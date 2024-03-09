@@ -42,11 +42,13 @@ class BlueOS:
     async def status(self, etag: str = None, timeout: int = 30) -> Status:
         """Get the current status of the device. Uses the /Status endpoint.
 
-        This endpoint supports long polling. If etag is set, the server will wait until the status changes or the timeout
-        is reached.
+        This endpoint supports long polling. If etag is set, the server will wait until the status changes or the
+        timeout is reached.
 
         :param etag: The last etag received from the server. Triggers long polling if set.
         :param timeout: The timeout in seconds for long polling.
+
+        :return: The current status of the device. Only selected fields are returned.
         """
         params = {}
         if etag:
@@ -73,7 +75,10 @@ class BlueOS:
             return status
 
     async def mac(self) -> str:
-        """Get the MAC address of the device. Uses the /SyncStatus endpoint."""
+        """Get the MAC address of the device. Uses the /SyncStatus endpoint.
+
+        :return: The MAC address of the device as string.
+        """
         async with self._session.get(f"{self.base_url}/SyncStatus") as response:
             response.raise_for_status()
             response_data = await response.text()
@@ -82,7 +87,15 @@ class BlueOS:
             return chained_get(response_dict, "SyncStatus", "@mac")
 
     async def volume(self, level: int = None, mute: bool = None, tell_slaves: bool = None) -> Volume:
-        """Get or set the volume of the device. Uses the /Volume endpoint."""
+        """Get or set the volume of the device. Uses the /Volume endpoint.
+        Call without parameters to get the current volume. Call with parameters to set the volume.
+
+        :param level: The volume level to set. Range is 0-100.
+        :param mute: Whether to mute the device.
+        :param tell_slaves: Whether to tell grouped speakers to change their volume as well.
+
+        :return: The current volume of the device.
+        """
         params = {}
         if level:
             params["level"] = level
@@ -105,6 +118,12 @@ class BlueOS:
             return volume
 
     async def play(self, seek: int = None) -> str:
+        """Start playing the current track. Uses the /Play endpoint. Can also be used to seek within the current track.
+        Works only when paused, not when stopped.
+
+        :param seek: The position in seconds to seek to.
+        :return: The playback state after command execution.
+        """
         params = {}
         if seek:
             params["seek"] = seek
@@ -117,6 +136,11 @@ class BlueOS:
             return chained_get(response_dict, "state")
 
     async def pause(self, toggle: bool = None) -> str:
+        """Pause or unpause the current track. Uses the /Pause endpoint.
+        :param toggle: Toggle between pause and unpause.
+
+        :return: The playback state after command execution.
+        """
         params = {}
         if toggle:
             params["toggle"] = "1"
@@ -129,6 +153,10 @@ class BlueOS:
             return chained_get(response_dict, "state")
 
     async def stop(self) -> str:
+        """Stop the current track. Uses the /Stop endpoint. Stopped playback cannot be resumed.
+
+        :return: The playback state after command execution.
+        """
         async with self._session.get(f"{self.base_url}/Stop") as response:
             response.raise_for_status()
             response_data = await response.text()
@@ -137,9 +165,11 @@ class BlueOS:
             return chained_get(response_dict, "state")
 
     async def skip(self) -> None:
+        """Skip to the next track. Uses the /Skip endpoint."""
         async with self._session.get(f"{self.base_url}/Skip") as response:
             response.raise_for_status()
 
     async def back(self) -> None:
+        """Go back to the previous track. Uses the /Back endpoint."""
         async with self._session.get(f"{self.base_url}/Back") as response:
             response.raise_for_status()
