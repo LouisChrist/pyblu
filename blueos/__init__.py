@@ -5,11 +5,13 @@ import xmltodict
 
 from blueos.entities import Status, Volume
 
-StringDict: TypeAlias = dict[str, Union[str, 'StringDict']]
-T: TypeAlias = TypeVar('T')
+StringDict: TypeAlias = dict[str, Union[str, "StringDict"]]
+T: TypeAlias = TypeVar("T")
 
 
-def chained_get(data: StringDict, *keys, _map: Callable[[str], T] = lambda x: x) -> T | None:
+def chained_get(
+    data: StringDict, *keys, _map: Callable[[str], T] = lambda x: x
+) -> T | None:
     local_data = data
     for key in keys:
         local_data = local_data.get(key)
@@ -19,7 +21,9 @@ def chained_get(data: StringDict, *keys, _map: Callable[[str], T] = lambda x: x)
 
 
 class BlueOS:
-    def __init__(self, host: str, port: int = 11000, session: aiohttp.ClientSession = None):
+    def __init__(
+        self, host: str, port: int = 11000, session: aiohttp.ClientSession = None
+    ):
         self.base_url = f"http://{host}:{port}"
         if session:
             self._owned_session = False
@@ -51,22 +55,27 @@ class BlueOS:
         if etag:
             params["etag"] = etag
             params["timeout"] = timeout
-        async with self._session.get(f"{self.base_url}/Status", params=params) as response:
+        async with self._session.get(
+            f"{self.base_url}/Status", params=params
+        ) as response:
             response.raise_for_status()
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
 
-            status = Status(etag=chained_get(response_dict, "status", "@etag"),
-                            state=chained_get(response_dict, "status", "state"),
-                            album=chained_get(response_dict, "status", "album"),
-                            artist=chained_get(response_dict, "status", "artist"),
-                            name=chained_get(response_dict, "status", "title1"),
-                            image=chained_get(response_dict, "status", "image"),
-                            volume=chained_get(response_dict, "status", "volume", _map=int),
-                            mute=chained_get(response_dict, "status", "mute") == "1",
-                            seconds=chained_get(response_dict, "status", "secs", _map=int),
-                            total_seconds=chained_get(response_dict, "status", "totlen", _map=float)
-                            )
+            status = Status(
+                etag=chained_get(response_dict, "status", "@etag"),
+                state=chained_get(response_dict, "status", "state"),
+                album=chained_get(response_dict, "status", "album"),
+                artist=chained_get(response_dict, "status", "artist"),
+                name=chained_get(response_dict, "status", "title1"),
+                image=chained_get(response_dict, "status", "image"),
+                volume=chained_get(response_dict, "status", "volume", _map=int),
+                mute=chained_get(response_dict, "status", "mute") == "1",
+                seconds=chained_get(response_dict, "status", "secs", _map=int),
+                total_seconds=chained_get(
+                    response_dict, "status", "totlen", _map=float
+                ),
+            )
 
             return status
 
@@ -79,7 +88,9 @@ class BlueOS:
 
             return chained_get(response_dict, "SyncStatus", "@mac")
 
-    async def volume(self, level: int = None, mute: bool = None, tell_slaves: bool = None) -> Volume:
+    async def volume(
+        self, level: int = None, mute: bool = None, tell_slaves: bool = None
+    ) -> Volume:
         """Get or set the volume of the device. Uses the /Volume endpoint."""
         params = {}
         if level:
@@ -89,15 +100,18 @@ class BlueOS:
         if tell_slaves:
             params["tell_slaves"] = "1" if tell_slaves else "0"
 
-        async with self._session.get(f"{self.base_url}/Volume", params=params) as response:
+        async with self._session.get(
+            f"{self.base_url}/Volume", params=params
+        ) as response:
             response.raise_for_status()
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
 
-            volume = Volume(volume=chained_get(response_dict, "volume", "#text", _map=int),
-                            db=chained_get(response_dict, "volume", "@db", _map=float),
-                            mute=chained_get(response_dict, "volume", "@mute") == "1"
-                            )
+            volume = Volume(
+                volume=chained_get(response_dict, "volume", "#text", _map=int),
+                db=chained_get(response_dict, "volume", "@db", _map=float),
+                mute=chained_get(response_dict, "volume", "@mute") == "1",
+            )
 
             return volume
 
@@ -106,7 +120,9 @@ class BlueOS:
         if seek:
             params["seek"] = seek
 
-        async with self._session.get(f"{self.base_url}/Play", params=params) as response:
+        async with self._session.get(
+            f"{self.base_url}/Play", params=params
+        ) as response:
             response.raise_for_status()
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
@@ -118,7 +134,9 @@ class BlueOS:
         if toggle:
             params["toggle"] = "1"
 
-        async with self._session.get(f"{self.base_url}/Pause", params=params) as response:
+        async with self._session.get(
+            f"{self.base_url}/Pause", params=params
+        ) as response:
             response.raise_for_status()
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)

@@ -12,10 +12,9 @@ async def run():
         print(mac)
 
 
-
-
 def main():
     asyncio.run(run())
+
 
 if __name__ == "__main__":
     main()
