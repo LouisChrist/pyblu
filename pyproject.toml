@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "blueos"
+name = "bluos"
 version = "0.1.0"
 description = ""
 authors = ["Louis Christ <mail@louischrist.de>"]
@@ -13,7 +13,7 @@ aiohttp = "^3.9.3"
 pydantic = "^2.6.3"
 
 [tool.poetry.scripts]
-blueos = "blueos.cmd:main"
+bluos = "bluos.cmd:main"
 
 
 [tool.poetry.group.dev.dependencies]

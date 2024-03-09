@@ -1,2 +1,2 @@
-poetry run black blueos
-poetry run pylint blueos
+poetry run black bluos
+poetry run pylint bluos

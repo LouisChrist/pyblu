@@ -1,9 +1,11 @@
+"""A Python library for controlling BluOS devices."""
+
 from typing import TypeVar, Union, Callable, TypeAlias
 
 import aiohttp
 import xmltodict
 
-from blueos.entities import Status, Volume
+from bluos.entities import Status, Volume
 
 StringDict: TypeAlias = dict[str, Union[str, "StringDict"]]
 # pylint: disable=invalid-name

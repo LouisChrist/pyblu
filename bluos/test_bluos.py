@@ -1,6 +1,6 @@
 from aioresponses import aioresponses
 
-from blueos import BlueOS
+from bluos import BlueOS
 
 
 async def test_skip():

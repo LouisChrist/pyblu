@@ -1,7 +1,7 @@
 # pylint: skip-file
 import asyncio
 
-from blueos import BlueOS, Status, entities
+from bluos import BlueOS, Status, entities
 
 
 async def run():
