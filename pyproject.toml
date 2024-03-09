@@ -23,3 +23,17 @@ black = "^24.2.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pylint."messages control"]
+disable = [
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "too-many-instance-attributes",
+]
+
+[tool.pylint.format]
+max-line-length = 160
+
+[tool.black]
+line-length = 160
