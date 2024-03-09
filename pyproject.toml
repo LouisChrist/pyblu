@@ -20,6 +20,9 @@ blueos = "blueos.cmd:main"
 pylint = "^3.1.0"
 black = "^24.2.0"
 pytest = "^8.1.1"
+aioresponses = "^0.7.6"
+pytest-asyncio = "^0.23.5.post1"
+pytest-cov = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -38,3 +41,6 @@ max-line-length = 160
 
 [tool.black]
 line-length = 160
+
+[tool.pytest.ini_options]
+asyncio_mode= "auto"
