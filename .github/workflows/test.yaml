@@ -6,6 +6,32 @@ on:
       - main
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          #export PATH="$HOME/.poetry/bin:$PATH"
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run pylint
+        run: poetry run pylint blueos
+
+      - name: Run black
+        run: poetry run black blueos
+
   test:
     runs-on: ubuntu-latest
 
@@ -21,16 +47,10 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          export PATH="$HOME/.poetry/bin:$PATH"
+          #export PATH="$HOME/.poetry/bin:$PATH"
 
       - name: Install dependencies
         run: poetry install
 
-      # - name: Run pytest
-      #   run: poetry run pytest
-
-      - name: Run pylint
-        run: poetry run pylint blueos
-
-      - name: Run black
-        run: poetry run black blueos
+      - name: Run pytest
+        run: poetry run pytest
