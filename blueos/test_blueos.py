@@ -66,7 +66,10 @@ async def test_volume():
 
 async def test_status():
     with aioresponses() as mocked:
-        mocked.get("http://node:11000/Status", status=200, body="""
+        mocked.get(
+            "http://node:11000/Status",
+            status=200,
+            body="""
         <status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
             <state>playing</state>
             <album>Album</album>
@@ -78,7 +81,8 @@ async def test_status():
             <secs>10</secs>
             <totlen>100</totlen>
         </status>
-        """)
+        """,
+        )
         async with BlueOS("node") as client:
             status = await client.status()
 
@@ -91,6 +95,6 @@ async def test_status():
         assert status.name == "Name"
         assert status.image == "Image"
         assert status.volume == 10
-        assert status.mute == False
+        assert not status.mute
         assert status.seconds == 10
         assert status.total_seconds == 100.0
