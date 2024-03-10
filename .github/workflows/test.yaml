@@ -26,10 +26,10 @@ jobs:
         run: poetry install
 
       - name: Run pylint
-        run: poetry run pylint bluos
+        run: poetry run pylint src
 
       - name: Run black
-        run: poetry run black bluos
+        run: poetry run black src
 
   test:
     runs-on: ubuntu-latest
