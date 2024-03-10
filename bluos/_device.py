@@ -19,7 +19,7 @@ def chained_get(data: StringDict, *keys, _map: Callable[[str], T] = lambda x: x)
     return _map(local_data)
 
 
-class BlueOSDevice:
+class BluOSDevice:
     def __init__(self, host: str, port: int = 11000, session: aiohttp.ClientSession = None):
         self.base_url = f"http://{host}:{port}"
         if session:

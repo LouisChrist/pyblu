@@ -1,12 +1,12 @@
 from aioresponses import aioresponses
 
-from bluos import BlueOSDevice
+from bluos import BluOSDevice
 
 
 async def test_skip():
     with aioresponses() as mocked:
         mocked.get("http://node:11000/Skip", status=200)
-        async with BlueOSDevice("node") as client:
+        async with BluOSDevice("node") as client:
             await client.skip()
 
         mocked.assert_called_once()
@@ -15,7 +15,7 @@ async def test_skip():
 async def test_back():
     with aioresponses() as mocked:
         mocked.get("http://node:11000/Back", status=200)
-        async with BlueOSDevice("node") as client:
+        async with BluOSDevice("node") as client:
             await client.back()
 
         mocked.assert_called_once()
@@ -24,7 +24,7 @@ async def test_back():
 async def test_play():
     with aioresponses() as mocked:
         mocked.get("http://node:11000/Play", status=200, body="<state>playing</state>")
-        async with BlueOSDevice("node") as client:
+        async with BluOSDevice("node") as client:
             state = await client.play()
 
         assert state == "playing"
@@ -34,7 +34,7 @@ async def test_play():
 async def test_pause():
     with aioresponses() as mocked:
         mocked.get("http://node:11000/Pause", status=200, body="<state>paused</state>")
-        async with BlueOSDevice("node") as client:
+        async with BluOSDevice("node") as client:
             state = await client.pause()
 
         assert state == "paused"
@@ -44,7 +44,7 @@ async def test_pause():
 async def test_stop():
     with aioresponses() as mocked:
         mocked.get("http://node:11000/Stop", status=200, body="<state>stopped</state>")
-        async with BlueOSDevice("node") as client:
+        async with BluOSDevice("node") as client:
             state = await client.stop()
 
         assert state == "stopped"
@@ -54,7 +54,7 @@ async def test_stop():
 async def test_volume():
     with aioresponses() as mocked:
         mocked.get("http://node:11000/Volume", status=200, body="<volume db='-20.0' mute='0'>10</volume>")
-        async with BlueOSDevice("node") as client:
+        async with BluOSDevice("node") as client:
             volume = await client.volume()
 
         mocked.assert_called_once()
@@ -83,7 +83,7 @@ async def test_status():
         </status>
         """,
         )
-        async with BlueOSDevice("node") as client:
+        async with BluOSDevice("node") as client:
             status = await client.status()
 
         mocked.assert_called_once()

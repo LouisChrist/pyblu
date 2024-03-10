@@ -7,10 +7,10 @@ to control and query the status of BlueOS devices.
 Authentication is not required.
 
 ```python
-from blueos import BlueOSDevice
+from blueos import BluOSDevice
 
 async def main():
-    async with BlueOSDevice("<host>") as device:
+    async with BluOSDevice("<host>") as device:
         status = await device.status()
         print(status)
 ```
