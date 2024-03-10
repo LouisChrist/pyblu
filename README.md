@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/bluos)](https://pypi.org/project/bluos/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/bluos)](https://pypi.org/project/bluos/)
-[![PyPI - License](https://img.shields.io/pypi/l/bluos)](https://pypi.org/project/bluos/)
+[![PyPI - License](https://img.shields.io/pypi/l/bluos)](https://github.com/LouisChrist/python-bluos/blob/main/LICENSE)
 
 This is a Python library for interfacing with BlueOS devices. 
 It uses the 
