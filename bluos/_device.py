@@ -21,16 +21,26 @@ def chained_get(data: StringDict, *keys, _map: Callable[[str], T] = lambda x: x)
 
 class BluOSDevice:
     def __init__(self, host: str, port: int = 11000, session: aiohttp.ClientSession = None):
+        """Represents a BluOS device.
+
+        The passed sessions will not be closed when the device is closed.
+
+        :param host: The hostname or IP address of the device.
+        :param port: The port of the device. Default is 11000.
+        :param session: An optional aiohttp.ClientSession to use for requests. If not set, a new session will be created.
+
+        :return: A new BluOS device.
+        """
         self.base_url = f"http://{host}:{port}"
         if session:
-            self._owned_session = False
+            self._session_owned = False
             self._session = session
         else:
-            self._owned_session = True
+            self._session_owned = True
             self._session = aiohttp.ClientSession()
 
     async def close(self):
-        if self._owned_session:
+        if self._session_owned:
             await self._session.close()
 
     async def __aenter__(self):
