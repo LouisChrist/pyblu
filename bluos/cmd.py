@@ -1,11 +1,11 @@
 # pylint: skip-file
 import asyncio
 
-from bluos import BlueOS, Status, entities
+from bluos import BlueOSDevice, Status, entities
 
 
 async def run():
-    async with BlueOS("node.home.louischrist.me") as client:
+    async with BlueOSDevice("node.home.louischrist.me") as client:
         status = await client.status()
         print(status)
 
