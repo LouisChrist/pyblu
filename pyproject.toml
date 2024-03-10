@@ -3,6 +3,7 @@ name = "bluos"
 version = "0.1.0"
 description = ""
 authors = ["Louis Christ <mail@louischrist.de>"]
+repository = "https://github.com/LouisChrist/python-bluos"
 license = "MIT"
 readme = "README.md"
 packages = [
