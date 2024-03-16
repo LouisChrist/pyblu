@@ -7,8 +7,8 @@ on:
     paths:
       - src/**
       - tests/**
-      - poetry.lock
       - pyproject.toml
+      - poetry.lock
       - .github/workflows/test.yml
 
 jobs:
@@ -23,8 +23,7 @@ jobs:
         with:
           python-version: 3.11
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
+        run: curl -sSL https://install.python-poetry.org | python3 -
       - name: Install dependencies
         run: poetry install
       - name: Run pylint
@@ -43,8 +42,7 @@ jobs:
         with:
           python-version: 3.11
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
+        run: curl -sSL https://install.python-poetry.org | python3 -
       - name: Install dependencies
         run: poetry install
       - name: Run pytest
