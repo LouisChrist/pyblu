@@ -6,6 +6,7 @@ Main Classes
 
 .. autoclass:: bluos.BluOSDevice
    :members:
+   :special-members: __init__
 
 Data Classes
 ------------

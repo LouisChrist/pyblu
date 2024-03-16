@@ -23,7 +23,7 @@ class BluOSDevice:
     def __init__(self, host: str, port: int = 11000, session: aiohttp.ClientSession = None):
         """Represents a BluOS device.
 
-        The passed sessions will not be closed when the device is closed.
+        The passed sessions will not be closed when the device is closed and has to be closed by the caller.
 
         :param host: The hostname or IP address of the device.
         :param port: The port of the device. Default is 11000.
