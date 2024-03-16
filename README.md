@@ -10,6 +10,8 @@ It uses the
 to control and query the status of BlueOS devices.
 Authentication is not required.
 
+Documentation is available at [here](https://louischrist.github.io/python-bluos/)
+
 ```python
 from blueos import BluOSDevice
 
