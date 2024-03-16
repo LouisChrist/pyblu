@@ -21,13 +21,16 @@ def chained_get(data: StringDict, *keys, _map: Callable[[str], T] = lambda x: x)
 
 class BluOSDevice:
     def __init__(self, host: str, port: int = 11000, session: aiohttp.ClientSession = None):
-        """Represents a BluOS device.
+        """Client for a BluOS device. Uses the HTTP API of the BluOS devices to control it.
 
-        The passed sessions will not be closed when the device is closed and has to be closed by the caller.
+        The passed sessions will not be closed when the device is closed and has to be closed by the caller. 
+        If no session is passed, a new session will be created and closed when the device is closed.
+
+        *BlueOSDevice* is an async context manager and can be used with *async with*.
 
         :param host: The hostname or IP address of the device.
         :param port: The port of the device. Default is 11000.
-        :param session: An optional aiohttp.ClientSession to use for requests. If not set, a new session will be created.
+        :param session: An optional aiohttp.ClientSession to use for requests.
 
         :return: A new BluOS device.
         """
@@ -50,9 +53,10 @@ class BluOSDevice:
         await self.close()
 
     async def status(self, etag: str = None, timeout: int = 30) -> Status:
-        """Get the current status of the device. Uses the /Status endpoint.
+        """Get the current status of the device.
 
-        This endpoint supports long polling. If etag is set, the server will wait until the status changes or the timeout is reached.
+        This endpoint supports long polling. If **etag** is set, the server will wait until the status changes or the timeout is reached.
+        **etag** has to be the last etag received from the server.
 
         :param etag: The last etag received from the server. Triggers long polling if set.
         :param timeout: The timeout in seconds for long polling.
@@ -84,9 +88,9 @@ class BluOSDevice:
             return status
 
     async def mac(self) -> str:
-        """Get the MAC address of the device. Uses the /SyncStatus endpoint.
+        """Get the MAC address of the device.
 
-        :return: The MAC address of the device as string.
+        :return: The MAC address as string.
         """
         async with self._session.get(f"{self.base_url}/SyncStatus") as response:
             response.raise_for_status()
@@ -96,7 +100,7 @@ class BluOSDevice:
             return chained_get(response_dict, "SyncStatus", "@mac")
 
     async def volume(self, level: int = None, mute: bool = None, tell_slaves: bool = None) -> Volume:
-        """Get or set the volume of the device. Uses the /Volume endpoint.
+        """Get or set the volume of the device.
         Call without parameters to get the current volume. Call with parameters to set the volume.
 
         :param level: The volume level to set. Range is 0-100.
@@ -127,10 +131,11 @@ class BluOSDevice:
             return volume
 
     async def play(self, seek: int = None) -> str:
-        """Start playing the current track. Uses the /Play endpoint. Can also be used to seek within the current track.
+        """Start playing the current track. Can also be used to seek within the current track.
         Works only when paused, not when stopped.
 
         :param seek: The position in seconds to seek to.
+
         :return: The playback state after command execution.
         """
         params = {}
@@ -145,9 +150,9 @@ class BluOSDevice:
             return chained_get(response_dict, "state")
 
     async def pause(self, toggle: bool = None) -> str:
-        """Pause or unpause the current track. Uses the /Pause endpoint.
-        
-        :param toggle: Toggle between pause and unpause.
+        """Pause the current track. **toggle** can be used to toggle between playing and pause.
+
+        :param toggle: Toggle between playing and pause.
 
         :return: The playback state after command execution.
         """
@@ -163,7 +168,7 @@ class BluOSDevice:
             return chained_get(response_dict, "state")
 
     async def stop(self) -> str:
-        """Stop the current track. Uses the /Stop endpoint. Stopped playback cannot be resumed.
+        """Stop the current track. Stopped playback cannot be resumed.
 
         :return: The playback state after command execution.
         """
@@ -175,11 +180,11 @@ class BluOSDevice:
             return chained_get(response_dict, "state")
 
     async def skip(self) -> None:
-        """Skip to the next track. Uses the /Skip endpoint."""
+        """Skip to the next track."""
         async with self._session.get(f"{self.base_url}/Skip") as response:
             response.raise_for_status()
 
     async def back(self) -> None:
-        """Go back to the previous track. Uses the /Back endpoint."""
+        """Go back to the previous track."""
         async with self._session.get(f"{self.base_url}/Back") as response:
             response.raise_for_status()
