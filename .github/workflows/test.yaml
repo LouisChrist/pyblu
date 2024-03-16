@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
+    paths:
+      - src/**
+      - tests/**
+      - pyproject.toml
+      - poetry.lock
+      - .github/workflows/test.yml
 
 jobs:
   lint:
