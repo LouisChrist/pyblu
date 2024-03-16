@@ -20,14 +20,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - uses: actions/setup-python@v3
-      - name: Install dependencies
+      - name: Install sphinx
         run: |
           pip install sphinx
       - name: Sphinx build
         run: |
-          cd docs
-          make html
-          mv build/html ../_site
+          sphinx-build -b html docs/source _site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
