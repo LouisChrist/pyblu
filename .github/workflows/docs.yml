@@ -20,12 +20,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - uses: actions/setup-python@v3
-      - name: Install sphinx
-        run: |
-          pip install sphinx
+        with:
+          python-version: 3.11
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: Install dependencies
+        run: poetry install
       - name: Sphinx build
-        run: |
-          sphinx-build -b html docs/source _site
+        run: poetry run sphinx-build -b html docs/source _site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
