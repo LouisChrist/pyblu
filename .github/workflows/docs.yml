@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths:
-      - src/**
-      - docs/**
+      - 'src/**'
+      - 'docs/**'
       - pyproject.toml
       - poetry.lock
-      - .github/workflows/docs.yml
+      - '.github/workflows/docs.yml'
 
 permissions:
   contents: read
