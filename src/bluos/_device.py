@@ -146,6 +146,7 @@ class BluOSDevice:
 
     async def pause(self, toggle: bool = None) -> str:
         """Pause or unpause the current track. Uses the /Pause endpoint.
+        
         :param toggle: Toggle between pause and unpause.
 
         :return: The playback state after command execution.
