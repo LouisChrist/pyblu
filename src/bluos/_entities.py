@@ -4,7 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class Status:
     etag: str
-    """Cursor for long polling requests"""
+    """Cursor for long polling requests. Can be passed to next status call."""
     state: str
     """Playback state"""
 
