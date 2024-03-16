@@ -2,7 +2,14 @@ name: Publish docs
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
+    paths:
+      - src/**
+      - docs/**
+      - .github/workflows/docs.yml
+      - pyproject.toml
+      - poetry.lock
 
 permissions:
   contents: read
