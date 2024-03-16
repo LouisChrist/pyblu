@@ -5,7 +5,7 @@ This is a Python library for interfacing with BlueOS device. It uses the
 `BlueOS API <https://bluesound-deutschland.de/wp-content/uploads/2022/01/Custom-Integration-API-v1.0_March-2021.pdf>`_ 
 to control and query the status of BlueOS devices.
 
-A basic example of usage:
+Basic usage example:
 
 .. code-block:: python
 
