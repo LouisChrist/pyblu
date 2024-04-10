@@ -27,9 +27,9 @@ jobs:
       - name: Install dependencies
         run: poetry install
       - name: Run pylint
-        run: poetry run pylint src
+        run: poetry run pylint src tests
       - name: Run black
-        run: poetry run black src
+        run: poetry run black --check src tests
 
   test:
     runs-on: ubuntu-latest
