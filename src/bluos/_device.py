@@ -3,7 +3,7 @@ from typing import TypeVar, Union, Callable, TypeAlias
 import aiohttp
 import xmltodict
 
-from bluos._entities import Status, Volume
+from bluos._entities import Status, Volume, SyncStatus
 
 StringDict: TypeAlias = dict[str, Union[str, "StringDict"]]
 # pylint: disable=invalid-name
@@ -23,7 +23,7 @@ class BluOSDevice:
     def __init__(self, host: str, port: int = 11000, session: aiohttp.ClientSession = None):
         """Client for a BluOS device. Uses the HTTP API of the BluOS devices to control it.
 
-        The passed sessions will not be closed when the device is closed and has to be closed by the caller. 
+        The passed sessions will not be closed when the device is closed and has to be closed by the caller.
         If no session is passed, a new session will be created and closed when the device is closed.
 
         *BlueOSDevice* is an async context manager and can be used with *async with*.
@@ -87,17 +87,54 @@ class BluOSDevice:
 
             return status
 
-    async def mac(self) -> str:
-        """Get the MAC address of the device.
+    async def sync_status(self) -> SyncStatus:
+        """Get the SyncStatus of the device.
 
-        :return: The MAC address as string.
+        :return: The SyncStatus of the device.
         """
         async with self._session.get(f"{self.base_url}/SyncStatus") as response:
             response.raise_for_status()
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
 
-            return chained_get(response_dict, "SyncStatus", "@mac")
+            master_ip = chained_get(response_dict, "SyncStatus", "master", "#text")
+            master_port = chained_get(response_dict, "SyncStatus", "master", "@port")
+            master = f"{master_ip}:{master_port}" if master_ip and master_port else None
+
+            slaves_raw = chained_get(response_dict, "SyncStatus", "slave")
+            match slaves_raw:
+                case {"@id": ip, "@port": port}:
+                    slaves = [f"{ip}:{port}"]
+                case [*slaves_raw]:
+                    slaves = [f"{slave['@id']}:{slave['@port']}" for slave in slaves_raw]
+                case _:
+                    slaves = None
+
+            sync_status = SyncStatus(
+                etag=chained_get(response_dict, "SyncStatus", "@etag"),
+                sync_stat=chained_get(response_dict, "SyncStatus", "@syncStat"),
+                id=chained_get(response_dict, "SyncStatus", "@id"),
+                mac=chained_get(response_dict, "SyncStatus", "@mac"),
+                name=chained_get(response_dict, "SyncStatus", "@name"),
+                icon_url=chained_get(response_dict, "SyncStatus", "@icon"),
+                initialized=chained_get(response_dict, "SyncStatus", "@initialized") == "true",
+                group=chained_get(response_dict, "SyncStatus", "@group"),
+                master=master,
+                slaves=slaves,
+                zone=chained_get(response_dict, "SyncStatus", "@zone"),
+                zone_master=chained_get(response_dict, "SyncStatus", "@zoneMaster") == "true",
+                zone_slave=chained_get(response_dict, "SyncStatus", "@zoneSlave") == "true",
+                brand=chained_get(response_dict, "SyncStatus", "@brand"),
+                model=chained_get(response_dict, "SyncStatus", "@model"),
+                model_name=chained_get(response_dict, "SyncStatus", "@modelName"),
+                mute_volume_db=chained_get(response_dict, "SyncStatus", "@muteDb", _map=int),
+                mute_volume=chained_get(response_dict, "SyncStatus", "@muteVolume", _map=int),
+                volume_db=chained_get(response_dict, "SyncStatus", "@db", _map=int),
+                volume=chained_get(response_dict, "SyncStatus", "@volume", _map=int),
+                schema_version=chained_get(response_dict, "SyncStatus", "@schemaVersion", _map=int),
+            )
+
+            return sync_status
 
     async def volume(self, level: int = None, mute: bool = None, tell_slaves: bool = None) -> Volume:
         """Get or set the volume of the device.
