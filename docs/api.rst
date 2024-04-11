@@ -16,3 +16,9 @@ Data Classes
 
 .. autoclass:: bluos.Volume
    :members:
+
+.. autoclass:: bluos.SyncStatus
+   :members:
+
+.. autoclass:: bluos.PairedPlayer
+   :members:
