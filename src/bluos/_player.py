@@ -87,7 +87,7 @@ class Player:
 
             return status
 
-    async def sync_status(self, etag: str | None = None, timeout: int= 30) -> SyncStatus:
+    async def sync_status(self, etag: str | None = None, timeout: int = 30) -> SyncStatus:
         """Get the SyncStatus of the player.
 
         :return: The SyncStatus of the player.
