@@ -192,6 +192,35 @@ async def test_add_slave():
         ]
 
 
+async def test_add_slaves():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/AddSlave?slaves=1.1.1.1,2.2.2.2&ports=11000,11000",
+            status=200,
+            body="""
+                    <addSlave>
+                        <slave id="1.1.1.1" port="11000"/>
+                        <slave id="2.2.2.2" port="11000"/>
+                    </addSlave>
+                    """,
+        )
+
+        async with Player("node") as client:
+            slaves = await client.add_slaves(
+                [
+                    PairedPlayer(ip="1.1.1.1", port=11000),
+                    PairedPlayer(ip="2.2.2.2", port=11000),
+                ]
+            )
+
+        mocked.assert_called_once()
+
+        assert slaves == [
+            PairedPlayer(ip="1.1.1.1", port=11000),
+            PairedPlayer(ip="2.2.2.2", port=11000),
+        ]
+
+
 async def test_sync_status_no_slave():
     slaves_raw = {}
     slaves = _parse_slave_list(slaves_raw)

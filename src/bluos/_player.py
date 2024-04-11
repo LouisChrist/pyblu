@@ -225,7 +225,8 @@ class Player:
             response.raise_for_status()
 
     async def add_slave(self, ip: str, port: int = 11000) -> list[PairedPlayer]:
-        """Add a secondary player to the current player as a slave. If it fails the player won't be in the returned list.
+        """Add a secondary player to the current player as a slave.
+        If it fails the player won't be in the returned list.
 
         :param ip: The IP address of the player to add.
         :param port: The port of the player to add. Default is 11000.
@@ -235,6 +236,30 @@ class Player:
         params = {
             "slave": ip,
             "port": port,
+        }
+        async with self._session.get(f"{self.base_url}/AddSlave", params=params) as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            slaves_raw = chained_get(response_dict, "addSlave", "slave")
+            slaves = _parse_slave_list(slaves_raw)
+
+            return slaves
+
+    async def add_slaves(self, slaves: list[PairedPlayer]) -> list[PairedPlayer]:
+        """Add a list of secondary players to the current player as slaves.
+        If it fails the player won't be in the returned list.
+
+        Same as *add_slave* but with a list of players. Makes only one request to player.
+
+        :param slaves: The list of players to add.
+
+        :return: The list of slaves of the player.
+        """
+        params = {
+            "slaves": ",".join(x.ip for x in slaves),
+            "ports": ",".join(str(x.port) for x in slaves),
         }
         async with self._session.get(f"{self.base_url}/AddSlave", params=params) as response:
             response.raise_for_status()
