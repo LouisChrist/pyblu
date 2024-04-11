@@ -90,6 +90,12 @@ class Player:
     async def sync_status(self, etag: str | None = None, timeout: int = 30) -> SyncStatus:
         """Get the SyncStatus of the player.
 
+        This endpoint supports long polling. If **etag** is set, the server will wait until the status changes or the timeout is reached.
+        **etag** has to be the last etag received from the server.
+
+        :param etag: The last etag received from the server. Triggers long polling if set.
+        :param timeout: The timeout in seconds for long polling.
+
         :return: The SyncStatus of the player.
         """
         params = {}
