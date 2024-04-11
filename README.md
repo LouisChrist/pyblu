@@ -4,27 +4,27 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/bluos)](https://pypi.org/project/bluos/)
 [![PyPI - License](https://img.shields.io/pypi/l/bluos)](https://github.com/LouisChrist/python-bluos/blob/main/LICENSE)
 
-This is a Python library for interfacing with BlueOS devices. 
+This is a Python library for interfacing with BluOS players. 
 It uses the 
-[BlueOS API](https://bluesound-deutschland.de/wp-content/uploads/2022/01/Custom-Integration-API-v1.0_March-2021.pdf) 
-to control and query the status of BlueOS devices.
+[BluOS API](https://bluesound-deutschland.de/wp-content/uploads/2022/01/Custom-Integration-API-v1.0_March-2021.pdf) 
+to control and query the status of BluOS players.
 Authentication is not required.
 
 Documentation is available at [here](https://louischrist.github.io/python-bluos/)
 
 ```python
-from blueos import BluOSDevice
+from bluos import Player
 
 async def main():
-    async with BluOSDevice("<host>") as device:
-        status = await device.status()
+    async with Player("<host>") as player:
+        status = await player.status()
         print(status)
 ```
 
 ## Installation
 
 ```bash
-pip install blueos
+pip install bluos
 ```
 
 

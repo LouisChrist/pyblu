@@ -50,7 +50,7 @@ class SyncStatus:
     """Name of the player"""
 
     icon_url: str
-    """URL of the device icon"""
+    """URL of the player icon"""
     initialized: bool
     """True means the player is already setup, false means the player needs to be setup"""
 

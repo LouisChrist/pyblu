@@ -19,20 +19,20 @@ def chained_get(data: StringDict, *keys, _map: Callable[[str], T] = lambda x: x)
     return _map(local_data)
 
 
-class BluOSDevice:
+class Player:
     def __init__(self, host: str, port: int = 11000, session: aiohttp.ClientSession = None):
-        """Client for a BluOS device. Uses the HTTP API of the BluOS devices to control it.
+        """Client for a BluOS player. Uses the HTTP API of the BluOS players to control it.
 
-        The passed sessions will not be closed when the device is closed and has to be closed by the caller.
-        If no session is passed, a new session will be created and closed when the device is closed.
+        The passed sessions will not be closed when the player is closed and has to be closed by the caller.
+        If no session is passed, a new session will be created and closed when the player is closed.
 
-        *BlueOSDevice* is an async context manager and can be used with *async with*.
+        *Player* is an async context manager and can be used with *async with*.
 
-        :param host: The hostname or IP address of the device.
-        :param port: The port of the device. Default is 11000.
+        :param host: The hostname or IP address of the player.
+        :param port: The port of the player. Default is 11000.
         :param session: An optional aiohttp.ClientSession to use for requests.
 
-        :return: A new BluOS device.
+        :return: A new BluOS player.
         """
         self.base_url = f"http://{host}:{port}"
         if session:
@@ -52,8 +52,8 @@ class BluOSDevice:
     async def __aexit__(self, *args):
         await self.close()
 
-    async def status(self, etag: str = None, timeout: int = 30) -> Status:
-        """Get the current status of the device.
+    async def status(self, etag: str | None = None, timeout: int = 30) -> Status:
+        """Get the current status of the player.
 
         This endpoint supports long polling. If **etag** is set, the server will wait until the status changes or the timeout is reached.
         **etag** has to be the last etag received from the server.
@@ -61,7 +61,7 @@ class BluOSDevice:
         :param etag: The last etag received from the server. Triggers long polling if set.
         :param timeout: The timeout in seconds for long polling.
 
-        :return: The current status of the device. Only selected fields are returned.
+        :return: The current status of the player. Only selected fields are returned.
         """
         params = {}
         if etag:
@@ -87,12 +87,16 @@ class BluOSDevice:
 
             return status
 
-    async def sync_status(self) -> SyncStatus:
-        """Get the SyncStatus of the device.
+    async def sync_status(self, etag: str | None = None, timeout: int= 30) -> SyncStatus:
+        """Get the SyncStatus of the player.
 
-        :return: The SyncStatus of the device.
+        :return: The SyncStatus of the player.
         """
-        async with self._session.get(f"{self.base_url}/SyncStatus") as response:
+        params = {}
+        if etag:
+            params["etag"] = etag
+            params["timeout"] = timeout
+        async with self._session.get(f"{self.base_url}/SyncStatus", params=params) as response:
             response.raise_for_status()
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
@@ -137,14 +141,14 @@ class BluOSDevice:
             return sync_status
 
     async def volume(self, level: int = None, mute: bool = None, tell_slaves: bool = None) -> Volume:
-        """Get or set the volume of the device.
+        """Get or set the volume of the player.
         Call without parameters to get the current volume. Call with parameters to set the volume.
 
         :param level: The volume level to set. Range is 0-100.
-        :param mute: Whether to mute the device.
+        :param mute: Whether to mute the player.
         :param tell_slaves: Whether to tell grouped speakers to change their volume as well.
 
-        :return: The current volume of the device.
+        :return: The current volume of the player.
         """
         params = {}
         if level:

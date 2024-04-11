@@ -1,4 +1,4 @@
-"""A Python library for controlling BluOS devices."""
+"""A Python library for controlling BluOS players."""
 
-from ._device import BluOSDevice
+from ._player import Player
 from ._entities import Status, Volume, SyncStatus, PairedPlayer
