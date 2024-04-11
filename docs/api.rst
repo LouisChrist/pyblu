@@ -4,7 +4,7 @@ API Reference
 Main Classes
 ------------
 
-.. autoclass:: bluos.BluOSDevice
+.. autoclass:: bluos.Player
    :members:
    :special-members: __init__
 

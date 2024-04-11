@@ -9,7 +9,7 @@ Basic usage example:
 
 .. code-block:: python
 
-   from bluos import BluOSDevice
+   from bluos import Player
 
    async def main():
       async with Player("<host>") as player:
