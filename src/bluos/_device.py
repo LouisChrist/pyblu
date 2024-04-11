@@ -3,7 +3,7 @@ from typing import TypeVar, Union, Callable, TypeAlias
 import aiohttp
 import xmltodict
 
-from bluos._entities import Status, Volume, SyncStatus
+from bluos._entities import Status, Volume, SyncStatus, PairedPlayer
 
 StringDict: TypeAlias = dict[str, Union[str, "StringDict"]]
 # pylint: disable=invalid-name
@@ -99,14 +99,14 @@ class BluOSDevice:
 
             master_ip = chained_get(response_dict, "SyncStatus", "master", "#text")
             master_port = chained_get(response_dict, "SyncStatus", "master", "@port")
-            master = f"{master_ip}:{master_port}" if master_ip and master_port else None
+            master = PairedPlayer(ip=master_ip, port=int(master_port)) if master_ip and master_port else None
 
             slaves_raw = chained_get(response_dict, "SyncStatus", "slave")
             match slaves_raw:
                 case {"@id": ip, "@port": port}:
-                    slaves = [f"{ip}:{port}"]
+                    slaves = [PairedPlayer(ip=ip, port=int(port))]
                 case [*slaves_raw]:
-                    slaves = [f"{slave['@id']}:{slave['@port']}" for slave in slaves_raw]
+                    slaves = [PairedPlayer(ip=slave["@id"], port=int(slave["@port"])) for slave in slaves_raw]
                 case _:
                     slaves = None
 

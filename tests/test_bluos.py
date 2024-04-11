@@ -1,6 +1,6 @@
 from aioresponses import aioresponses
 
-from bluos import BluOSDevice
+from bluos import BluOSDevice, PairedPlayer
 
 
 async def test_skip():
@@ -132,8 +132,8 @@ async def test_sync_status():
         assert sync_status.icon_url == "/images/players/N125_nt.png"
         assert sync_status.initialized
         assert sync_status.group == "Node +2"
-        assert sync_status.master == "192.168.1.100:11000"
-        assert sync_status.slaves == ["192.168.1.153:11000", "192.168.1.234:11000"]
+        assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
+        assert sync_status.slaves == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
         assert sync_status.zone == "Desk"
         assert sync_status.zone_master
         assert sync_status.zone_slave
@@ -164,4 +164,6 @@ async def test_sync_status_one_slave():
 
         mocked.assert_called_once()
 
-        assert sync_status.slaves == ["1.1.1.1:11000"]
+        assert sync_status.slaves == [
+            PairedPlayer(ip="1.1.1.1", port=11000),
+        ]

@@ -28,6 +28,14 @@ class Status:
 
 
 @dataclass
+class PairedPlayer:
+    ip: str
+    """IP address of the player"""
+    port: int
+    """Port of the player"""
+
+
+@dataclass
 class SyncStatus:
     etag: str
     """Cursor for long polling requests. Can be passed to next sync_status call."""
@@ -48,9 +56,9 @@ class SyncStatus:
 
     group: str | None
     """Group name of the player"""
-    master: str | None
+    master: PairedPlayer | None
     """Master player IP and port. Only present if the player is grouped and not master itself"""
-    slaves: list[str] | None
+    slaves: PairedPlayer | None
     """List of slave players. Every entry is IP and port. Only present if the player is master"""
 
     zone: str | None
