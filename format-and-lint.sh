@@ -1,2 +1,2 @@
-poetry run black bluos
-poetry run pylint bluos
+poetry run black src tests
+poetry run pylint src tests

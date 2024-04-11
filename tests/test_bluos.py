@@ -146,6 +146,7 @@ async def test_sync_status():
         assert sync_status.volume == 29
         assert sync_status.schema_version == 34
 
+
 async def test_sync_status_one_slave():
     with aioresponses() as mocked:
         mocked.get(
