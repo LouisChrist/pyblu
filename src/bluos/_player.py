@@ -106,13 +106,7 @@ class Player:
             master = PairedPlayer(ip=master_ip, port=int(master_port)) if master_ip and master_port else None
 
             slaves_raw = chained_get(response_dict, "SyncStatus", "slave")
-            match slaves_raw:
-                case {"@id": ip, "@port": port}:
-                    slaves = [PairedPlayer(ip=ip, port=int(port))]
-                case [*slaves_raw]:
-                    slaves = [PairedPlayer(ip=slave["@id"], port=int(slave["@port"])) for slave in slaves_raw]
-                case _:
-                    slaves = None
+            slaves = _parse_slave_list(slaves_raw)
 
             sync_status = SyncStatus(
                 etag=chained_get(response_dict, "SyncStatus", "@etag"),
@@ -229,3 +223,35 @@ class Player:
         """Go back to the previous track."""
         async with self._session.get(f"{self.base_url}/Back") as response:
             response.raise_for_status()
+
+    async def add_slave(self, ip: str, port: int = 11000) -> list[PairedPlayer]:
+        """Add a secondary player to the current player as a slave. If it fails the player won't be in the returned list.
+
+        :param ip: The IP address of the player to add.
+        :param port: The port of the player to add. Default is 11000.
+
+        :return: The list of slaves of the player.
+        """
+        params = {
+            "slave": ip,
+            "port": port,
+        }
+        async with self._session.get(f"{self.base_url}/AddSlave", params=params) as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            slaves_raw = chained_get(response_dict, "addSlave", "slave")
+            slaves = _parse_slave_list(slaves_raw)
+
+            return slaves
+
+
+def _parse_slave_list(slaves_raw: list[dict[str, str]]) -> list[PairedPlayer] | None:
+    match slaves_raw:
+        case {"@id": ip, "@port": port}:
+            return [PairedPlayer(ip=ip, port=int(port))]
+        case [*slaves_raw]:
+            return [PairedPlayer(ip=slave["@id"], port=int(slave["@port"])) for slave in slaves_raw]
+        case _:
+            return None

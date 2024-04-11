@@ -1,6 +1,7 @@
 from aioresponses import aioresponses
 
 from bluos import Player, PairedPlayer
+from bluos._player import _parse_slave_list
 
 
 async def test_skip():
@@ -167,3 +168,66 @@ async def test_sync_status_one_slave():
         assert sync_status.slaves == [
             PairedPlayer(ip="1.1.1.1", port=11000),
         ]
+
+
+async def test_add_slave():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/AddSlave?slave=1.1.1.1&port=11000",
+            status=200,
+            body="""
+                    <addSlave>
+                        <slave id="1.1.1.1" port="11000"/>
+                    </addSlave>
+                    """,
+        )
+
+        async with Player("node") as client:
+            slaves = await client.add_slave("1.1.1.1", 11000)
+
+        mocked.assert_called_once()
+
+        assert slaves == [
+            PairedPlayer(ip="1.1.1.1", port=11000),
+        ]
+
+
+async def test_sync_status_no_slave():
+    slaves_raw = {}
+    slaves = _parse_slave_list(slaves_raw)
+    assert slaves is None
+
+
+async def test_parse_slave_list_single_element():
+    slaves_raw = [
+        {
+            "@id": "1.1.1.1",
+            "@port": "11000",
+        }
+    ]
+
+    slaves = _parse_slave_list(slaves_raw)
+
+    assert slaves == [
+        PairedPlayer(ip="1.1.1.1", port=11000),
+    ]
+
+
+async def test_parse_slave_list_multiple_elements():
+    slaves_raw = [
+        {
+            "@id": "1.1.1.1",
+            "@port": "11000",
+        },
+        {
+            "@id": "2.2.2.2",
+            "@port": "11000",
+        },
+    ]
+
+    slaves = _parse_slave_list(slaves_raw)
+
+    assert slaves == [
+        PairedPlayer(ip="1.1.1.1", port=11000),
+        PairedPlayer(ip="2.2.2.2", port=11000),
+    ]
