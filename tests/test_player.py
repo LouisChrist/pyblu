@@ -221,13 +221,13 @@ async def test_add_slaves():
         ]
 
 
-async def test_sync_status_no_slave():
+def test_sync_status_no_slave():
     slaves_raw = {}
     slaves = _parse_slave_list(slaves_raw)
     assert slaves is None
 
 
-async def test_parse_slave_list_single_element():
+def test_parse_slave_list_single_element():
     slaves_raw = [
         {
             "@id": "1.1.1.1",
@@ -242,7 +242,7 @@ async def test_parse_slave_list_single_element():
     ]
 
 
-async def test_parse_slave_list_multiple_elements():
+def test_parse_slave_list_multiple_elements():
     slaves_raw = [
         {
             "@id": "1.1.1.1",
