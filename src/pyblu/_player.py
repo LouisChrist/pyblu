@@ -3,7 +3,7 @@ from typing import TypeVar, Union, Callable, TypeAlias
 import aiohttp
 import xmltodict
 
-from bluos._entities import Status, Volume, SyncStatus, PairedPlayer
+from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer
 
 StringDict: TypeAlias = dict[str, Union[str, "StringDict"]]
 # pylint: disable=invalid-name
@@ -32,7 +32,7 @@ class Player:
         :param port: The port of the player. Default is 11000.
         :param session: An optional aiohttp.ClientSession to use for requests.
 
-        :return: A new BluOS player.
+        :return: A new Player.
         """
         self.base_url = f"http://{host}:{port}"
         if session:

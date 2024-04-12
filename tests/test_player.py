@@ -1,7 +1,7 @@
 from aioresponses import aioresponses
 
-from bluos import Player, PairedPlayer
-from bluos._player import _parse_slave_list
+from pyblu import Player, PairedPlayer
+from pyblu._player import _parse_slave_list
 
 
 async def test_skip():

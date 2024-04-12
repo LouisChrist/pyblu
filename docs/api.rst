@@ -4,21 +4,21 @@ API Reference
 Main Classes
 ------------
 
-.. autoclass:: bluos.Player
+.. autoclass:: pyblu.Player
    :members:
    :special-members: __init__
 
 Data Classes
 ------------
 
-.. autoclass:: bluos.Status
+.. autoclass:: pyblu.Status
    :members:
 
-.. autoclass:: bluos.Volume
+.. autoclass:: pyblu.Volume
    :members:
 
-.. autoclass:: bluos.SyncStatus
+.. autoclass:: pyblu.SyncStatus
    :members:
 
-.. autoclass:: bluos.PairedPlayer
+.. autoclass:: pyblu.PairedPlayer
    :members:

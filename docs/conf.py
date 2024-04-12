@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'BluOS'
+project = 'pyblu'
 copyright = '2024, Louis Christ'
 author = 'Louis Christ'
 

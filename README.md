@@ -1,8 +1,8 @@
-# BluOS Client
+# pyblu
 
-[![PyPI](https://img.shields.io/pypi/v/bluos)](https://pypi.org/project/bluos/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/bluos)](https://pypi.org/project/bluos/)
-[![PyPI - License](https://img.shields.io/pypi/l/bluos)](https://github.com/LouisChrist/python-bluos/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/pyblu)](https://pypi.org/project/pyblu/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyblu)](https://pypi.org/project/pyblu/)
+[![PyPI - License](https://img.shields.io/pypi/l/pyblu)](https://github.com/LouisChrist/python-pyblu/blob/main/LICENSE)
 
 This is a Python library for interfacing with BluOS players. 
 It uses the 
@@ -10,10 +10,11 @@ It uses the
 to control and query the status of BluOS players.
 Authentication is not required.
 
-Documentation is available at [here](https://louischrist.github.io/python-bluos/)
+Documentation is available at [here](https://louischrist.github.io/pyblu/)
 
 ```python
-from bluos import Player
+from pyblu import Player
+
 
 async def main():
     async with Player("<host>") as player:
@@ -24,7 +25,7 @@ async def main():
 ## Installation
 
 ```bash
-pip install bluos
+pip install pyblu
 ```
 
 
