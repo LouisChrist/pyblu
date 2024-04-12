@@ -1,7 +1,6 @@
 from aioresponses import aioresponses
 
 from pyblu import Player, PairedPlayer
-from pyblu._player import _parse_slave_list
 
 
 async def test_skip():
@@ -221,42 +220,102 @@ async def test_add_slaves():
         ]
 
 
-def test_sync_status_no_slave():
-    slaves_raw = {}
-    slaves = _parse_slave_list(slaves_raw)
-    assert slaves is None
+async def test_remove_slave():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/RemoveSlave?slave=1.1.1.1&port=11000",
+            status=200,
+            body="""
+                <SyncStatus icon="/images/players/N125_nt.png" muteDb="-18" muteVolume="30"
+                db="-17" modelName="NODE" model="N130"
+                brand="Bluesound" initialized="true" id="1.1.1.1:11000" mac="00:11:22:33:44:55" volume="29" 
+                name="Node" etag="707" schemaVersion="34" syncStat="707" class="streamer"
+                group="Node +2" zone="Desk" zoneMaster="true" zoneSlave="true">
+                  <pairWithSub/>
+                  <bluetoothOutput/>
+                  <master port="11000">192.168.1.100</master>
+                  <slave port="11000" id="192.168.1.153"/>
+                  <slave port="11000" id="192.168.1.234"/>
+                </SyncStatus>
+                    """,
+        )
+
+        async with Player("node") as client:
+            sync_status = await client.remove_slave("1.1.1.1", 11000)
+
+        mocked.assert_called_once()
+
+        assert sync_status.etag == "707"
+        assert sync_status.sync_stat == "707"
+        assert sync_status.id == "1.1.1.1:11000"
+        assert sync_status.mac == "00:11:22:33:44:55"
+        assert sync_status.name == "Node"
+        assert sync_status.icon_url == "/images/players/N125_nt.png"
+        assert sync_status.initialized
+        assert sync_status.group == "Node +2"
+        assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
+        assert sync_status.slaves == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
+        assert sync_status.zone == "Desk"
+        assert sync_status.zone_master
+        assert sync_status.zone_slave
+        assert sync_status.brand == "Bluesound"
+        assert sync_status.model == "N130"
+        assert sync_status.model_name == "NODE"
+        assert sync_status.mute_volume_db == -18
+        assert sync_status.mute_volume == 30
+        assert sync_status.volume_db == -17
+        assert sync_status.volume == 29
+        assert sync_status.schema_version == 34
 
 
-def test_parse_slave_list_single_element():
-    slaves_raw = [
-        {
-            "@id": "1.1.1.1",
-            "@port": "11000",
-        }
-    ]
+async def test_remove_slaves():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/RemoveSlave?slaves=1.1.1.1,2.2.2.2&ports=11000,11000",
+            status=200,
+            body="""
+                <SyncStatus icon="/images/players/N125_nt.png" muteDb="-18" muteVolume="30"
+                db="-17" modelName="NODE" model="N130"
+                brand="Bluesound" initialized="true" id="1.1.1.1:11000" mac="00:11:22:33:44:55" volume="29" 
+                name="Node" etag="707" schemaVersion="34" syncStat="707" class="streamer"
+                group="Node +2" zone="Desk" zoneMaster="true" zoneSlave="true">
+                  <pairWithSub/>
+                  <bluetoothOutput/>
+                  <master port="11000">192.168.1.100</master>
+                  <slave port="11000" id="192.168.1.153"/>
+                  <slave port="11000" id="192.168.1.234"/>
+                </SyncStatus>
+                    """,
+        )
 
-    slaves = _parse_slave_list(slaves_raw)
+        async with Player("node") as client:
+            sync_status = await client.remove_slaves(
+                [
+                    PairedPlayer(ip="1.1.1.1", port=11000),
+                    PairedPlayer(ip="2.2.2.2", port=11000),
+                ]
+            )
 
-    assert slaves == [
-        PairedPlayer(ip="1.1.1.1", port=11000),
-    ]
+        mocked.assert_called_once()
 
-
-def test_parse_slave_list_multiple_elements():
-    slaves_raw = [
-        {
-            "@id": "1.1.1.1",
-            "@port": "11000",
-        },
-        {
-            "@id": "2.2.2.2",
-            "@port": "11000",
-        },
-    ]
-
-    slaves = _parse_slave_list(slaves_raw)
-
-    assert slaves == [
-        PairedPlayer(ip="1.1.1.1", port=11000),
-        PairedPlayer(ip="2.2.2.2", port=11000),
-    ]
+        assert sync_status.etag == "707"
+        assert sync_status.sync_stat == "707"
+        assert sync_status.id == "1.1.1.1:11000"
+        assert sync_status.mac == "00:11:22:33:44:55"
+        assert sync_status.name == "Node"
+        assert sync_status.icon_url == "/images/players/N125_nt.png"
+        assert sync_status.initialized
+        assert sync_status.group == "Node +2"
+        assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
+        assert sync_status.slaves == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
+        assert sync_status.zone == "Desk"
+        assert sync_status.zone_master
+        assert sync_status.zone_slave
+        assert sync_status.brand == "Bluesound"
+        assert sync_status.model == "N130"
+        assert sync_status.model_name == "NODE"
+        assert sync_status.mute_volume_db == -18
+        assert sync_status.mute_volume == 30
+        assert sync_status.volume_db == -17
+        assert sync_status.volume == 29
+        assert sync_status.schema_version == 34

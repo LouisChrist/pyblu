@@ -1,22 +1,8 @@
-from typing import TypeVar, Union, Callable, TypeAlias
-
 import aiohttp
 import xmltodict
 
 from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer
-
-StringDict: TypeAlias = dict[str, Union[str, "StringDict"]]
-# pylint: disable=invalid-name
-T: TypeAlias = TypeVar("T")
-
-
-def chained_get(data: StringDict, *keys, _map: Callable[[str], T] = lambda x: x) -> T | None:
-    local_data = data
-    for key in keys:
-        local_data = local_data.get(key)
-        if not local_data:
-            return None
-    return _map(local_data)
+from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get
 
 
 class Player:
@@ -72,18 +58,7 @@ class Player:
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
 
-            status = Status(
-                etag=chained_get(response_dict, "status", "@etag"),
-                state=chained_get(response_dict, "status", "state"),
-                album=chained_get(response_dict, "status", "album"),
-                artist=chained_get(response_dict, "status", "artist"),
-                name=chained_get(response_dict, "status", "title1"),
-                image=chained_get(response_dict, "status", "image"),
-                volume=chained_get(response_dict, "status", "volume", _map=int),
-                mute=chained_get(response_dict, "status", "mute") == "1",
-                seconds=chained_get(response_dict, "status", "secs", _map=int),
-                total_seconds=chained_get(response_dict, "status", "totlen", _map=float),
-            )
+            status = parse_status(response_dict)
 
             return status
 
@@ -107,36 +82,7 @@ class Player:
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
 
-            master_ip = chained_get(response_dict, "SyncStatus", "master", "#text")
-            master_port = chained_get(response_dict, "SyncStatus", "master", "@port")
-            master = PairedPlayer(ip=master_ip, port=int(master_port)) if master_ip and master_port else None
-
-            slaves_raw = chained_get(response_dict, "SyncStatus", "slave")
-            slaves = _parse_slave_list(slaves_raw)
-
-            sync_status = SyncStatus(
-                etag=chained_get(response_dict, "SyncStatus", "@etag"),
-                sync_stat=chained_get(response_dict, "SyncStatus", "@syncStat"),
-                id=chained_get(response_dict, "SyncStatus", "@id"),
-                mac=chained_get(response_dict, "SyncStatus", "@mac"),
-                name=chained_get(response_dict, "SyncStatus", "@name"),
-                icon_url=chained_get(response_dict, "SyncStatus", "@icon"),
-                initialized=chained_get(response_dict, "SyncStatus", "@initialized") == "true",
-                group=chained_get(response_dict, "SyncStatus", "@group"),
-                master=master,
-                slaves=slaves,
-                zone=chained_get(response_dict, "SyncStatus", "@zone"),
-                zone_master=chained_get(response_dict, "SyncStatus", "@zoneMaster") == "true",
-                zone_slave=chained_get(response_dict, "SyncStatus", "@zoneSlave") == "true",
-                brand=chained_get(response_dict, "SyncStatus", "@brand"),
-                model=chained_get(response_dict, "SyncStatus", "@model"),
-                model_name=chained_get(response_dict, "SyncStatus", "@modelName"),
-                mute_volume_db=chained_get(response_dict, "SyncStatus", "@muteDb", _map=int),
-                mute_volume=chained_get(response_dict, "SyncStatus", "@muteVolume", _map=int),
-                volume_db=chained_get(response_dict, "SyncStatus", "@db", _map=int),
-                volume=chained_get(response_dict, "SyncStatus", "@volume", _map=int),
-                schema_version=chained_get(response_dict, "SyncStatus", "@schemaVersion", _map=int),
-            )
+            sync_status = parse_sync_status(response_dict)
 
             return sync_status
 
@@ -163,11 +109,7 @@ class Player:
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
 
-            volume = Volume(
-                volume=chained_get(response_dict, "volume", "#text", _map=int),
-                db=chained_get(response_dict, "volume", "@db", _map=float),
-                mute=chained_get(response_dict, "volume", "@mute") == "1",
-            )
+            volume = parse_volume(response_dict)
 
             return volume
 
@@ -249,7 +191,7 @@ class Player:
             response_dict = xmltodict.parse(response_data)
 
             slaves_raw = chained_get(response_dict, "addSlave", "slave")
-            slaves = _parse_slave_list(slaves_raw)
+            slaves = parse_slave_list(slaves_raw)
 
             return slaves
 
@@ -273,16 +215,49 @@ class Player:
             response_dict = xmltodict.parse(response_data)
 
             slaves_raw = chained_get(response_dict, "addSlave", "slave")
-            slaves = _parse_slave_list(slaves_raw)
+            slaves = parse_slave_list(slaves_raw)
 
             return slaves
 
+    async def remove_slave(self, ip: str, port: int = 11000) -> SyncStatus:
+        """Remove a secondary player from the group.
 
-def _parse_slave_list(slaves_raw: list[dict[str, str]]) -> list[PairedPlayer] | None:
-    match slaves_raw:
-        case {"@id": ip, "@port": port}:
-            return [PairedPlayer(ip=ip, port=int(port))]
-        case [*slaves_raw]:
-            return [PairedPlayer(ip=slave["@id"], port=int(slave["@port"])) for slave in slaves_raw]
-        case _:
-            return None
+        :param ip: The IP address of the player to remove.
+        :param port: The port of the player to remove. Default is 11000.
+
+        :return: The SyncStatus of the player.
+        """
+        params = {
+            "slave": ip,
+            "port": port,
+        }
+        async with self._session.get(f"{self.base_url}/RemoveSlave", params=params) as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            sync_status = parse_sync_status(response_dict)
+
+            return sync_status
+
+    async def remove_slaves(self, slaves: list[PairedPlayer]) -> SyncStatus:
+        """Remove a list of secondary players from the group.
+
+        Same as *remove_slave* but with a list of players. Makes only one request to player.
+
+        :param slaves: The list of players to remove.
+
+        :return: The SyncStatus of the player.
+        """
+        params = {
+            "slaves": ",".join(x.ip for x in slaves),
+            "ports": ",".join(str(x.port) for x in slaves),
+        }
+        async with self._session.get(f"{self.base_url}/RemoveSlave", params=params) as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            sync_status = parse_sync_status(response_dict)
+
+            return sync_status
