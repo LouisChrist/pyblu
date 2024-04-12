@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/pyblu)](https://pypi.org/project/pyblu/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyblu)](https://pypi.org/project/pyblu/)
-[![PyPI - License](https://img.shields.io/pypi/l/pyblu)](https://github.com/LouisChrist/python-pyblu/blob/main/LICENSE)
+[![PyPI - License](https://img.shields.io/pypi/l/pyblu)](https://github.com/LouisChrist/pyblu/blob/main/LICENSE)
 
 This is a Python library for interfacing with BluOS players. 
 It uses the 
