@@ -1,8 +1,8 @@
 import aiohttp
 import xmltodict
 
-from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue
-from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get, parse_play_queue
+from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset
+from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get, parse_play_queue, parse_presets
 
 
 class Player:
@@ -349,3 +349,28 @@ class Player:
                 sleep_timer = 0
 
             return sleep_timer
+
+    async def presets(self) -> list[Preset]:
+        """Get the list of presets of the player.
+
+        :return: The list of presets of the player.
+        """
+        async with self._session.get(f"{self.base_url}/Presets") as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            presets = parse_presets(response_dict)
+
+            return presets
+
+    async def load_preset(self, preset_id: int) -> None:
+        """Load a preset by ID.
+
+        :param preset_id: The ID of the preset to load.
+        """
+        params = {
+            "id": preset_id,
+        }
+        async with self._session.get(f"{self.base_url}/Preset", params=params) as response:
+            response.raise_for_status()

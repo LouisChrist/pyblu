@@ -1,6 +1,6 @@
 from typing import Any, TypeAlias, TypeVar, Callable
 
-from pyblu._entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue
+from pyblu._entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
 
 # pylint: disable=invalid-name
 T: TypeAlias = TypeVar("T")
@@ -96,3 +96,22 @@ def parse_play_queue(response_dict: dict[str, Any]) -> PlayQueue:
     )
 
     return play_queue
+
+
+def parse_presets(response_dict: dict[str, Any]) -> list[Preset]:
+    presets_raw = chained_get(response_dict, "presets", "preset")
+    if not presets_raw:
+        return []
+
+    presets = [
+        Preset(
+            name=chained_get(x, "@name"),
+            id=chained_get(x, "@id", _map=int),
+            url=chained_get(x, "@url"),
+            image=chained_get(x, "@image"),
+            volume=chained_get(x, "@volume", _map=int),
+        )
+        for x in presets_raw
+    ]
+
+    return presets

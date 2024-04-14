@@ -3,6 +3,7 @@ from urllib.parse import quote
 from aioresponses import aioresponses
 
 from pyblu import Player, PairedPlayer
+from pyblu._entities import Preset
 
 
 async def test_skip():
@@ -429,3 +430,59 @@ async def test_sleep_timer_reset():
         mocked.assert_called_once()
 
         assert sleep_time == 0
+
+
+async def test_presets():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Presets",
+            status=200,
+            body="""
+        <presets prid="2">
+          <preset url="Spotify:play" id="1" name="My preset" image="/Sources/images/SpotifyIcon.png"/>
+          <preset url="Spotify:play" id="2" name="Second" volume="10" image="/Sources/images/SpotifyIcon.png"/>
+        </presets>
+        """,
+        )
+        async with Player("node") as client:
+            presets = await client.presets()
+
+        mocked.assert_called_once()
+
+        assert presets == [
+            Preset(id=1, name="My preset", url="Spotify:play", volume=None, image="/Sources/images/SpotifyIcon.png"),
+            Preset(id=2, name="Second", url="Spotify:play", volume=10, image="/Sources/images/SpotifyIcon.png"),
+        ]
+
+
+async def test_preset_empty():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Presets",
+            status=200,
+            body="""
+        <presets prid="6">
+        </presets>
+        """,
+        )
+        async with Player("node") as client:
+            presets = await client.presets()
+
+        mocked.assert_called_once()
+
+        assert presets == []
+
+
+async def test_load_preset():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Preset?id=1",
+            status=200,
+            body="""
+        <state>stream</state>
+        """,
+        )
+        async with Player("node") as client:
+            await client.load_preset(1)
+
+        mocked.assert_called_once()
