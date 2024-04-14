@@ -30,18 +30,6 @@ class Status:
     mute_volume_db: int | None
     """If the player is muted, then this is the unmuted volume level in dB. Absent if the player is not muted."""
 
-    title1: str
-    """First line for 3 line display"""
-    title2: str
-    """Second line for 3 line display"""
-    title3: str
-    """Third line for 3 line display"""
-
-    twoline_title1: str
-    """First line for 2 line display"""
-    twoline_title2: str
-    """Second line for 2 line display"""
-
     seconds: int
     """Current playback position in seconds"""
     total_seconds: float

@@ -73,11 +73,6 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
         mute_volume_db=chained_get(response_dict, "status", "muteDb", _map=int),
         seconds=chained_get(response_dict, "status", "secs", _map=int),
         total_seconds=chained_get(response_dict, "status", "totlen", _map=float),
-        title1=chained_get(response_dict, "status", "title1"),
-        title2=chained_get(response_dict, "status", "title2"),
-        title3=chained_get(response_dict, "status", "title3"),
-        twoline_title1=chained_get(response_dict, "status", "twoline_title1"),
-        twoline_title2=chained_get(response_dict, "status", "twoline_title2"),
     )
 
     return status

@@ -79,13 +79,7 @@ async def test_status():
             
             <album>Album</album>
             <artist>Artist</artist>
-            
-            <title1>Name</title1>
-            <title2>Three line second</title2>
-            <title3>Three line third</title3>
-            
-            <twoline_title1>Two line first</twoline_title1>
-            <twoline_title2>Two line second</twoline_title2>
+            <title1>Name</title1>>
             
             <volume>10</volume>
             <db>-20</db>
@@ -111,11 +105,6 @@ async def test_status():
         assert status.album == "Album"
         assert status.artist == "Artist"
         assert status.name == "Name"
-        assert status.title1 == "Name"
-        assert status.title2 == "Three line second"
-        assert status.title3 == "Three line third"
-        assert status.twoline_title1 == "Two line first"
-        assert status.twoline_title2 == "Two line second"
 
         assert status.volume == 10
         assert status.volume_db == -20.0
