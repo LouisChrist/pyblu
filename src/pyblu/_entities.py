@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class Status:
     etag: str
     """Cursor for long polling requests. Can be passed to next status call."""
+
     state: str
     """Playback state"""
 
@@ -19,8 +20,28 @@ class Status:
 
     volume: int
     """Volume level with a range of 0-100"""
+    volume_db: int
+    """Volume level in dB"""
+
     mute: bool
     """Mute status"""
+    mute_volume: int | None
+    """If the player is muted, then this is the unmuted volume level. Absent if the player is not muted."""
+    mute_volume_db: int | None
+    """If the player is muted, then this is the unmuted volume level in dB. Absent if the player is not muted."""
+
+    title1: str
+    """First line for 3 line display"""
+    title2: str
+    """Second line for 3 line display"""
+    title3: str
+    """Third line for 3 line display"""
+
+    twoline_title1: str
+    """First line for 2 line display"""
+    twoline_title2: str
+    """Second line for 2 line display"""
+
     seconds: int
     """Current playback position in seconds"""
     total_seconds: float

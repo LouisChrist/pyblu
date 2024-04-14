@@ -75,12 +75,25 @@ async def test_status():
             body="""
         <status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
             <state>playing</state>
+            <image>Image</image>
+            
             <album>Album</album>
             <artist>Artist</artist>
+            
             <title1>Name</title1>
-            <image>Image</image>
+            <title2>Three line second</title2>
+            <title3>Three line third</title3>
+            
+            <twoline_title1>Two line first</twoline_title1>
+            <twoline_title2>Two line second</twoline_title2>
+            
             <volume>10</volume>
-            <mute>0</mute>
+            <db>-20</db>
+            
+            <mute>1</mute>
+            <muteVolume>20</muteVolume>
+            <muteDb>-20</muteDb>
+            
             <secs>10</secs>
             <totlen>100</totlen>
         </status>
@@ -93,12 +106,22 @@ async def test_status():
 
         assert status.etag == "4e266c9fbfba6d13d1a4d6ff4bd2e1e6"
         assert status.state == "playing"
+        assert status.image == "Image"
+
         assert status.album == "Album"
         assert status.artist == "Artist"
         assert status.name == "Name"
-        assert status.image == "Image"
+        assert status.title1 == "Name"
+        assert status.title2 == "Three line second"
+        assert status.title3 == "Three line third"
+        assert status.twoline_title1 == "Two line first"
+        assert status.twoline_title2 == "Two line second"
+
         assert status.volume == 10
-        assert not status.mute
+        assert status.volume_db == -20.0
+        assert status.mute
+        assert status.mute_volume == 20
+        assert status.mute_volume_db == -20.0
         assert status.seconds == 10
         assert status.total_seconds == 100.0
 
