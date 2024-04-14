@@ -280,3 +280,17 @@ class Player:
             play_queue = parse_play_queue(response_dict)
 
             return play_queue
+
+    async def clear(self) -> PlayQueue:
+        """Clear the play queue.
+
+        :return: The current play queue.
+        """
+        async with self._session.get(f"{self.base_url}/Clear") as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            play_queue = parse_play_queue(response_dict)
+
+            return play_queue

@@ -331,11 +331,31 @@ async def test_shuffle():
         """,
         )
         async with Player("node") as client:
-            shuffle = await client.shuffle(shuffle=True)
+            play_queue = await client.shuffle(shuffle=True)
 
         mocked.assert_called_once()
 
-        assert shuffle.id == "1"
-        assert shuffle.modified
-        assert shuffle.length == 23
-        assert shuffle.shuffle
+        assert play_queue.id == "1"
+        assert play_queue.modified
+        assert play_queue.length == 23
+        assert play_queue.shuffle
+
+
+async def test_clear():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Clear",
+            status=200,
+            body="""
+        <playlist id="1" modified="0" length="0"/>
+        """,
+        )
+        async with Player("node") as client:
+            play_queue = await client.clear()
+
+        mocked.assert_called_once()
+
+        assert play_queue.id == "1"
+        assert not play_queue.modified
+        assert play_queue.length == 0
+        assert not play_queue.shuffle
