@@ -97,3 +97,15 @@ class Volume:
     """Volume level in dB"""
     mute: bool
     """Mute status"""
+
+
+@dataclass
+class PlayQueue:
+    id: str
+    """Unique id for the current play queue state. Changes whenever the play queue changes."""
+    shuffle: bool
+    """PlayQueue is shuffled"""
+    modified: bool
+    """PlayQueue was modified since it was loaded"""
+    length: int
+    """Number of tracks in the play queue"""

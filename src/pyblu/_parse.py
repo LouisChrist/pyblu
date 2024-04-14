@@ -1,6 +1,6 @@
 from typing import Any, TypeAlias, TypeVar, Callable
 
-from pyblu._entities import PairedPlayer, SyncStatus, Status, Volume
+from pyblu._entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue
 
 # pylint: disable=invalid-name
 T: TypeAlias = TypeVar("T")
@@ -85,3 +85,14 @@ def parse_volume(response_dict: dict[str, Any]) -> Volume:
     )
 
     return volume
+
+
+def parse_play_queue(response_dict: dict[str, Any]) -> PlayQueue:
+    play_queue = PlayQueue(
+        id=chained_get(response_dict, "playlist", "@id"),
+        modified=chained_get(response_dict, "playlist", "@modified") == "1",
+        length=chained_get(response_dict, "playlist", "@length", _map=int),
+        shuffle=chained_get(response_dict, "playlist", "@shuffle") == "1",
+    )
+
+    return play_queue

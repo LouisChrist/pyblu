@@ -319,3 +319,23 @@ async def test_remove_slaves():
         assert sync_status.volume_db == -17
         assert sync_status.volume == 29
         assert sync_status.schema_version == 34
+
+
+async def test_shuffle():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Shuffle?shuffle=1",
+            status=200,
+            body="""
+        <playlist id="1" modified="1" length="23" shuffle="1"/>
+        """,
+        )
+        async with Player("node") as client:
+            shuffle = await client.shuffle(shuffle=True)
+
+        mocked.assert_called_once()
+
+        assert shuffle.id == "1"
+        assert shuffle.modified
+        assert shuffle.length == 23
+        assert shuffle.shuffle

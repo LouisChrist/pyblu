@@ -1,8 +1,8 @@
 import aiohttp
 import xmltodict
 
-from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer
-from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get
+from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue
+from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get, parse_play_queue
 
 
 class Player:
@@ -261,3 +261,22 @@ class Player:
             sync_status = parse_sync_status(response_dict)
 
             return sync_status
+
+    async def shuffle(self, shuffle: bool) -> PlayQueue:
+        """Set shuffle on current play queue.
+
+        :param shuffle: Whether to shuffle the playlist.
+
+        :return: The current play queue.
+        """
+        params = {
+            "shuffle": "1" if shuffle else "0",
+        }
+        async with self._session.get(f"{self.base_url}/Shuffle", params=params) as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            play_queue = parse_play_queue(response_dict)
+
+            return play_queue
