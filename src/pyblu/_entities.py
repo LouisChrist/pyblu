@@ -37,6 +37,9 @@ class Status:
     total_seconds: float
     """Total track length in seconds"""
 
+    sleep: int
+    """Sleep timer in minutes. 0 means the sleep timer is off."""
+
 
 @dataclass
 class PairedPlayer:

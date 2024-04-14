@@ -91,6 +91,8 @@ async def test_status():
             
             <secs>10</secs>
             <totlen>100</totlen>
+            
+            <sleep>15</sleep>
         </status>
         """,
         )
@@ -115,6 +117,8 @@ async def test_status():
         assert status.mute_volume_db == -20.0
         assert status.seconds == 10
         assert status.total_seconds == 100.0
+
+        assert status.sleep == 15
 
 
 async def test_sync_status():
