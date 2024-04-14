@@ -132,6 +132,27 @@ class Player:
 
             return chained_get(response_dict, "state")
 
+    async def select_input(self, input_type: str, index: int = None) -> str:
+        """Select an input.
+
+        :param input_type: The input type to select.
+        :param index: Index of the input, if the input type has multiple inputs. Default is to select the first input.
+
+        :return: The playback state after command execution.
+        """
+        params = {
+            "inputType": input_type,
+        }
+        if index:
+            params["index"] = index
+
+        async with self._session.get(f"{self.base_url}/Play", params=params) as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            return chained_get(response_dict, "state")
+
     async def pause(self, toggle: bool = None) -> str:
         """Pause the current track. **toggle** can be used to toggle between playing and pause.
 

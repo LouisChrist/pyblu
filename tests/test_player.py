@@ -359,3 +359,20 @@ async def test_clear():
         assert not play_queue.modified
         assert play_queue.length == 0
         assert not play_queue.shuffle
+
+
+async def test_select_input():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Play?inputType=arc&index=2",
+            status=200,
+            body="""
+        <state>playing</state>
+        """,
+        )
+        async with Player("node") as client:
+            play_state = await client.select_input(input_type="arc", index=2)
+
+        mocked.assert_called_once()
+
+        assert play_state == "playing"
