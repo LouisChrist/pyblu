@@ -39,8 +39,6 @@ class PairedPlayer:
 class SyncStatus:
     etag: str
     """Cursor for long polling requests. Can be passed to next sync_status call."""
-    sync_stat: str
-    """Id of sync status. Changes whenever the sync status changes."""
 
     id: str
     """Player IP and port"""
@@ -49,17 +47,17 @@ class SyncStatus:
     name: str
     """Name of the player"""
 
-    icon_url: str
-    """URL of the player icon"""
+    image: str
+    """URL of the player image"""
     initialized: bool
     """True means the player is already setup, false means the player needs to be setup"""
 
     group: str | None
     """Group name of the player"""
     master: PairedPlayer | None
-    """Master player IP and port. Only present if the player is grouped and not master itself"""
+    """Master player. Only present if the player is grouped and not master itself"""
     slaves: PairedPlayer | None
-    """List of slave players. Every entry is IP and port. Only present if the player is master"""
+    """List of slave players. Only present if the player is master"""
 
     zone: str | None
     """Name of the zone the player is in. Zones are fixed groups."""
@@ -80,13 +78,10 @@ class SyncStatus:
     mute_volume: int | None
     """If the player is muted, then this is the unmuted volume level. Absent if the player is not muted."""
 
-    volume_db: float
+    volume_db: int
     """Volume level in dB"""
     volume: int
     """Volume level with a range of 0-100. -1 means fixed volume."""
-
-    schema_version: int
-    """Software schema version"""
 
 
 @dataclass

@@ -128,11 +128,10 @@ async def test_sync_status():
         mocked.assert_called_once()
 
         assert sync_status.etag == "707"
-        assert sync_status.sync_stat == "707"
         assert sync_status.id == "1.1.1.1:11000"
         assert sync_status.mac == "00:11:22:33:44:55"
         assert sync_status.name == "Node"
-        assert sync_status.icon_url == "/images/players/N125_nt.png"
+        assert sync_status.image == "/images/players/N125_nt.png"
         assert sync_status.initialized
         assert sync_status.group == "Node +2"
         assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
@@ -147,7 +146,6 @@ async def test_sync_status():
         assert sync_status.mute_volume == 30
         assert sync_status.volume_db == -17
         assert sync_status.volume == 29
-        assert sync_status.schema_version == 34
 
 
 async def test_sync_status_one_slave():
@@ -249,11 +247,10 @@ async def test_remove_slave():
         mocked.assert_called_once()
 
         assert sync_status.etag == "707"
-        assert sync_status.sync_stat == "707"
         assert sync_status.id == "1.1.1.1:11000"
         assert sync_status.mac == "00:11:22:33:44:55"
         assert sync_status.name == "Node"
-        assert sync_status.icon_url == "/images/players/N125_nt.png"
+        assert sync_status.image == "/images/players/N125_nt.png"
         assert sync_status.initialized
         assert sync_status.group == "Node +2"
         assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
@@ -268,7 +265,6 @@ async def test_remove_slave():
         assert sync_status.mute_volume == 30
         assert sync_status.volume_db == -17
         assert sync_status.volume == 29
-        assert sync_status.schema_version == 34
 
 
 async def test_remove_slaves():
@@ -302,11 +298,10 @@ async def test_remove_slaves():
         mocked.assert_called_once()
 
         assert sync_status.etag == "707"
-        assert sync_status.sync_stat == "707"
         assert sync_status.id == "1.1.1.1:11000"
         assert sync_status.mac == "00:11:22:33:44:55"
         assert sync_status.name == "Node"
-        assert sync_status.icon_url == "/images/players/N125_nt.png"
+        assert sync_status.image == "/images/players/N125_nt.png"
         assert sync_status.initialized
         assert sync_status.group == "Node +2"
         assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
@@ -321,7 +316,6 @@ async def test_remove_slaves():
         assert sync_status.mute_volume == 30
         assert sync_status.volume_db == -17
         assert sync_status.volume == 29
-        assert sync_status.schema_version == 34
 
 
 async def test_shuffle():

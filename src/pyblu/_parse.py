@@ -35,11 +35,10 @@ def parse_sync_status(response_dict: dict[str, Any]) -> SyncStatus:
 
     sync_status = SyncStatus(
         etag=chained_get(response_dict, "SyncStatus", "@etag"),
-        sync_stat=chained_get(response_dict, "SyncStatus", "@syncStat"),
         id=chained_get(response_dict, "SyncStatus", "@id"),
         mac=chained_get(response_dict, "SyncStatus", "@mac"),
         name=chained_get(response_dict, "SyncStatus", "@name"),
-        icon_url=chained_get(response_dict, "SyncStatus", "@icon"),
+        image=chained_get(response_dict, "SyncStatus", "@icon"),
         initialized=chained_get(response_dict, "SyncStatus", "@initialized") == "true",
         group=chained_get(response_dict, "SyncStatus", "@group"),
         master=master,
@@ -54,7 +53,6 @@ def parse_sync_status(response_dict: dict[str, Any]) -> SyncStatus:
         mute_volume=chained_get(response_dict, "SyncStatus", "@muteVolume", _map=int),
         volume_db=chained_get(response_dict, "SyncStatus", "@db", _map=int),
         volume=chained_get(response_dict, "SyncStatus", "@volume", _map=int),
-        schema_version=chained_get(response_dict, "SyncStatus", "@schemaVersion", _map=int),
     )
 
     return sync_status
