@@ -22,3 +22,12 @@ Data Classes
 
 .. autoclass:: pyblu.PairedPlayer
    :members:
+
+.. autoclass:: pyblu.Preset
+   :members:
+
+.. autoclass:: pyblu.PlayQueue
+   :members:
+
+.. autoclass:: pyblu.Input
+   :members:
