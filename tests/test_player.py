@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from aioresponses import aioresponses
 
 from pyblu import Player, PairedPlayer
@@ -372,6 +374,23 @@ async def test_select_input():
         )
         async with Player("node") as client:
             play_state = await client.select_input(input_type="arc", index=2)
+
+        mocked.assert_called_once()
+
+        assert play_state == "playing"
+
+
+async def test_play_url():
+    with aioresponses() as mocked:
+        mocked.get(
+            f"http://node:11000/Play?url={quote('Spotify:play')}",
+            status=200,
+            body="""
+        <state>playing</state>
+        """,
+        )
+        async with Player("node") as client:
+            play_state = await client.play_url("Spotify:play")
 
         mocked.assert_called_once()
 

@@ -132,6 +132,23 @@ class Player:
 
             return chained_get(response_dict, "state")
 
+    async def play_url(self, url: str) -> str:
+        """Start playing a track from a URL. Special urls can be used to play from a source e.g "Spotify:play".
+
+        :param url: The URL of the track to play.
+
+        :return: The playback state after command execution.
+        """
+        params = {
+            "url": url,
+        }
+        async with self._session.get(f"{self.base_url}/Play", params=params) as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            return chained_get(response_dict, "state")
+
     async def select_input(self, input_type: str, index: int = None) -> str:
         """Select an input.
 
