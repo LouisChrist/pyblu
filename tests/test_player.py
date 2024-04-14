@@ -3,7 +3,7 @@ from urllib.parse import quote
 from aioresponses import aioresponses
 
 from pyblu import Player, PairedPlayer
-from pyblu._entities import Preset, Source
+from pyblu._entities import Preset, Input
 
 
 async def test_skip():
@@ -75,6 +75,7 @@ async def test_status():
             body="""
         <status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
             <state>playing</state>
+            <inputId>input-1</inputId>
             <image>Image</image>
             
             <album>Album</album>
@@ -100,6 +101,7 @@ async def test_status():
 
         assert status.etag == "4e266c9fbfba6d13d1a4d6ff4bd2e1e6"
         assert status.state == "playing"
+        assert status.input_id == "input-1"
         assert status.image == "Image"
 
         assert status.album == "Album"
@@ -491,12 +493,12 @@ async def test_inputs():
         """,
         )
         async with Player("node") as client:
-            inputs = await client.sources()
+            inputs = await client.inputs()
 
         mocked.assert_called_once()
 
         assert inputs == [
-            Source(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture%3Abluez%3Abluetooth"),
-            Source(id="input2", text="HDMI ARC", image="/images/capture/ic_tv.png", url="Capture%3Ahw%3Aimxspdif%2C0%2F1%2F25%2F2%3Fid%3Dinput2"),
-            Source(id="Spotify", text="Spotify", image="/Sources/images/SpotifyIcon.png", url="Spotify%3Aplay"),
+            Input(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture%3Abluez%3Abluetooth"),
+            Input(id="input2", text="HDMI ARC", image="/images/capture/ic_tv.png", url="Capture%3Ahw%3Aimxspdif%2C0%2F1%2F25%2F2%3Fid%3Dinput2"),
+            Input(id="Spotify", text="Spotify", image="/Sources/images/SpotifyIcon.png", url="Spotify%3Aplay"),
         ]

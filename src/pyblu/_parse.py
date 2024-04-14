@@ -62,6 +62,7 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
     status = Status(
         etag=chained_get(response_dict, "status", "@etag"),
         state=chained_get(response_dict, "status", "state"),
+        input_id=chained_get(response_dict, "status", "inputId"),
         album=chained_get(response_dict, "status", "album"),
         artist=chained_get(response_dict, "status", "artist"),
         name=chained_get(response_dict, "status", "title1"),

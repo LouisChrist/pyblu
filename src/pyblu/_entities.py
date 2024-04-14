@@ -8,6 +8,8 @@ class Status:
 
     state: str
     """Playback state"""
+    input_id: str | None
+    """Unique id of the input. Is not set for radio."""
 
     album: str
     """Album name"""
@@ -130,12 +132,12 @@ class Preset:
 
 
 @dataclass
-class Source:
+class Input:
     id: str
-    """Unique id of the source"""
+    """Unique id of the input"""
     text: str
-    """User friendly name of the source"""
+    """User friendly name of the input"""
     image: str
     """URL of the input image"""
     url: str
-    """URL to play the source. Can be passed to *play_url*"""
+    """URL to play the input. Can be passed to *play_url*"""

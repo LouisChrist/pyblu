@@ -1,7 +1,7 @@
 import aiohttp
 import xmltodict
 
-from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Source
+from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
 from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get, parse_play_queue, parse_presets
 
 
@@ -133,7 +133,7 @@ class Player:
             return chained_get(response_dict, "state")
 
     async def play_url(self, url: str) -> str:
-        """Start playing a track from a URL. Can also be used to select sources. See *sources* for available sources.
+        """Start playing a track from a URL. Can also be used to select inputs. See *inputs* for available inputs.
 
         :param url: The URL of the track to play.
 
@@ -354,10 +354,10 @@ class Player:
         async with self._session.get(f"{self.base_url}/Preset", params=params) as response:
             response.raise_for_status()
 
-    async def sources(self) -> list[Source]:
-        """List all available sources.
+    async def inputs(self) -> list[Input]:
+        """List all available inputs.
 
-        :return: The list of sources of the player.
+        :return: The list of inputss of the player.
         """
         params = {"service": "Capture"}
         async with self._session.get(f"{self.base_url}/RadioBrowse", params=params) as response:
@@ -365,15 +365,15 @@ class Player:
             response_data = await response.text()
             response_dict = xmltodict.parse(response_data)
 
-            sources_raw = chained_get(response_dict, "radiotime", "item")
-            sources = [
-                Source(
+            inputs_raw = chained_get(response_dict, "radiotime", "item")
+            inputs = [
+                Input(
                     id=chained_get(x, "@id"),
                     text=chained_get(x, "@text"),
                     image=chained_get(x, "@image"),
                     url=chained_get(x, "@URL"),
                 )
-                for x in sources_raw
+                for x in inputs_raw
             ]
 
-            return sources
+            return inputs
