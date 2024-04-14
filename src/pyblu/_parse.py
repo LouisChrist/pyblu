@@ -6,12 +6,17 @@ from pyblu._entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue,
 T: TypeAlias = TypeVar("T")
 
 
-def chained_get(data: dict[str, Any], *keys, _map: Callable[[str], T] = lambda x: x) -> T | None:
+def chained_get(data: dict[str, Any], *keys, _map: Callable[[str], T] = lambda x: x, default: T | None = None) -> T | None:
+    """Get a value from a nested dictionary.
+    If the value is not found, return the default value.
+    Map the value to a different type using the _map function.
+    """
     local_data = data
     for key in keys:
         local_data = local_data.get(key)
         if not local_data:
-            return None
+            return default
+
     return _map(local_data)
 
 
