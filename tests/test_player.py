@@ -3,7 +3,7 @@ from urllib.parse import quote
 from aioresponses import aioresponses
 
 from pyblu import Player, PairedPlayer
-from pyblu._entities import Preset
+from pyblu._entities import Preset, Source
 
 
 async def test_skip():
@@ -364,23 +364,6 @@ async def test_clear():
         assert not play_queue.shuffle
 
 
-async def test_select_input():
-    with aioresponses() as mocked:
-        mocked.get(
-            "http://node:11000/Play?inputType=arc&index=2",
-            status=200,
-            body="""
-        <state>playing</state>
-        """,
-        )
-        async with Player("node") as client:
-            play_state = await client.select_input(input_type="arc", index=2)
-
-        mocked.assert_called_once()
-
-        assert play_state == "playing"
-
-
 async def test_play_url():
     with aioresponses() as mocked:
         mocked.get(
@@ -486,3 +469,28 @@ async def test_load_preset():
             await client.load_preset(1)
 
         mocked.assert_called_once()
+
+
+async def test_inputs():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/RadioBrowse?service=Capture",
+            status=200,
+            body="""
+        <radiotime service="Capture">
+          <item typeIndex="bluetooth-1" playerName="Node" text="Bluetooth" inputType="bluetooth" id="input3" URL="Capture%3Abluez%3Abluetooth" image="/images/BluetoothIcon.png" type="audio"/>
+          <item typeIndex="arc-1" playerName="Node" text="HDMI ARC" inputType="arc" id="input2" URL="Capture%3Ahw%3Aimxspdif%2C0%2F1%2F25%2F2%3Fid%3Dinput2" image="/images/capture/ic_tv.png" type="audio"/>
+          <item playerName="Node" text="Spotify" id="Spotify" URL="Spotify%3Aplay" image="/Sources/images/SpotifyIcon.png" serviceType="CloudService" type="audio"/>
+        </radiotime>
+        """,
+        )
+        async with Player("node") as client:
+            inputs = await client.sources()
+
+        mocked.assert_called_once()
+
+        assert inputs == [
+            Source(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture%3Abluez%3Abluetooth"),
+            Source(id="input2", text="HDMI ARC", image="/images/capture/ic_tv.png", url="Capture%3Ahw%3Aimxspdif%2C0%2F1%2F25%2F2%3Fid%3Dinput2"),
+            Source(id="Spotify", text="Spotify", image="/Sources/images/SpotifyIcon.png", url="Spotify%3Aplay"),
+        ]

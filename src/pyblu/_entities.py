@@ -123,3 +123,15 @@ class Preset:
     """URL of the preset image"""
     volume: int | None
     """Volume level with a range of 0-100. None means the volume is not set."""
+
+
+@dataclass
+class Source:
+    id: str
+    """Unique id of the source"""
+    text: str
+    """User friendly name of the source"""
+    image: str
+    """URL of the input image"""
+    url: str
+    """URL to play the source. Can be passed to *play_url*"""
