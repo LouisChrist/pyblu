@@ -332,3 +332,20 @@ class Player:
             play_queue = parse_play_queue(response_dict)
 
             return play_queue
+
+    async def sleep_timer(self) -> int:
+        """Set sleep timer. Time steps are 15, 30, 45, 60, 90 minutes. Each call goes to next step.
+        Resets to 0 if called when 90 minutes are set.
+
+        :return: The current sleep timer in minutes. 0 if no sleep timer is set.
+        """
+        async with self._session.get(f"{self.base_url}/Sleep") as response:
+            response.raise_for_status()
+            response_data = await response.text()
+            response_dict = xmltodict.parse(response_data)
+
+            sleep_timer = chained_get(response_dict, "sleep", _map=int)
+            if not sleep_timer:
+                sleep_timer = 0
+
+            return sleep_timer

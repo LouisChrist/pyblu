@@ -395,3 +395,37 @@ async def test_play_url():
         mocked.assert_called_once()
 
         assert play_state == "playing"
+
+
+async def test_sleep_timer():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Sleep",
+            status=200,
+            body="""
+        <sleep>15</sleep>
+        """,
+        )
+        async with Player("node") as client:
+            sleep_time = await client.sleep_timer()
+
+        mocked.assert_called_once()
+
+        assert sleep_time == 15
+
+
+async def test_sleep_timer_reset():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Sleep",
+            status=200,
+            body="""
+        <sleep/>
+        """,
+        )
+        async with Player("node") as client:
+            sleep_time = await client.sleep_timer()
+
+        mocked.assert_called_once()
+
+        assert sleep_time == 0
