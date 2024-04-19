@@ -111,6 +111,9 @@ def parse_presets(response_dict: dict[str, Any]) -> list[Preset]:
     if not presets_raw:
         return []
 
+    if not isinstance(presets_raw, list):
+        presets_raw = [presets_raw]
+
     presets = [
         Preset(
             name=chained_get(x, "@name"),

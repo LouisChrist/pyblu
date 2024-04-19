@@ -1,5 +1,6 @@
 import aiohttp
 import xmltodict
+from urllib.parse import unquote
 
 from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
 from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get, parse_play_queue, parse_presets
@@ -366,12 +367,16 @@ class Player:
             response_dict = xmltodict.parse(response_data)
 
             inputs_raw = chained_get(response_dict, "radiotime", "item")
+
+            if not isinstance(inputs_raw, list):
+                inputs_raw = [inputs_raw]
+
             inputs = [
                 Input(
                     id=chained_get(x, "@id"),
                     text=chained_get(x, "@text"),
                     image=chained_get(x, "@image"),
-                    url=chained_get(x, "@URL"),
+                    url=chained_get(x, "@URL", _map=unquote),
                 )
                 for x in inputs_raw
             ]

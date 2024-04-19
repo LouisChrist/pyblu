@@ -449,6 +449,26 @@ async def test_presets():
             Preset(id=2, name="Second", url="Spotify:play", volume=10, image="/Sources/images/SpotifyIcon.png"),
         ]
 
+async def test_presets_only_one():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Presets",
+            status=200,
+            body="""
+        <presets prid="2">
+          <preset url="Spotify:play" id="1" name="My preset" image="/Sources/images/SpotifyIcon.png"/>
+        </presets>
+        """,
+        )
+        async with Player("node") as client:
+            presets = await client.presets()
+
+        mocked.assert_called_once()
+
+        assert presets == [
+            Preset(id=1, name="My preset", url="Spotify:play", volume=None, image="/Sources/images/SpotifyIcon.png"),
+        ]
+
 
 async def test_preset_empty():
     with aioresponses() as mocked:
@@ -502,7 +522,27 @@ async def test_inputs():
         mocked.assert_called_once()
 
         assert inputs == [
-            Input(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture%3Abluez%3Abluetooth"),
-            Input(id="input2", text="HDMI ARC", image="/images/capture/ic_tv.png", url="Capture%3Ahw%3Aimxspdif%2C0%2F1%2F25%2F2%3Fid%3Dinput2"),
-            Input(id="Spotify", text="Spotify", image="/Sources/images/SpotifyIcon.png", url="Spotify%3Aplay"),
+            Input(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture:bluez:bluetooth"),
+            Input(id="input2", text="HDMI ARC", image="/images/capture/ic_tv.png", url="Capture:hw:imxspdif,0/1/25/2?id=input2"),
+            Input(id="Spotify", text="Spotify", image="/Sources/images/SpotifyIcon.png", url="Spotify:play"),
+        ]
+
+async def test_inputs_only_one():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/RadioBrowse?service=Capture",
+            status=200,
+            body="""
+        <radiotime service="Capture">
+          <item typeIndex="bluetooth-1" playerName="Node" text="Bluetooth" inputType="bluetooth" id="input3" URL="Capture%3Abluez%3Abluetooth" image="/images/BluetoothIcon.png" type="audio"/>
+        </radiotime>
+        """,
+        )
+        async with Player("node") as client:
+            inputs = await client.inputs()
+
+        mocked.assert_called_once()
+
+        assert inputs == [
+            Input(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture:bluez:bluetooth"),
         ]
