@@ -1,6 +1,7 @@
+from urllib.parse import unquote
+
 import aiohttp
 import xmltodict
-from urllib.parse import unquote
 
 from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
 from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get, parse_play_queue, parse_presets

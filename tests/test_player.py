@@ -449,6 +449,7 @@ async def test_presets():
             Preset(id=2, name="Second", url="Spotify:play", volume=10, image="/Sources/images/SpotifyIcon.png"),
         ]
 
+
 async def test_presets_only_one():
     with aioresponses() as mocked:
         mocked.get(
@@ -526,6 +527,7 @@ async def test_inputs():
             Input(id="input2", text="HDMI ARC", image="/images/capture/ic_tv.png", url="Capture:hw:imxspdif,0/1/25/2?id=input2"),
             Input(id="Spotify", text="Spotify", image="/Sources/images/SpotifyIcon.png", url="Spotify:play"),
         ]
+
 
 async def test_inputs_only_one():
     with aioresponses() as mocked:
