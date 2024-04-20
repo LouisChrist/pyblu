@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyblu"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["Louis Christ <mail@louischrist.de>"]
 repository = "https://github.com/LouisChrist/pyblu"
