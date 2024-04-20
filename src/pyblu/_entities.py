@@ -6,10 +6,13 @@ class Status:
     etag: str
     """Cursor for long polling requests. Can be passed to next status call."""
 
-    state: str
-    """Playback state"""
     input_id: str | None
     """Unique id of the input. Is not set for radio."""
+
+    state: str
+    """Playback state"""
+    shuffle: bool
+    """Shuffle enabled"""
 
     album: str
     """Album name"""
@@ -39,6 +42,11 @@ class Status:
 
     sleep: int
     """Sleep timer in minutes. 0 means the sleep timer is off."""
+
+    group_name: str | None
+    """Name of the group the player is in. Only present on master."""
+    group_volume: int | None
+    """Volume level of the group. Only present on master. Range is 0-100."""
 
 
 @dataclass

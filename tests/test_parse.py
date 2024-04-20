@@ -56,6 +56,7 @@ def test_parse_status_default_sleep():
 
     assert status.sleep == 0
 
+
 def test_parse_status_name_album_artist():
     data = """<status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
                 <name>Track Name</name>
@@ -70,6 +71,7 @@ def test_parse_status_name_album_artist():
     assert status.name == "Track Name"
     assert status.album == "Album Name"
     assert status.artist == "Artist Name"
+
 
 def test_parse_status_title1_title2_title3():
     data = """<status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">

@@ -75,12 +75,14 @@ async def test_status():
             body="""
         <status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
             <state>playing</state>
+            <shuffle>1</shuffle>
+            
             <inputId>input-1</inputId>
             <image>Image</image>
             
-            <album>Album</album>
+            <name>Name</name>
             <artist>Artist</artist>
-            <title1>Name</title1>>
+            <album>Album</album>
             
             <volume>10</volume>
             <db>-20</db>
@@ -93,6 +95,9 @@ async def test_status():
             <totlen>100</totlen>
             
             <sleep>15</sleep>
+            
+            <groupName>Group</groupName>
+            <groupVolume>20</groupVolume>
         </status>
         """,
         )
@@ -103,6 +108,7 @@ async def test_status():
 
         assert status.etag == "4e266c9fbfba6d13d1a4d6ff4bd2e1e6"
         assert status.state == "playing"
+        assert status.shuffle
         assert status.input_id == "input-1"
         assert status.image == "Image"
 
@@ -119,6 +125,9 @@ async def test_status():
         assert status.total_seconds == 100.0
 
         assert status.sleep == 15
+
+        assert status.group_name == "Group"
+        assert status.group_volume == 20
 
 
 async def test_sync_status():

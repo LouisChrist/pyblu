@@ -76,8 +76,9 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
 
     status = Status(
         etag=chained_get(response_dict, "status", "@etag"),
-        state=chained_get(response_dict, "status", "state"),
         input_id=chained_get(response_dict, "status", "inputId"),
+        state=chained_get(response_dict, "status", "state"),
+        shuffle=chained_get(response_dict, "status", "shuffle") == "1",
         album=album,
         artist=artist,
         name=name,
@@ -90,6 +91,8 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
         seconds=chained_get(response_dict, "status", "secs", _map=int),
         total_seconds=chained_get(response_dict, "status", "totlen", _map=float),
         sleep=chained_get(response_dict, "status", "sleep", _map=int, default=0),
+        group_name=chained_get(response_dict, "status", "groupName"),
+        group_volume=chained_get(response_dict, "status", "groupVolume", _map=int),
     )
 
     return status
