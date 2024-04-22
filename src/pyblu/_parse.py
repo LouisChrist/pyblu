@@ -77,6 +77,7 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
     status = Status(
         etag=chained_get(response_dict, "status", "@etag"),
         input_id=chained_get(response_dict, "status", "inputId"),
+        service=chained_get(response_dict, "status", "service"),
         state=chained_get(response_dict, "status", "state"),
         shuffle=chained_get(response_dict, "status", "shuffle") == "1",
         album=album,

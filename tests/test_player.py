@@ -78,6 +78,8 @@ async def test_status():
             <shuffle>1</shuffle>
             
             <inputId>input-1</inputId>
+            <service>Capture</service>
+            
             <image>Image</image>
             
             <name>Name</name>
@@ -110,6 +112,7 @@ async def test_status():
         assert status.state == "playing"
         assert status.shuffle
         assert status.input_id == "input-1"
+        assert status.service == "Capture"
         assert status.image == "Image"
 
         assert status.album == "Album"

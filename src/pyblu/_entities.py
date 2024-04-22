@@ -8,6 +8,8 @@ class Status:
 
     input_id: str | None
     """Unique id of the input. Is not set for radio."""
+    service: str
+    """Service id of current input. 'Capture' for regular inputs."""
 
     state: str
     """Playback state"""
