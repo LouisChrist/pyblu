@@ -95,11 +95,14 @@ async def test_status():
             
             <secs>10</secs>
             <totlen>100</totlen>
+            <canSeek>1</canSeek>
             
             <sleep>15</sleep>
             
             <groupName>Group</groupName>
             <groupVolume>20</groupVolume>
+            
+            <indexing>1</indexing>
         </status>
         """,
         )
@@ -126,11 +129,13 @@ async def test_status():
         assert status.mute_volume_db == -20.0
         assert status.seconds == 10
         assert status.total_seconds == 100.0
+        assert status.can_seek
 
         assert status.sleep == 15
 
         assert status.group_name == "Group"
         assert status.group_volume == 20
+        assert status.indexing
 
 
 async def test_sync_status():

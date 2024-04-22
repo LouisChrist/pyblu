@@ -91,9 +91,11 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
         mute_volume_db=chained_get(response_dict, "status", "muteDb", _map=int),
         seconds=chained_get(response_dict, "status", "secs", _map=int),
         total_seconds=chained_get(response_dict, "status", "totlen", _map=float),
+        can_seek=chained_get(response_dict, "status", "canSeek") == "1",
         sleep=chained_get(response_dict, "status", "sleep", _map=int, default=0),
         group_name=chained_get(response_dict, "status", "groupName"),
         group_volume=chained_get(response_dict, "status", "groupVolume", _map=int),
+        indexing=chained_get(response_dict, "status", "indexing") == "1",
     )
 
     return status

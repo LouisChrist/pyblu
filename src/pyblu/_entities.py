@@ -41,6 +41,8 @@ class Status:
     """Current playback position in seconds"""
     total_seconds: float
     """Total track length in seconds"""
+    can_seek: bool
+    """True if the current track can be seeked"""
 
     sleep: int
     """Sleep timer in minutes. 0 means the sleep timer is off."""
@@ -49,6 +51,9 @@ class Status:
     """Name of the group the player is in. Only present on master."""
     group_volume: int | None
     """Volume level of the group. Only present on master. Range is 0-100."""
+
+    indexing: bool
+    """True if the player is currently indexing."""
 
 
 @dataclass
