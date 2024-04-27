@@ -66,6 +66,7 @@ async def test_volume():
         assert volume.db == -20.0
         assert volume.mute
 
+
 async def test_volume_unmute():
     with aioresponses() as mocked:
         mocked.get("http://node:11000/Volume?mute=0", status=200, body="<volume db='-20.0' mute='0'>10</volume>")
