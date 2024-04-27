@@ -103,6 +103,7 @@ async def test_status():
             <groupVolume>20</groupVolume>
             
             <indexing>1</indexing>
+            <streamUrl>RadioParadise:/0:4</streamUrl>
         </status>
         """,
         )
@@ -136,6 +137,8 @@ async def test_status():
         assert status.group_name == "Group"
         assert status.group_volume == 20
         assert status.indexing
+
+        assert status.stream_url == "RadioParadise:/0:4"
 
 
 async def test_sync_status():

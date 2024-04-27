@@ -55,6 +55,10 @@ class Status:
     indexing: bool
     """True if the player is currently indexing."""
 
+    stream_url: str | None
+    """The presence of this element should be treated as a flag and its contents as an opaque value. 
+    Seems to be present for radio stations and to be the same as the url from the matching preset."""
+
 
 @dataclass
 class PairedPlayer:

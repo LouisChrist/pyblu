@@ -96,6 +96,7 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
         group_name=chained_get(response_dict, "status", "groupName"),
         group_volume=chained_get(response_dict, "status", "groupVolume", _map=int),
         indexing=chained_get(response_dict, "status", "indexing") == "1",
+        stream_url=chained_get(response_dict, "status", "streamUrl"),
     )
 
     return status
