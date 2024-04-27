@@ -56,9 +56,21 @@ async def test_stop():
 
 async def test_volume():
     with aioresponses() as mocked:
-        mocked.get("http://node:11000/Volume", status=200, body="<volume db='-20.0' mute='0'>10</volume>")
+        mocked.get("http://node:11000/Volume", status=200, body="<volume db='-20.0' mute='1'>10</volume>")
         async with Player("node") as client:
             volume = await client.volume()
+
+        mocked.assert_called_once()
+
+        assert volume.volume == 10
+        assert volume.db == -20.0
+        assert volume.mute
+
+async def test_volume_unmute():
+    with aioresponses() as mocked:
+        mocked.get("http://node:11000/Volume?mute=0", status=200, body="<volume db='-20.0' mute='0'>10</volume>")
+        async with Player("node") as client:
+            volume = await client.volume(mute=False)
 
         mocked.assert_called_once()
 
