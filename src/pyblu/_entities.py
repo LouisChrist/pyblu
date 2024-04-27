@@ -102,12 +102,12 @@ class SyncStatus:
     model_name: str
     """Model name of the player"""
 
-    mute_volume_db: int | None
+    mute_volume_db: float | None
     """If the player is muted, then this is the unmuted volume level in dB. Absent if the player is not muted."""
     mute_volume: int | None
     """If the player is muted, then this is the unmuted volume level. Absent if the player is not muted."""
 
-    volume_db: int
+    volume_db: float
     """Volume level in dB"""
     volume: int
     """Volume level with a range of 0-100. -1 means fixed volume."""

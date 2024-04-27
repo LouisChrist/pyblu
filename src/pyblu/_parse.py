@@ -54,9 +54,9 @@ def parse_sync_status(response_dict: dict[str, Any]) -> SyncStatus:
         brand=chained_get(response_dict, "SyncStatus", "@brand"),
         model=chained_get(response_dict, "SyncStatus", "@model"),
         model_name=chained_get(response_dict, "SyncStatus", "@modelName"),
-        mute_volume_db=chained_get(response_dict, "SyncStatus", "@muteDb", _map=int),
+        mute_volume_db=chained_get(response_dict, "SyncStatus", "@muteDb", _map=float),
         mute_volume=chained_get(response_dict, "SyncStatus", "@muteVolume", _map=int),
-        volume_db=chained_get(response_dict, "SyncStatus", "@db", _map=int),
+        volume_db=chained_get(response_dict, "SyncStatus", "@db", _map=float),
         volume=chained_get(response_dict, "SyncStatus", "@volume", _map=int),
     )
 

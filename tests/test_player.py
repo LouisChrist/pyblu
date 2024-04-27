@@ -144,8 +144,8 @@ async def test_sync_status():
             "http://node:11000/SyncStatus",
             status=200,
             body="""
-        <SyncStatus icon="/images/players/N125_nt.png" muteDb="-18" muteVolume="30"
-        db="-17" modelName="NODE" model="N130"
+        <SyncStatus icon="/images/players/N125_nt.png" muteDb="-18.1" muteVolume="30"
+        db="-17.1" modelName="NODE" model="N130"
         brand="Bluesound" initialized="true" id="1.1.1.1:11000" mac="00:11:22:33:44:55" volume="29" 
         name="Node" etag="707" schemaVersion="34" syncStat="707" class="streamer"
         group="Node +2" zone="Desk" zoneMaster="true" zoneSlave="true">
@@ -177,9 +177,9 @@ async def test_sync_status():
         assert sync_status.brand == "Bluesound"
         assert sync_status.model == "N130"
         assert sync_status.model_name == "NODE"
-        assert sync_status.mute_volume_db == -18
+        assert sync_status.mute_volume_db == -18.1
         assert sync_status.mute_volume == 30
-        assert sync_status.volume_db == -17
+        assert sync_status.volume_db == -17.1
         assert sync_status.volume == 29
 
 
