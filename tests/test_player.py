@@ -87,11 +87,11 @@ async def test_status():
             <album>Album</album>
             
             <volume>10</volume>
-            <db>-20</db>
+            <db>-20.1</db>
             
             <mute>1</mute>
             <muteVolume>20</muteVolume>
-            <muteDb>-20</muteDb>
+            <muteDb>-20.1</muteDb>
             
             <secs>10</secs>
             <totlen>100</totlen>
@@ -123,10 +123,10 @@ async def test_status():
         assert status.name == "Name"
 
         assert status.volume == 10
-        assert status.volume_db == -20.0
+        assert status.volume_db == -20.1
         assert status.mute
         assert status.mute_volume == 20
-        assert status.mute_volume_db == -20.0
+        assert status.mute_volume_db == -20.1
         assert status.seconds == 10
         assert status.total_seconds == 100.0
         assert status.can_seek
