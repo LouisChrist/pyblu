@@ -52,7 +52,7 @@ class Player:
         :return: The current status of the player. Only selected fields are returned.
         """
         params = {}
-        if etag:
+        if etag is not None:
             params["etag"] = etag
             params["timeout"] = timeout
         async with self._session.get(f"{self.base_url}/Status", params=params) as response:
@@ -76,7 +76,7 @@ class Player:
         :return: The SyncStatus of the player.
         """
         params = {}
-        if etag:
+        if etag is not None:
             params["etag"] = etag
             params["timeout"] = timeout
         async with self._session.get(f"{self.base_url}/SyncStatus", params=params) as response:
@@ -99,11 +99,11 @@ class Player:
         :return: The current volume of the player.
         """
         params = {}
-        if level:
+        if level is not None:
             params["level"] = level
-        if mute:
+        if mute is not None:
             params["mute"] = "1" if mute else "0"
-        if tell_slaves:
+        if tell_slaves is not None:
             params["tell_slaves"] = "1" if tell_slaves else "0"
 
         async with self._session.get(f"{self.base_url}/Volume", params=params) as response:
@@ -124,7 +124,7 @@ class Player:
         :return: The playback state after command execution.
         """
         params = {}
-        if seek:
+        if seek is not None:
             params["seek"] = seek
 
         async with self._session.get(f"{self.base_url}/Play", params=params) as response:
@@ -159,7 +159,7 @@ class Player:
         :return: The playback state after command execution.
         """
         params = {}
-        if toggle:
+        if toggle is not None:
             params["toggle"] = "1"
 
         async with self._session.get(f"{self.base_url}/Pause", params=params) as response:
