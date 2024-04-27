@@ -8,7 +8,7 @@ class Status:
 
     input_id: str | None
     """Unique id of the input. Is not set for radio."""
-    service: str
+    service: str | None
     """Service id of current input. 'Capture' for regular inputs."""
 
     state: str
@@ -16,13 +16,13 @@ class Status:
     shuffle: bool
     """Shuffle enabled"""
 
-    album: str
+    album: str | None
     """Album name"""
-    artist: str
+    artist: str | None
     """Artist name"""
-    name: str
+    name: str | None
     """Track name"""
-    image: str
+    image: str | None
     """URL of the album art"""
 
     volume: int
