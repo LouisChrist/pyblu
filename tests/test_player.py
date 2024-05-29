@@ -1,6 +1,7 @@
 from urllib.parse import quote
 
 from aioresponses import aioresponses
+import pytest
 
 from pyblu import Player, PairedPlayer
 from pyblu._entities import Preset, Input
@@ -154,6 +155,29 @@ async def test_status():
         assert status.stream_url == "RadioParadise:/0:4"
 
 
+async def test_status_timeout_missconfigured():
+    async with Player("node") as client:
+        with pytest.raises(ValueError, match="poll_timeout has to be smaller than timeout"):
+            await client.status(etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6")
+
+
+async def test_status_long_polling():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Status?etag=4e266c9fbfba6d13d1a4d6ff4bd2e1e6&timeout=5",
+            status=200,
+            body="""
+        <status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
+        </status>
+        """,
+        )
+
+        async with Player("node") as client:
+            await client.status(etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6", poll_timeout=5, timeout=10)
+
+        mocked.assert_called_once()
+
+
 async def test_sync_status():
     with aioresponses() as mocked:
         mocked.get(
@@ -219,6 +243,30 @@ async def test_sync_status_one_slave():
         assert sync_status.slaves == [
             PairedPlayer(ip="1.1.1.1", port=11000),
         ]
+
+
+async def test_sync_status_timeout_missconfigured():
+    async with Player("node") as client:
+        with pytest.raises(ValueError, match="poll_timeout has to be smaller than timeout"):
+            await client.sync_status(etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6")
+
+
+async def test_sync_status_long_polling():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/SyncStatus?etag=4e266c9fbfba6d13d1a4d6ff4bd2e1e6&timeout=5",
+            status=200,
+            body="""
+        <SyncStatus>
+          <slave port="11000" id="1.1.1.1"/>
+        </SyncStatus>
+        """,
+        )
+
+        async with Player("node") as client:
+            await client.sync_status(etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6", poll_timeout=5, timeout=10)
+
+        mocked.assert_called_once()
 
 
 async def test_add_slave():

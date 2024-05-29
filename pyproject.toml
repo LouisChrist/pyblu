@@ -33,6 +33,7 @@ disable = [
     "missing-module-docstring",
     "missing-class-docstring",
     "too-many-instance-attributes",
+    "too-many-public-methods",
 ]
 
 [tool.pylint.format]
