@@ -16,7 +16,7 @@ xmltodict = "^0.13.0"
 aiohttp = "^3.9.5"
 
 [tool.poetry.group.dev.dependencies]
-pylint = "^3.2.5"
+pylint = "^3.2.6"
 black = "^24.4.2"
 pytest = "^8.2.2"
 aioresponses = "^0.7.6"
