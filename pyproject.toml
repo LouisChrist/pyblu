@@ -13,7 +13,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.11"
 xmltodict = "^0.13.0"
-aiohttp = "^3.9.5"
+aiohttp = "^3.10.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.2.5"
