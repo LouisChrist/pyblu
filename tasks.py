@@ -69,4 +69,13 @@ def release(ctx: Context):
     ctx.run("poetry publish --build")
 
     print(f"Release v{bumped_version} created and published")
+
+@task
+def format_and_lint(ctx: Context):
+    ctx.run("black src tests")
+    ctx.run("pylint -f colorized src tests")
+
+@task
+def test(ctx: Context):
+    ctx.run("pytest tests --color=yes")
     
