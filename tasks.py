@@ -1,6 +1,7 @@
 import re
 
-from invoke import task, Context
+from invoke import task, Context, Exit
+from semver import Version
 
 def _commits_with_version_change(ctx: Context):
     commits = ctx.run("git log --pretty=format:'%h'", hide=True).stdout.split("\n")
@@ -29,3 +30,43 @@ def add_missing_tags(ctx: Context):
         print(f"Tagging {commit} as {version}")
         ctx.run(f"git tag -m v{version} v{version} {commit}", hide=True)
 
+@task
+def release(ctx: Context):
+    any_changes = ctx.run("git status --porcelain", hide=True).stdout.strip()
+    if any_changes:
+        print("There are uncommited changes")
+        exit(1)
+
+    version = ctx.run("poetry version --short", hide=True).stdout.strip()
+    version = Version.parse(version)
+    
+    print(f"patch: {version.bump_patch()}")
+    print(f"minor: {version.bump_minor()}")
+    print(f"major: {version.bump_major()}")
+    choice = input("Select version to bump [patch/minor/major]: ")
+    match choice:
+        case "patch":
+            bumped_version = version.bump_patch()
+        case "minor":
+            bumped_version = version.bump_minor()
+        case "major":
+            bumped_version = version.bump_major()
+        case _:
+            print("Invalid choice")
+            exit(1)
+
+    ctx.run(f"poetry version {choice}")
+
+    print(f"Creating commit with tag v{bumped_version}")
+    ctx.run("git add pyproject.toml", hide=True)
+    ctx.run(f"git commit -m 'Release v{bumped_version}'", hide=True)
+    ctx.run(f"git tag -m v{bumped_version} v{bumped_version}", hide=True)
+
+    print("Pushing changes")
+    ctx.run("git push --follow-tags", hide=True)
+
+    print("Publishing package")
+    ctx.run("poetry publish --build")
+
+    print(f"Release v{bumped_version} created and published")
+    

@@ -23,6 +23,7 @@ aioresponses = "^0.7.6"
 pytest-asyncio = "^0.23.7"
 sphinx = "^7.3.7"
 invoke = "^2.2.0"
+semver = "^3.0.2"
 
 [build-system]
 requires = ["poetry-core"]
