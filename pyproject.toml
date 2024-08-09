@@ -21,7 +21,7 @@ black = "^24.4.2"
 pytest = "^8.2.2"
 aioresponses = "^0.7.6"
 pytest-asyncio = "^0.23.7"
-sphinx = "^7.3.7"
+sphinx = "^8.0.2"
 invoke = "^2.2.0"
 semver = "^3.0.2"
 
