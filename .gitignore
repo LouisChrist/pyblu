@@ -1,3 +1,6 @@
+# sphinx documentation
+/_site/
+
 # JetBrains
 .idea/
 

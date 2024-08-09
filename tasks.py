@@ -78,4 +78,9 @@ def format_and_lint(ctx: Context):
 @task
 def test(ctx: Context):
     ctx.run("pytest tests --color=yes")
+
+@task
+def build_docs(ctx: Context):
+    print("Building docs")
+    ctx.run("sphinx-build -b html docs _site", hide=True)
     
