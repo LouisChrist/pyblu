@@ -110,7 +110,7 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
         mute_volume=chained_get_optional(response_dict, "status", "muteVolume", _map=int),
         mute_volume_db=chained_get_optional(response_dict, "status", "muteDb", _map=float),
         seconds=chained_get(response_dict, "status", "secs", _map=int),
-        total_seconds=chained_get(response_dict, "status", "totlen", _map=float),
+        total_seconds=chained_get_optional(response_dict, "status", "totlen", _map=float),
         can_seek=chained_get_optional(response_dict, "status", "canSeek") == "1",
         sleep=chained_get(response_dict, "status", "sleep", _map=int, default=0),
         group_name=chained_get_optional(response_dict, "status", "groupName"),
