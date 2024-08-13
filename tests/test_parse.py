@@ -1,47 +1,38 @@
 import xmltodict
 
 from pyblu import PairedPlayer
-from pyblu.parse import parse_presets, parse_slave_list, parse_status, parse_sync_status
+from pyblu.parse import parse_add_slave, parse_presets, parse_status, parse_sync_status
 
 
-def test_parse_slave_list_no_slave():
-    slaves_raw = {}
-    slaves = parse_slave_list(slaves_raw)
-    assert slaves is None
+def test_parse_add_slave_no_slave():
+    data = """<addSlave></addSlave>"""
+
+    slaves = parse_add_slave(data)
+
+    assert slaves == []
 
 
-def test_parse_slave_list_single_element():
-    slaves_raw = [
-        {
-            "@id": "1.1.1.1",
-            "@port": "11000",
-        }
-    ]
+def test_parse_add_slave_single_element():
+    data = """<addSlave>
+            <slave id="1.1.1.1" port="11000"/>
+        </addSlave>"""
+    
+    slaves = parse_add_slave(data)
 
-    slaves = parse_slave_list(slaves_raw)
-
-    assert slaves == [
-        PairedPlayer(ip="1.1.1.1", port=11000),
-    ]
+    assert slaves == [PairedPlayer(ip="1.1.1.1", port=11000)]
 
 
-def test_parse_slave_list_multiple_elements():
-    slaves_raw = [
-        {
-            "@id": "1.1.1.1",
-            "@port": "11000",
-        },
-        {
-            "@id": "2.2.2.2",
-            "@port": "11000",
-        },
-    ]
-
-    slaves = parse_slave_list(slaves_raw)
+def test_parse_add_slave_multiple_elements():
+    data = """<addSlave>
+            <slave id="1.1.1.1" port="11000"/>
+            <slave id="2.2.2.2" port="11000"/>
+            </addSlave>"""
+    
+    slaves = parse_add_slave(data)
 
     assert slaves == [
         PairedPlayer(ip="1.1.1.1", port=11000),
-        PairedPlayer(ip="2.2.2.2", port=11000),
+        PairedPlayer(ip="2.2.2.2", port=11000)
     ]
 
 

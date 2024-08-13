@@ -42,14 +42,14 @@ def chained_get(data: dict[str, Any], *keys, _map: Callable[[str], T] | None = N
     return value
 
 
-def parse_slave_list(slaves_raw: Any) -> list[PairedPlayer] | None:
-    match slaves_raw:
-        case {"@id": ip, "@port": port}:
-            return [PairedPlayer(ip=ip, port=int(port))]
-        case [*slaves_raw_match]:
-            return [PairedPlayer(ip=slave["@id"], port=int(slave["@port"])) for slave in slaves_raw_match]  # type: ignore
-        case _:
-            return None
+def parse_add_slave(response: str) -> list[PairedPlayer]:
+    tree = etree.fromstring(response)
+    slave_elements = tree.xpath("//addSlave/slave")
+
+    return [
+        PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"]))
+        for x in slave_elements
+    ]
 
 
 def parse_sync_status(response: str) -> SyncStatus:

@@ -5,7 +5,7 @@ import aiohttp
 import xmltodict
 
 from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
-from pyblu.parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get_optional, chained_get, parse_play_queue, parse_presets
+from pyblu.parse import parse_add_slave, parse_sync_status, parse_status, parse_volume, chained_get_optional, chained_get, parse_play_queue, parse_presets
 
 
 class Player:
@@ -257,12 +257,10 @@ class Player:
         async with self._session.get(f"{self.base_url}/AddSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
 
-            slaves_raw = chained_get_optional(response_dict, "addSlave", "slave")
-            slaves_after_request = parse_slave_list(slaves_raw)
+            slaves_after_request = parse_add_slave(response_data)
 
-            return slaves_after_request if slaves_after_request is not None else []
+            return slaves_after_request
 
     async def add_slaves(self, slaves: list[PairedPlayer], timeout: float | None = None) -> list[PairedPlayer]:
         """Add a list of secondary players to the current player as slaves.
@@ -284,12 +282,10 @@ class Player:
         async with self._session.get(f"{self.base_url}/AddSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
 
-            slaves_raw = chained_get_optional(response_dict, "addSlave", "slave")
-            slaves_after_request: list[PairedPlayer] | None = parse_slave_list(slaves_raw)
+            slaves_after_request = parse_add_slave(response_data)
 
-            return slaves_after_request if slaves_after_request is not None else []
+            return slaves_after_request
 
     async def remove_slave(self, ip: str, port: int = 11000, timeout: float | None = None) -> SyncStatus:
         """Remove a secondary player from the group.
