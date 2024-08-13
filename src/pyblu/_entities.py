@@ -89,7 +89,7 @@ class SyncStatus:
     """Group name of the player"""
     master: PairedPlayer | None
     """Master player. Only present if the player is grouped and not master itself"""
-    slaves: PairedPlayer | None
+    slaves: list[PairedPlayer] | None
     """List of slave players. Only present if the player is master"""
 
     zone: str | None

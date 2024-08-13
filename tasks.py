@@ -1,7 +1,8 @@
 import re
 
-from invoke import task, Context, Exit
+from invoke import task, Context
 from semver import Version
+
 
 def _commits_with_version_change(ctx: Context):
     commits = ctx.run("git log --pretty=format:'%h'", hide=True).stdout.split("\n")
@@ -11,11 +12,13 @@ def _commits_with_version_change(ctx: Context):
         if not version_lines:
             continue
 
-        yield commit, version_lines[0].split(" = ")[1].strip("\"")
+        yield commit, version_lines[0].split(" = ")[1].strip('"')
+
 
 def _get_tagged_versions(ctx: Context):
     tags = ctx.run("git tag", hide=True).stdout.split("\n")
     return [tag[1:] for tag in tags if re.match(r"v\d+\.\d+\.\d+", tag)]
+
 
 @task
 def add_missing_tags(ctx: Context):
@@ -30,8 +33,14 @@ def add_missing_tags(ctx: Context):
         print(f"Tagging {commit} as {version}")
         ctx.run(f"git tag -m v{version} v{version} {commit}", hide=True)
 
+
 @task
 def release(ctx: Context):
+    current_branch = ctx.run("git branch --show-current", hide=True).stdout.strip()
+    if current_branch != "main":
+        print("You must be on the main branch to release")
+        exit(1)
+
     any_changes = ctx.run("git status --porcelain", hide=True).stdout.strip()
     if any_changes:
         print("There are uncommited changes")
@@ -39,7 +48,7 @@ def release(ctx: Context):
 
     version = ctx.run("poetry version --short", hide=True).stdout.strip()
     version = Version.parse(version)
-    
+
     print(f"patch: {version.bump_patch()}")
     print(f"minor: {version.bump_minor()}")
     print(f"major: {version.bump_major()}")
@@ -70,17 +79,24 @@ def release(ctx: Context):
 
     print(f"Release v{bumped_version} created and published")
 
+
 @task
 def format_and_lint(ctx: Context):
     ctx.run("black src tests")
     ctx.run("pylint -f colorized src tests")
 
+
 @task
 def test(ctx: Context):
     ctx.run("pytest tests --color=yes")
+
+
+@task
+def mypy(ctx: Context):
+    ctx.run("mypy src")
+
 
 @task
 def build_docs(ctx: Context):
     print("Building docs")
     ctx.run("sphinx-build -b html docs _site", hide=True)
-    

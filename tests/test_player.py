@@ -166,10 +166,38 @@ async def test_status_long_polling():
         mocked.get(
             "http://node:11000/Status?etag=4e266c9fbfba6d13d1a4d6ff4bd2e1e6&timeout=5",
             status=200,
-            body="""
-        <status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
-        </status>
-        """,
+            body="""<status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
+            <state>playing</state>
+            <shuffle>1</shuffle>
+            
+            <inputId>input-1</inputId>
+            <service>Capture</service>
+            
+            <image>Image</image>
+            
+            <name>Name</name>
+            <artist>Artist</artist>
+            <album>Album</album>
+            
+            <volume>10</volume>
+            <db>-20.1</db>
+            
+            <mute>1</mute>
+            <muteVolume>20</muteVolume>
+            <muteDb>-20.1</muteDb>
+            
+            <secs>10</secs>
+            <totlen>100</totlen>
+            <canSeek>1</canSeek>
+            
+            <sleep>15</sleep>
+            
+            <groupName>Group</groupName>
+            <groupVolume>20</groupVolume>
+            
+            <indexing>1</indexing>
+            <streamUrl>RadioParadise:/0:4</streamUrl>
+        </status>""",
         )
 
         async with Player("node") as client:
@@ -229,8 +257,15 @@ async def test_sync_status_one_slave():
             "http://node:11000/SyncStatus",
             status=200,
             body="""
-        <SyncStatus>
-          <slave port="11000" id="1.1.1.1"/>
+        <SyncStatus icon="/images/players/N125_nt.png" muteDb="-18.1" muteVolume="30"
+        db="-17.1" modelName="NODE" model="N130"
+        brand="Bluesound" initialized="true" id="1.1.1.1:11000" mac="00:11:22:33:44:55" volume="29" 
+        name="Node" etag="707" schemaVersion="34" syncStat="707" class="streamer"
+        group="Node +2" zone="Desk" zoneMaster="true" zoneSlave="true">
+          <pairWithSub/>
+          <bluetoothOutput/>
+          <master port="11000">192.168.1.100</master>
+          <slave port="11000" id="192.168.1.153"/>
         </SyncStatus>
         """,
         )
@@ -241,7 +276,7 @@ async def test_sync_status_one_slave():
         mocked.assert_called_once()
 
         assert sync_status.slaves == [
-            PairedPlayer(ip="1.1.1.1", port=11000),
+            PairedPlayer(ip="192.168.1.153", port=11000),
         ]
 
 
@@ -257,8 +292,16 @@ async def test_sync_status_long_polling():
             "http://node:11000/SyncStatus?etag=4e266c9fbfba6d13d1a4d6ff4bd2e1e6&timeout=5",
             status=200,
             body="""
-        <SyncStatus>
-          <slave port="11000" id="1.1.1.1"/>
+        <SyncStatus icon="/images/players/N125_nt.png" muteDb="-18.1" muteVolume="30"
+        db="-17.1" modelName="NODE" model="N130"
+        brand="Bluesound" initialized="true" id="1.1.1.1:11000" mac="00:11:22:33:44:55" volume="29" 
+        name="Node" etag="707" schemaVersion="34" syncStat="707" class="streamer"
+        group="Node +2" zone="Desk" zoneMaster="true" zoneSlave="true">
+          <pairWithSub/>
+          <bluetoothOutput/>
+          <master port="11000">192.168.1.100</master>
+          <slave port="11000" id="192.168.1.153"/>
+          <slave port="11000" id="192.168.1.234"/>
         </SyncStatus>
         """,
         )
