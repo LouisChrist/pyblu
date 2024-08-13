@@ -1,7 +1,7 @@
 import xmltodict
 
 from pyblu import PairedPlayer
-from pyblu.parse import parse_slave_list, parse_status, parse_sync_status
+from pyblu.parse import parse_presets, parse_slave_list, parse_status, parse_sync_status
 
 
 def test_parse_slave_list_no_slave():
@@ -201,3 +201,24 @@ def test_parse_sync_status_without_master():
     assert sync_status.zone_slave is False
     assert sync_status.master is None
     assert sync_status.slaves is None
+
+def test_parse_presets():
+    data = """<presets prid="2">
+          <preset url="Spotify:play" id="1" name="My preset" image="/Sources/images/SpotifyIcon.png"/>
+          <preset url="Spotify:play" id="2" name="Second" volume="10" image="/Sources/images/SpotifyIcon.png"/>
+        </presets>"""
+    
+    presets = parse_presets(data)
+
+    assert len(presets) == 2
+    assert presets[0].url == "Spotify:play"
+    assert presets[0].id == 1
+    assert presets[0].name == "My preset"
+    assert presets[0].image == "/Sources/images/SpotifyIcon.png"
+    assert presets[0].volume is None
+
+    assert presets[1].url == "Spotify:play"
+    assert presets[1].id == 2
+    assert presets[1].name == "Second"
+    assert presets[1].image == "/Sources/images/SpotifyIcon.png"
+    assert presets[1].volume == 10

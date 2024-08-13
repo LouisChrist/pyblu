@@ -1,5 +1,7 @@
 from typing import Any, TypeVar, Callable
 
+from lxml import etree
+
 from pyblu.entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
 
 # pylint: disable=invalid-name
@@ -143,23 +145,19 @@ def parse_play_queue(response_dict: dict[str, Any]) -> PlayQueue:
     return play_queue
 
 
-def parse_presets(response_dict: dict[str, Any]) -> list[Preset]:
-    presets_raw = chained_get_optional(response_dict, "presets", "preset")
-    if not presets_raw:
-        return []
-
-    if not isinstance(presets_raw, list):
-        presets_raw = [presets_raw]
+def parse_presets(response: str) -> list[Preset]:
+    tree = etree.fromstring(response)
+    preset_elements = tree.xpath("//presets/preset")
 
     presets = [
         Preset(
-            name=chained_get_optional(x, "@name"),
-            id=chained_get_optional(x, "@id", _map=int),
-            url=chained_get_optional(x, "@url"),
-            image=chained_get_optional(x, "@image"),
-            volume=chained_get_optional(x, "@volume", _map=int),
+            name=x.attrib["name"],
+            id=int(x.attrib["id"]),
+            url=x.attrib["url"],
+            image=x.attrib["image"],
+            volume=int(x.attrib.get("volume")) if x.attrib.get("volume") else None,
         )
-        for x in presets_raw
+        for x in preset_elements
     ]
 
     return presets
