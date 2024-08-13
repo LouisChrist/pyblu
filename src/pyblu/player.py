@@ -416,7 +416,7 @@ class Player:
 
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
-        :return: The list of inputss of the player.
+        :return: The list of inputs of the player.
         """
         used_timeout = timeout if timeout is not None else self._default_timeout
 
