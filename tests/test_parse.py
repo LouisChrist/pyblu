@@ -1,7 +1,7 @@
 import xmltodict
 
 from pyblu import PairedPlayer
-from pyblu._parse import parse_slave_list, parse_status
+from pyblu._parse import parse_slave_list, parse_status, parse_sync_status
 
 
 def test_parse_slave_list_no_slave():
@@ -170,3 +170,34 @@ def test_parse_status_title1_title2_title3():
     assert status.name == "Track Name"
     assert status.album == "Album Name"
     assert status.artist == "Artist Name"
+
+
+def test_parse_sync_status_without_master():
+    data = """<SyncStatus icon="/images/players/N125_nt.png"
+        db="-17.1" modelName="NODE" model="N130"
+        brand="Bluesound" initialized="true" id="1.1.1.1:11000" mac="00:11:22:33:44:55" volume="29" 
+        name="Node" etag="707" schemaVersion="34" syncStat="707" class="streamer">
+          <pairWithSub/>
+          <bluetoothOutput/>
+        </SyncStatus>"""
+
+    response_dict = xmltodict.parse(data)
+
+    sync_status = parse_sync_status(response_dict)
+
+    assert sync_status.brand == "Bluesound"
+    assert sync_status.model == "N130"
+    assert sync_status.model_name == "NODE"
+    assert sync_status.image == "/images/players/N125_nt.png"
+    assert sync_status.volume == 29
+    assert sync_status.volume_db == -17.1
+    assert sync_status.initialized is True
+    assert sync_status.id == "1.1.1.1:11000"
+    assert sync_status.mac == "00:11:22:33:44:55"
+    assert sync_status.name == "Node"
+    assert sync_status.etag == "707"
+    assert sync_status.zone is None
+    assert sync_status.zone_master is False
+    assert sync_status.zone_slave is False
+    assert sync_status.master is None
+    assert sync_status.slaves is None

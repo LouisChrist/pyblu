@@ -15,7 +15,7 @@ def chained_get_optional(data: dict[str, Any], *keys, _map: Callable[[str], T] |
     for key in keys[:-1]:
         nested_data = local_data.get(key)
         if not isinstance(nested_data, dict):
-            raise KeyError(f"Key '{key}' not found")
+            return default
 
         local_data = nested_data
 
