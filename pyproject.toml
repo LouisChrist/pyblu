@@ -38,6 +38,7 @@ disable = [
     "missing-class-docstring",
     "too-many-instance-attributes",
     "too-many-public-methods",
+    "duplicate-code",
 ]
 
 [tool.pylint.format]
