@@ -85,51 +85,54 @@ def parse_sync_status(response_dict: dict[str, Any]) -> SyncStatus:
     return sync_status
 
 
-def parse_status(response_dict: dict[str, Any]) -> Status:
-    name = chained_get_optional(response_dict, "status", "name")
+def parse_status(response: str) -> Status:
+    tree = etree.fromstring(response)
+    status_elements = tree.xpath("//status")
+
+    assert len(status_elements) == 1, "Status element not found or multiple found"
+    status_element = status_elements[0]
+
+    name = status_element.findtext("name")
     if name is None:
-        name = chained_get_optional(response_dict, "status", "title1")
-    artist = chained_get_optional(response_dict, "status", "artist")
+        name = status_element.findtext("title1")
+    artist = status_element.findtext("artist")
     if artist is None:
-        artist = chained_get_optional(response_dict, "status", "title2")
-    album = chained_get_optional(response_dict, "status", "album")
+        artist = status_element.findtext("title2")
+    album = status_element.findtext("album")
     if album is None:
-        album = chained_get_optional(response_dict, "status", "title3")
+        album = status_element.findtext("title3")
 
     status = Status(
-        etag=chained_get(response_dict, "status", "@etag"),
-        input_id=chained_get_optional(response_dict, "status", "inputId"),
-        service=chained_get_optional(response_dict, "status", "service"),
-        state=chained_get(response_dict, "status", "state"),
-        shuffle=chained_get_optional(response_dict, "status", "shuffle") == "1",
+        etag=status_element.attrib["etag"],
+        input_id=status_element.findtext("inputId"),
+        service=status_element.findtext("service"),
+        state=status_element.findtext("state"),
+        shuffle=status_element.findtext("shuffle") == "1",
         album=album,
         artist=artist,
         name=name,
-        image=chained_get_optional(response_dict, "status", "image"),
-        volume=chained_get(response_dict, "status", "volume", _map=int),
-        volume_db=chained_get(response_dict, "status", "db", _map=float),
-        mute=chained_get_optional(response_dict, "status", "mute") == "1",
-        mute_volume=chained_get_optional(response_dict, "status", "muteVolume", _map=int),
-        mute_volume_db=chained_get_optional(response_dict, "status", "muteDb", _map=float),
-        seconds=chained_get(response_dict, "status", "secs", _map=int),
-        total_seconds=chained_get_optional(response_dict, "status", "totlen", _map=float),
-        can_seek=chained_get_optional(response_dict, "status", "canSeek") == "1",
-        sleep=chained_get(response_dict, "status", "sleep", _map=int, default=0),
-        group_name=chained_get_optional(response_dict, "status", "groupName"),
-        group_volume=chained_get_optional(response_dict, "status", "groupVolume", _map=int),
-        indexing=chained_get_optional(response_dict, "status", "indexing") == "1",
-        stream_url=chained_get_optional(response_dict, "status", "streamUrl"),
+        image=status_element.findtext("image"),
+        volume=int(status_element.findtext("volume")),
+        volume_db=float(status_element.findtext("db")),
+        mute=status_element.findtext("mute") == "1",
+        mute_volume=int(status_element.findtext("muteVolume")) if status_element.findtext("muteVolume") else None,
+        mute_volume_db=float(status_element.findtext("muteDb")) if status_element.findtext("muteDb") else None,
+        seconds=int(status_element.findtext("secs")),
+        total_seconds=float(status_element.findtext("totlen")) if status_element.findtext("totlen") else None,
+        can_seek=status_element.findtext("canSeek") == "1",
+        sleep=int(status_element.findtext("sleep")) if status_element.findtext("sleep") else 0,
+        group_name=status_element.findtext("groupName"),
+        group_volume=int(status_element.findtext("groupVolume")) if status_element.findtext("groupVolume") else None,
+        indexing=status_element.findtext("indexing") == "1",
+        stream_url=status_element.findtext("streamUrl"),
     )
 
     return status
-
-
 def parse_volume(response: str) -> Volume:
     tree = etree.fromstring(response)
     volume_elements = tree.xpath("//volume")
 
     assert len(volume_elements) == 1, "Volume element not found or multiple found"
-
     volume_element = volume_elements[0]
 
     volume = Volume(
@@ -146,7 +149,6 @@ def parse_play_queue(response: str) -> PlayQueue:
     playlist_elements = tree.xpath("//playlist")
 
     assert len(playlist_elements) == 1, "Playlist element not found or multiple found"
-
     playlist_element = playlist_elements[0]
 
     play_queue = PlayQueue(

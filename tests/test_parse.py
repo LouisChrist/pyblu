@@ -79,9 +79,7 @@ def test_parse_status_default_sleep():
             <streamUrl>RadioParadise:/0:4</streamUrl>
         </status>"""
 
-    response_dict = xmltodict.parse(data)
-
-    status = parse_status(response_dict)
+    status = parse_status(data)
 
     assert status.sleep == 0
 
@@ -119,10 +117,8 @@ def test_parse_status_name_album_artist():
             <indexing>1</indexing>
             <streamUrl>RadioParadise:/0:4</streamUrl>
         </status>"""
-
-    response_dict = xmltodict.parse(data)
-
-    status = parse_status(response_dict)
+    
+    status = parse_status(data)
 
     assert status.name == "Name"
     assert status.album == "Album"
@@ -163,9 +159,7 @@ def test_parse_status_title1_title2_title3():
             <streamUrl>RadioParadise:/0:4</streamUrl>
         </status>"""
 
-    response_dict = xmltodict.parse(data)
-
-    status = parse_status(response_dict)
+    status = parse_status(data)
 
     assert status.name == "Track Name"
     assert status.album == "Album Name"
@@ -222,3 +216,42 @@ def test_parse_presets():
     assert presets[1].name == "Second"
     assert presets[1].image == "/Sources/images/SpotifyIcon.png"
     assert presets[1].volume == 10
+
+
+def test_parse_status_optionals():
+    data = """<status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
+            <state>playing</state>
+            <shuffle>1</shuffle>
+            
+            <volume>10</volume>
+            <db>-20.1</db>
+            
+            <mute>1</mute>
+            
+            <secs>10</secs>
+            <canSeek>1</canSeek>
+            
+            <sleep>15</sleep>
+            
+            <indexing>1</indexing>
+        </status>"""
+
+    status = parse_status(data)
+
+    assert status.input_id is None
+    assert status.service is None
+
+    assert status.album is None
+    assert status.artist is None
+    assert status.name is None
+    assert status.image is None
+
+    assert status.mute_volume is None
+    assert status.mute_volume_db is None
+
+    assert status.total_seconds is None
+
+    assert status.group_name is None
+    assert status.group_volume is None
+
+    assert status.stream_url is None
