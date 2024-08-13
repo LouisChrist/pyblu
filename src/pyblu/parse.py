@@ -1,8 +1,9 @@
 from typing import Any, TypeVar, Callable
+from urllib.parse import unquote
 
 from lxml import etree
 
-from pyblu.entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
+from pyblu.entities import Input, PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
 
 # pylint: disable=invalid-name
 T = TypeVar("T")
@@ -192,3 +193,37 @@ def parse_presets(response: str) -> list[Preset]:
     ]
 
     return presets
+
+def parse_state(response: str) -> str:
+    tree = etree.fromstring(response)
+    state_elements = tree.xpath("//state")
+
+    assert len(state_elements) == 1, "State element not found or multiple found"
+    state_element = state_elements[0]
+
+    return state_element.text
+
+def parse_sleep(response: str) -> int:
+    tree = etree.fromstring(response)
+    sleep_elements = tree.xpath("//sleep")
+
+    assert len(sleep_elements) == 1, "Sleep element not found or multiple found"
+    sleep_element = sleep_elements[0]
+
+    return int(sleep_element.text) if sleep_element.text else 0
+
+def parse_inputs(response: str) -> list[Input]:
+    tree = etree.fromstring(response)
+    input_elements = tree.xpath("//radiotime/item")
+
+    inputs = [
+        Input(
+            id=x.attrib["id"],
+            text=x.attrib["text"],
+            image=x.attrib["image"],
+            url=unquote(x.attrib["URL"]),
+        )
+        for x in input_elements
+    ]
+
+    return inputs

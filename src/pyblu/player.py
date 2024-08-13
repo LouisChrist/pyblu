@@ -3,9 +3,10 @@ from typing import Any
 
 import aiohttp
 import xmltodict
+from lxml import etree
 
 from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
-from pyblu.parse import parse_add_slave, parse_sync_status, parse_status, parse_volume, chained_get_optional, chained_get, parse_play_queue, parse_presets
+from pyblu.parse import parse_add_slave, parse_inputs, parse_sleep, parse_state, parse_sync_status, parse_status, parse_volume, chained_get_optional, chained_get, parse_play_queue, parse_presets
 
 
 class Player:
@@ -136,7 +137,6 @@ class Player:
             response.raise_for_status()
             response_data = await response.text()
 
-
             volume = parse_volume(response_data)
             return volume
 
@@ -158,9 +158,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/Play", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
-
-            return chained_get(response_dict, "state")
+            
+            return parse_state(response_data)
 
     async def play_url(self, url: str, timeout: float | None = None) -> str:
         """Start playing a track from a URL. Can also be used to select inputs. See *inputs* for available inputs.
@@ -178,9 +177,9 @@ class Player:
         async with self._session.get(f"{self.base_url}/Play", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
-
-            return chained_get(response_dict, "state")
+            
+            return parse_state(response_data)
+            
 
     async def pause(self, toggle: bool | None = None, timeout: float | None = None) -> str:
         """Pause the current track. **toggle** can be used to toggle between playing and pause.
@@ -199,9 +198,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/Pause", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
-
-            return chained_get(response_dict, "state")
+            
+            return parse_state(response_data)
 
     async def stop(self, timeout: float | None = None) -> str:
         """Stop the current track. Stopped playback cannot be resumed.
@@ -215,9 +213,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/Stop", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
-
-            return chained_get(response_dict, "state")
+            
+            return parse_state(response_data)
 
     async def skip(self, timeout: float | None = None) -> None:
         """Skip to the next track.
@@ -385,13 +382,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/Sleep", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
-
-            sleep_timer = chained_get_optional(response_dict, "sleep", _map=int)
-            if not sleep_timer:
-                sleep_timer = 0
-
-            return sleep_timer
+            
+            return parse_sleep(response_data)
 
     async def presets(self, timeout: float | None = None) -> list[Preset]:
         """Get the list of presets of the player.
@@ -438,23 +430,5 @@ class Player:
         async with self._session.get(f"{self.base_url}/RadioBrowse", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
-
-            inputs_raw: dict[str, Any] | list[dict[str, Any]] = chained_get(response_dict, "radiotime", "item")
-
-            if isinstance(inputs_raw, list):
-                inputs_raw_list = inputs_raw
-            else:
-                inputs_raw_list = [inputs_raw]
-
-            inputs = [
-                Input(
-                    id=chained_get(x, "@id"),
-                    text=chained_get(x, "@text"),
-                    image=chained_get(x, "@image"),
-                    url=chained_get(x, "@URL", _map=unquote),
-                )
-                for x in inputs_raw_list
-            ]
-
-            return inputs
+            
+            return parse_inputs(response_data)
