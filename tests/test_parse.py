@@ -1,5 +1,3 @@
-import xmltodict
-
 from pyblu import PairedPlayer
 from pyblu.parse import parse_add_slave, parse_presets, parse_status, parse_sync_status
 
@@ -16,7 +14,7 @@ def test_parse_add_slave_single_element():
     data = """<addSlave>
             <slave id="1.1.1.1" port="11000"/>
         </addSlave>"""
-    
+
     slaves = parse_add_slave(data)
 
     assert slaves == [PairedPlayer(ip="1.1.1.1", port=11000)]
@@ -27,13 +25,10 @@ def test_parse_add_slave_multiple_elements():
             <slave id="1.1.1.1" port="11000"/>
             <slave id="2.2.2.2" port="11000"/>
             </addSlave>"""
-    
+
     slaves = parse_add_slave(data)
 
-    assert slaves == [
-        PairedPlayer(ip="1.1.1.1", port=11000),
-        PairedPlayer(ip="2.2.2.2", port=11000)
-    ]
+    assert slaves == [PairedPlayer(ip="1.1.1.1", port=11000), PairedPlayer(ip="2.2.2.2", port=11000)]
 
 
 def test_parse_status_default_sleep():
@@ -108,7 +103,7 @@ def test_parse_status_name_album_artist():
             <indexing>1</indexing>
             <streamUrl>RadioParadise:/0:4</streamUrl>
         </status>"""
-    
+
     status = parse_status(data)
 
     assert status.name == "Name"
@@ -185,12 +180,13 @@ def test_parse_sync_status_without_master():
     assert sync_status.master is None
     assert sync_status.slaves is None
 
+
 def test_parse_presets():
     data = """<presets prid="2">
           <preset url="Spotify:play" id="1" name="My preset" image="/Sources/images/SpotifyIcon.png"/>
           <preset url="Spotify:play" id="2" name="Second" volume="10" image="/Sources/images/SpotifyIcon.png"/>
         </presets>"""
-    
+
     presets = parse_presets(data)
 
     assert len(presets) == 2

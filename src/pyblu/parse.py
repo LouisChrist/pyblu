@@ -1,59 +1,20 @@
-from typing import Any, TypeVar, Callable
 from urllib.parse import unquote
 
 from lxml import etree
 
 from pyblu.entities import Input, PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
 
-# pylint: disable=invalid-name
-T = TypeVar("T")
-
-
-def chained_get_optional(data: dict[str, Any], *keys, _map: Callable[[str], T] | None = None, default: T | None = None) -> T | None:
-    """Get a value from a nested dictionary.
-    If the value is not found, return the default value.
-    Map the value to a different type using the _map function.
-    """
-    local_data = data
-    for key in keys[:-1]:
-        nested_data = local_data.get(key)
-        if not isinstance(nested_data, dict):
-            return default
-
-        local_data = nested_data
-
-    last_key = keys[-1]
-    value = local_data.get(last_key)
-
-    if _map is not None and value is not None:
-        return _map(value)
-
-    return value if value is not None else default
-
-
-def chained_get(data: dict[str, Any], *keys, _map: Callable[[str], T] | None = None, default: T | None = None) -> T:
-    """Get a value from a nested dictionary.
-    If the value is not found, raise a KeyError.
-    Map the value to a different type using the _map function.
-    """
-    value = chained_get_optional(data, *keys, _map=_map, default=default)
-    if value is None:
-        raise KeyError(f"Key '{keys[-1]}' not found")
-
-    return value
-
 
 def parse_add_slave(response: str) -> list[PairedPlayer]:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     slave_elements = tree.xpath("//addSlave/slave")
 
-    return [
-        PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"]))
-        for x in slave_elements
-    ]
+    return [PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"])) for x in slave_elements]
 
 
 def parse_sync_status(response: str) -> SyncStatus:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
 
     master: PairedPlayer | None = None
@@ -67,10 +28,7 @@ def parse_sync_status(response: str) -> SyncStatus:
     slaves: list[PairedPlayer] | None = None
     slave_elements = tree.xpath("//SyncStatus/slave")
     if slave_elements:
-        slaves = [
-            PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"]))
-            for x in slave_elements
-        ]
+        slaves = [PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"])) for x in slave_elements]
 
     sync_status_elements = tree.xpath("//SyncStatus")
     assert len(sync_status_elements) == 1, "SyncStatus element not found or multiple found"
@@ -102,6 +60,7 @@ def parse_sync_status(response: str) -> SyncStatus:
 
 
 def parse_status(response: str) -> Status:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     status_elements = tree.xpath("//status")
 
@@ -144,7 +103,10 @@ def parse_status(response: str) -> Status:
     )
 
     return status
+
+
 def parse_volume(response: str) -> Volume:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     volume_elements = tree.xpath("//volume")
 
@@ -161,6 +123,7 @@ def parse_volume(response: str) -> Volume:
 
 
 def parse_play_queue(response: str) -> PlayQueue:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     playlist_elements = tree.xpath("//playlist")
 
@@ -178,6 +141,7 @@ def parse_play_queue(response: str) -> PlayQueue:
 
 
 def parse_presets(response: str) -> list[Preset]:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     preset_elements = tree.xpath("//presets/preset")
 
@@ -194,7 +158,9 @@ def parse_presets(response: str) -> list[Preset]:
 
     return presets
 
+
 def parse_state(response: str) -> str:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     state_elements = tree.xpath("//state")
 
@@ -203,7 +169,9 @@ def parse_state(response: str) -> str:
 
     return state_element.text
 
+
 def parse_sleep(response: str) -> int:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     sleep_elements = tree.xpath("//sleep")
 
@@ -212,7 +180,9 @@ def parse_sleep(response: str) -> int:
 
     return int(sleep_element.text) if sleep_element.text else 0
 
+
 def parse_inputs(response: str) -> list[Input]:
+    # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     input_elements = tree.xpath("//radiotime/item")
 

@@ -1,12 +1,7 @@
-from urllib.parse import unquote
-from typing import Any
-
 import aiohttp
-import xmltodict
-from lxml import etree
 
 from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
-from pyblu.parse import parse_add_slave, parse_inputs, parse_sleep, parse_state, parse_sync_status, parse_status, parse_volume, chained_get_optional, chained_get, parse_play_queue, parse_presets
+from pyblu.parse import parse_add_slave, parse_inputs, parse_sleep, parse_state, parse_sync_status, parse_status, parse_volume, parse_play_queue, parse_presets
 
 
 class Player:
@@ -158,7 +153,7 @@ class Player:
         async with self._session.get(f"{self.base_url}/Play", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            
+
             return parse_state(response_data)
 
     async def play_url(self, url: str, timeout: float | None = None) -> str:
@@ -177,9 +172,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/Play", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            
+
             return parse_state(response_data)
-            
 
     async def pause(self, toggle: bool | None = None, timeout: float | None = None) -> str:
         """Pause the current track. **toggle** can be used to toggle between playing and pause.
@@ -198,7 +192,7 @@ class Player:
         async with self._session.get(f"{self.base_url}/Pause", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            
+
             return parse_state(response_data)
 
     async def stop(self, timeout: float | None = None) -> str:
@@ -213,7 +207,7 @@ class Player:
         async with self._session.get(f"{self.base_url}/Stop", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            
+
             return parse_state(response_data)
 
     async def skip(self, timeout: float | None = None) -> None:
@@ -382,7 +376,7 @@ class Player:
         async with self._session.get(f"{self.base_url}/Sleep", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            
+
             return parse_sleep(response_data)
 
     async def presets(self, timeout: float | None = None) -> list[Preset]:
@@ -430,5 +424,5 @@ class Player:
         async with self._session.get(f"{self.base_url}/RadioBrowse", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            
+
             return parse_inputs(response_data)

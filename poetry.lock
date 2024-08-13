@@ -1537,17 +1537,6 @@ typing_extensions = {version = ">=4.10,<5.0", markers = "python_version < \"3.13
 test = ["beautifulsoup4 (>=4.8,<5.0)", "html5lib (==1.1)", "lxml (>=4.9)", "mypy (>=1.11.0,<1.12.0)", "pyright (>=1.1.351)", "pytest (>=7.0,<9)", "pytest-mypy-plugins (>=2.0)", "tox (>=4.0,<5.0)", "typeguard (>=3.0)", "typeguard (>=4.3.0)"]
 
 [[package]]
-name = "types-xmltodict"
-version = "0.13.0.3"
-description = "Typing stubs for xmltodict"
-optional = false
-python-versions = "*"
-files = [
-    {file = "types-xmltodict-0.13.0.3.tar.gz", hash = "sha256:8884534bab0364c4b22d5973f3c8153ff40d413a801d9e70eb893e676909f1fc"},
-    {file = "types_xmltodict-0.13.0.3-py3-none-any.whl", hash = "sha256:cb251c59e838986d8402b10d804225ade9fd6c9f66d01dc45cd6cfdf43640128"},
-]
-
-[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -1652,17 +1641,6 @@ files = [
     {file = "wrapt-1.16.0-cp39-cp39-win_amd64.whl", hash = "sha256:eb1b046be06b0fce7249f1d025cd359b4b80fc1c3e24ad9eca33e0dcdb2e4a35"},
     {file = "wrapt-1.16.0-py3-none-any.whl", hash = "sha256:6906c4100a8fcbf2fa735f6059214bb13b97f75b1a61777fcf6432121ef12ef1"},
     {file = "wrapt-1.16.0.tar.gz", hash = "sha256:5f370f952971e7d17c7d1ead40e49f32345a7f7a5373571ef44d800d06b1899d"},
-]
-
-[[package]]
-name = "xmltodict"
-version = "0.13.0"
-description = "Makes working with XML feel like you are working with JSON"
-optional = false
-python-versions = ">=3.4"
-files = [
-    {file = "xmltodict-0.13.0-py2.py3-none-any.whl", hash = "sha256:aa89e8fd76320154a40d19a0df04a4695fb9dc5ba977cbb68ab3e4eb225e7852"},
-    {file = "xmltodict-0.13.0.tar.gz", hash = "sha256:341595a488e3e01a85a9d8911d8912fd922ede5fecc4dce437eb4b6c8d037e56"},
 ]
 
 [[package]]
@@ -1771,4 +1749,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "fd4e8c12c51f76397cd3d2c0b44d1d47b958df28b295d17269f138508a2d7ee3"
+content-hash = "972efd67a6b17c087716b08f42da2d2f98b9ee9b4db28f396dc884d094b65d38"
