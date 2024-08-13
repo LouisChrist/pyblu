@@ -173,7 +173,7 @@ async def test_status_long_polling():
         )
 
         async with Player("node") as client:
-            await client.status(etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6", poll_timeout=5, timeout=10)
+            await client.status(etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6", poll_timeout=5, real_timeout=10)
 
         mocked.assert_called_once()
 
@@ -264,7 +264,7 @@ async def test_sync_status_long_polling():
         )
 
         async with Player("node") as client:
-            await client.sync_status(etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6", poll_timeout=5, timeout=10)
+            await client.sync_status(etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6", poll_timeout=5, real_timeout=10)
 
         mocked.assert_called_once()
 
