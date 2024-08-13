@@ -1,6 +1,6 @@
 from typing import Any, TypeVar, Callable
 
-from pyblu._entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
+from pyblu.entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
 
 # pylint: disable=invalid-name
 T = TypeVar("T")

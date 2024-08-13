@@ -1,7 +1,7 @@
 import xmltodict
 
 from pyblu import PairedPlayer
-from pyblu._parse import parse_slave_list, parse_status, parse_sync_status
+from pyblu.parse import parse_slave_list, parse_status, parse_sync_status
 
 
 def test_parse_slave_list_no_slave():

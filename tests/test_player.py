@@ -4,7 +4,7 @@ from aioresponses import aioresponses
 import pytest
 
 from pyblu import Player, PairedPlayer
-from pyblu._entities import Preset, Input
+from pyblu.entities import Preset, Input
 
 
 async def test_skip():

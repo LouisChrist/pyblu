@@ -4,8 +4,8 @@ from typing import Any
 import aiohttp
 import xmltodict
 
-from pyblu._entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
-from pyblu._parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get_optional, chained_get, parse_play_queue, parse_presets
+from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
+from pyblu.parse import parse_slave_list, parse_sync_status, parse_status, parse_volume, chained_get_optional, chained_get, parse_play_queue, parse_presets
 
 
 class Player:
