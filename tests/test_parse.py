@@ -175,9 +175,7 @@ def test_parse_sync_status_without_master():
           <bluetoothOutput/>
         </SyncStatus>"""
 
-    response_dict = xmltodict.parse(data)
-
-    sync_status = parse_sync_status(response_dict)
+    sync_status = parse_sync_status(data)
 
     assert sync_status.brand == "Bluesound"
     assert sync_status.model == "N130"

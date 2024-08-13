@@ -52,34 +52,49 @@ def parse_slave_list(slaves_raw: Any) -> list[PairedPlayer] | None:
             return None
 
 
-def parse_sync_status(response_dict: dict[str, Any]) -> SyncStatus:
-    master_ip: str | None = chained_get_optional(response_dict, "SyncStatus", "master", "#text")
-    master_port: str | None = chained_get_optional(response_dict, "SyncStatus", "master", "@port")
-    master = PairedPlayer(ip=master_ip, port=int(master_port)) if master_ip and master_port else None
+def parse_sync_status(response: str) -> SyncStatus:
+    tree = etree.fromstring(response)
 
-    slaves_raw: Any = chained_get_optional(response_dict, "SyncStatus", "slave")
-    slaves = parse_slave_list(slaves_raw)
+    master: PairedPlayer | None = None
+    master_elements = tree.xpath("//SyncStatus/master")
+    if master_elements:
+        master_element = master_elements[0]
+        master_ip = master_element.text
+        master_port = master_element.attrib["port"]
+        master = PairedPlayer(ip=master_ip, port=int(master_port))
+
+    slaves: list[PairedPlayer] | None = None
+    slave_elements = tree.xpath("//SyncStatus/slave")
+    if slave_elements:
+        slaves = [
+            PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"]))
+            for x in slave_elements
+        ]
+
+    sync_status_elements = tree.xpath("//SyncStatus")
+    assert len(sync_status_elements) == 1, "SyncStatus element not found or multiple found"
+    sync_status_element = sync_status_elements[0]
 
     sync_status = SyncStatus(
-        etag=chained_get(response_dict, "SyncStatus", "@etag"),
-        id=chained_get(response_dict, "SyncStatus", "@id"),
-        mac=chained_get(response_dict, "SyncStatus", "@mac"),
-        name=chained_get(response_dict, "SyncStatus", "@name"),
-        image=chained_get(response_dict, "SyncStatus", "@icon"),
-        initialized=chained_get_optional(response_dict, "SyncStatus", "@initialized") == "true",
-        group=chained_get_optional(response_dict, "SyncStatus", "@group"),
+        etag=sync_status_element.attrib["etag"],
+        id=sync_status_element.attrib["id"],
+        mac=sync_status_element.attrib["mac"],
+        name=sync_status_element.attrib["name"],
+        image=sync_status_element.attrib["icon"],
+        initialized=sync_status_element.attrib.get("initialized") == "true",
+        group=sync_status_element.attrib.get("group"),
         master=master,
         slaves=slaves,
-        zone=chained_get_optional(response_dict, "SyncStatus", "@zone"),
-        zone_master=chained_get_optional(response_dict, "SyncStatus", "@zoneMaster") == "true",
-        zone_slave=chained_get_optional(response_dict, "SyncStatus", "@zoneSlave") == "true",
-        brand=chained_get(response_dict, "SyncStatus", "@brand"),
-        model=chained_get(response_dict, "SyncStatus", "@model"),
-        model_name=chained_get(response_dict, "SyncStatus", "@modelName"),
-        mute_volume_db=chained_get_optional(response_dict, "SyncStatus", "@muteDb", _map=float),
-        mute_volume=chained_get_optional(response_dict, "SyncStatus", "@muteVolume", _map=int),
-        volume_db=chained_get(response_dict, "SyncStatus", "@db", _map=float),
-        volume=chained_get(response_dict, "SyncStatus", "@volume", _map=int),
+        zone=sync_status_element.attrib.get("zone"),
+        zone_master=sync_status_element.attrib.get("zoneMaster") == "true",
+        zone_slave=sync_status_element.attrib.get("zoneMaster") == "true",
+        brand=sync_status_element.attrib["brand"],
+        model=sync_status_element.attrib["model"],
+        model_name=sync_status_element.attrib["modelName"],
+        mute_volume_db=float(sync_status_element.attrib["muteDb"]) if "muteDb" in sync_status_element.attrib else None,
+        mute_volume=int(sync_status_element.attrib["muteVolume"]) if "muteVolume" in sync_status_element.attrib else None,
+        volume_db=float(sync_status_element.attrib["db"]),
+        volume=int(sync_status_element.attrib["volume"]),
     )
 
     return sync_status

@@ -106,9 +106,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/SyncStatus", params=params) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
 
-            sync_status = parse_sync_status(response_dict)
+            sync_status = parse_sync_status(response_data)
 
             return sync_status
 
@@ -310,9 +309,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/RemoveSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
 
-            sync_status = parse_sync_status(response_dict)
+            sync_status = parse_sync_status(response_data)
 
             return sync_status
 
@@ -335,9 +333,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/RemoveSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
 
-            sync_status = parse_sync_status(response_dict)
+            sync_status = parse_sync_status(response_data)
 
             return sync_status
 
