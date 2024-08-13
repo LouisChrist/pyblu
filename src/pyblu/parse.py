@@ -124,11 +124,18 @@ def parse_status(response_dict: dict[str, Any]) -> Status:
     return status
 
 
-def parse_volume(response_dict: dict[str, Any]) -> Volume:
+def parse_volume(response: str) -> Volume:
+    tree = etree.fromstring(response)
+    volume_elements = tree.xpath("//volume")
+
+    assert len(volume_elements) == 1, "Volume element not found or multiple found"
+
+    volume_element = volume_elements[0]
+
     volume = Volume(
-        volume=chained_get(response_dict, "volume", "#text", _map=int),
-        db=chained_get(response_dict, "volume", "@db", _map=float),
-        mute=chained_get_optional(response_dict, "volume", "@mute") == "1",
+        volume=int(volume_element.text),
+        db=float(volume_element.attrib["db"]),
+        mute=volume_element.attrib.get("mute") == "1",
     )
 
     return volume
@@ -138,8 +145,7 @@ def parse_play_queue(response: str) -> PlayQueue:
     tree = etree.fromstring(response)
     playlist_elements = tree.xpath("//playlist")
 
-    assert len(playlist_elements) < 2, "Too many playlist elements found"
-    assert len(playlist_elements) == 1, "Playlist element not found"
+    assert len(playlist_elements) == 1, "Playlist element not found or multiple found"
 
     playlist_element = playlist_elements[0]
 
