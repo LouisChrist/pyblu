@@ -1,4 +1,4 @@
-from typing import Any, TypeAlias, TypeVar, Callable, no_type_check
+from typing import Any, TypeVar, Callable
 
 from pyblu._entities import PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
 
@@ -16,16 +16,17 @@ def chained_get_optional(data: dict[str, Any], *keys, _map: Callable[[str], T] |
         nested_data = local_data.get(key)
         if not isinstance(nested_data, dict):
             raise KeyError(f"Key '{key}' not found")
-        
+
         local_data = nested_data
-        
+
     last_key = keys[-1]
     value = local_data.get(last_key)
 
     if _map is not None and value is not None:
         return _map(value)
-    
+
     return value if value is not None else default
+
 
 def chained_get(data: dict[str, Any], *keys, _map: Callable[[str], T] | None = None, default: T | None = None) -> T:
     """Get a value from a nested dictionary.
@@ -35,7 +36,7 @@ def chained_get(data: dict[str, Any], *keys, _map: Callable[[str], T] | None = N
     value = chained_get_optional(data, *keys, _map=_map, default=default)
     if value is None:
         raise KeyError(f"Key '{keys[-1]}' not found")
-    
+
     return value
 
 
@@ -44,7 +45,7 @@ def parse_slave_list(slaves_raw: Any) -> list[PairedPlayer] | None:
         case {"@id": ip, "@port": port}:
             return [PairedPlayer(ip=ip, port=int(port))]
         case [*slaves_raw_match]:
-            return [PairedPlayer(ip=slave["@id"], port=int(slave["@port"])) for slave in slaves_raw_match] # type: ignore
+            return [PairedPlayer(ip=slave["@id"], port=int(slave["@port"])) for slave in slaves_raw_match]  # type: ignore
         case _:
             return None
 

@@ -113,7 +113,7 @@ class Player:
 
             return sync_status
 
-    async def volume(self, level: int | None = None, mute: bool | None = None, tell_slaves: bool| None = None, timeout: float | None = None) -> Volume:
+    async def volume(self, level: int | None = None, mute: bool | None = None, tell_slaves: bool | None = None, timeout: float | None = None) -> Volume:
         """Get or set the volume of the player.
         Call without parameters to get the current volume. Call with parameters to set the volume.
 
@@ -458,7 +458,6 @@ class Player:
                 inputs_raw_list = inputs_raw
             else:
                 inputs_raw_list = [inputs_raw]
-
 
             inputs = [
                 Input(
