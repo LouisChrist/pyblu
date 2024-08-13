@@ -134,12 +134,20 @@ def parse_volume(response_dict: dict[str, Any]) -> Volume:
     return volume
 
 
-def parse_play_queue(response_dict: dict[str, Any]) -> PlayQueue:
+def parse_play_queue(response: str) -> PlayQueue:
+    tree = etree.fromstring(response)
+    playlist_elements = tree.xpath("//playlist")
+
+    assert len(playlist_elements) < 2, "Too many playlist elements found"
+    assert len(playlist_elements) == 1, "Playlist element not found"
+
+    playlist_element = playlist_elements[0]
+
     play_queue = PlayQueue(
-        id=chained_get(response_dict, "playlist", "@id"),
-        modified=chained_get_optional(response_dict, "playlist", "@modified") == "1",
-        length=chained_get(response_dict, "playlist", "@length", _map=int),
-        shuffle=chained_get_optional(response_dict, "playlist", "@shuffle") == "1",
+        id=playlist_element.attrib["id"],
+        modified=playlist_element.attrib.get("modified") == "1",
+        length=int(playlist_element.attrib["length"]),
+        shuffle=playlist_element.attrib.get("shuffle") == "1",
     )
 
     return play_queue

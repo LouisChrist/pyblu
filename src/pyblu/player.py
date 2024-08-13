@@ -359,9 +359,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/Shuffle", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
 
-            play_queue = parse_play_queue(response_dict)
+            play_queue = parse_play_queue(response_data)
 
             return play_queue
 
@@ -377,9 +376,8 @@ class Player:
         async with self._session.get(f"{self.base_url}/Clear", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.text()
-            response_dict = xmltodict.parse(response_data)
 
-            play_queue = parse_play_queue(response_dict)
+            play_queue = parse_play_queue(response_data)
 
             return play_queue
 
