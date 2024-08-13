@@ -39,7 +39,7 @@ class Status:
 
     seconds: int
     """Current playback position in seconds"""
-    total_seconds: float
+    total_seconds: float | None
     """Total track length in seconds"""
     can_seek: bool
     """True if the current track can be seeked"""
