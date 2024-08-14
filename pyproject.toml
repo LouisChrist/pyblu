@@ -26,6 +26,7 @@ invoke = "^2.2.0"
 semver = "^3.0.2"
 mypy = "^1.11.1"
 types-xmltodict = "^0.13.0.3"
+pygithub = "^2.3.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,7 +1,9 @@
 import re
+import os
 
 from invoke import task, Context
 from semver import Version
+import github
 
 
 def _commits_with_version_change(ctx: Context):
@@ -36,6 +38,18 @@ def add_missing_tags(ctx: Context):
 
 @task
 def release(ctx: Context):
+    githubToken = os.getenv("GITHUB_TOKEN_PYBLU")
+    if githubToken is None:
+        print("GITHUB_TOKEN_PYBLU environment variable is required")
+        exit(1)
+    githubAuth = github.Auth.Token(githubToken)
+    gh = github.Github(auth=githubAuth)
+    try:
+        githubRepo = gh.get_repo("LouisChrist/pyblu")
+    except github.GithubException:
+        print("No access to LouisChrist/pyblue")
+        exit(1)
+
     current_branch = ctx.run("git branch --show-current", hide=True).stdout.strip()
     if current_branch != "main":
         print("You must be on the main branch to release")
@@ -73,6 +87,9 @@ def release(ctx: Context):
 
     print("Pushing changes")
     ctx.run("git push --follow-tags", hide=True)
+
+    print("Creating release")
+    githubRepo.create_git_release(f"v{bumped_version}", f"v{bumped_version}", generate_release_notes=True)
 
     print("Publishing package")
     ctx.run("poetry publish --build")
