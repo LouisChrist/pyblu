@@ -69,7 +69,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/Status", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             status = parse_status(response_data)
 
@@ -101,7 +101,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/SyncStatus", params=params) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             sync_status = parse_sync_status(response_data)
 
@@ -130,7 +130,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/Volume", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             volume = parse_volume(response_data)
             return volume
@@ -152,7 +152,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/Play", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             return parse_state(response_data)
 
@@ -171,7 +171,7 @@ class Player:
         }
         async with self._session.get(f"{self.base_url}/Play", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             return parse_state(response_data)
 
@@ -191,7 +191,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/Pause", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             return parse_state(response_data)
 
@@ -206,7 +206,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/Stop", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             return parse_state(response_data)
 
@@ -247,7 +247,7 @@ class Player:
         }
         async with self._session.get(f"{self.base_url}/AddSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             slaves_after_request = parse_add_slave(response_data)
 
@@ -272,7 +272,7 @@ class Player:
         }
         async with self._session.get(f"{self.base_url}/AddSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             slaves_after_request = parse_add_slave(response_data)
 
@@ -295,7 +295,7 @@ class Player:
         }
         async with self._session.get(f"{self.base_url}/RemoveSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             sync_status = parse_sync_status(response_data)
 
@@ -319,7 +319,7 @@ class Player:
         }
         async with self._session.get(f"{self.base_url}/RemoveSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             sync_status = parse_sync_status(response_data)
 
@@ -340,7 +340,7 @@ class Player:
         }
         async with self._session.get(f"{self.base_url}/Shuffle", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             play_queue = parse_play_queue(response_data)
 
@@ -357,7 +357,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/Clear", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             play_queue = parse_play_queue(response_data)
 
@@ -375,7 +375,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/Sleep", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             return parse_sleep(response_data)
 
@@ -390,7 +390,7 @@ class Player:
 
         async with self._session.get(f"{self.base_url}/Presets", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             presets = parse_presets(response_data)
 
@@ -423,6 +423,6 @@ class Player:
         params = {"service": "Capture"}
         async with self._session.get(f"{self.base_url}/RadioBrowse", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
-            response_data = await response.text()
+            response_data = await response.read()
 
             return parse_inputs(response_data)
