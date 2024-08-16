@@ -31,3 +31,15 @@ Data Classes
 
 .. autoclass:: pyblu.Input
    :members:
+
+Exceptions
+----------
+
+.. autoclass:: pyblu.errors.PlayerError
+   :members:
+
+.. autoclass:: pyblu.errors.PlayerUnreachableError
+   :members:
+
+.. autoclass:: pyblu.errors.PlayerUnexpectedResponseError
+   :members:
