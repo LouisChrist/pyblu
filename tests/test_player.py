@@ -4,7 +4,7 @@ from aioresponses import aioresponses
 import pytest
 
 from pyblu import Player, PairedPlayer
-from pyblu._entities import Preset, Input
+from pyblu.entities import Preset, Input
 
 
 async def test_skip():
@@ -86,7 +86,7 @@ async def test_status():
         mocked.get(
             "http://node:11000/Status",
             status=200,
-            body="""
+            body="""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
             <state>playing</state>
             <shuffle>1</shuffle>

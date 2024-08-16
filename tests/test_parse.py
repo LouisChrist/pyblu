@@ -1,48 +1,34 @@
-import xmltodict
-
 from pyblu import PairedPlayer
-from pyblu._parse import parse_slave_list, parse_status, parse_sync_status
+from pyblu.parse import parse_add_slave, parse_presets, parse_status, parse_sync_status
 
 
-def test_parse_slave_list_no_slave():
-    slaves_raw = {}
-    slaves = parse_slave_list(slaves_raw)
-    assert slaves is None
+def test_parse_add_slave_no_slave():
+    data = """<addSlave></addSlave>"""
+
+    slaves = parse_add_slave(data)
+
+    assert slaves == []
 
 
-def test_parse_slave_list_single_element():
-    slaves_raw = [
-        {
-            "@id": "1.1.1.1",
-            "@port": "11000",
-        }
-    ]
+def test_parse_add_slave_single_element():
+    data = """<addSlave>
+            <slave id="1.1.1.1" port="11000"/>
+        </addSlave>"""
 
-    slaves = parse_slave_list(slaves_raw)
+    slaves = parse_add_slave(data)
 
-    assert slaves == [
-        PairedPlayer(ip="1.1.1.1", port=11000),
-    ]
+    assert slaves == [PairedPlayer(ip="1.1.1.1", port=11000)]
 
 
-def test_parse_slave_list_multiple_elements():
-    slaves_raw = [
-        {
-            "@id": "1.1.1.1",
-            "@port": "11000",
-        },
-        {
-            "@id": "2.2.2.2",
-            "@port": "11000",
-        },
-    ]
+def test_parse_add_slave_multiple_elements():
+    data = """<addSlave>
+            <slave id="1.1.1.1" port="11000"/>
+            <slave id="2.2.2.2" port="11000"/>
+            </addSlave>"""
 
-    slaves = parse_slave_list(slaves_raw)
+    slaves = parse_add_slave(data)
 
-    assert slaves == [
-        PairedPlayer(ip="1.1.1.1", port=11000),
-        PairedPlayer(ip="2.2.2.2", port=11000),
-    ]
+    assert slaves == [PairedPlayer(ip="1.1.1.1", port=11000), PairedPlayer(ip="2.2.2.2", port=11000)]
 
 
 def test_parse_status_default_sleep():
@@ -79,9 +65,7 @@ def test_parse_status_default_sleep():
             <streamUrl>RadioParadise:/0:4</streamUrl>
         </status>"""
 
-    response_dict = xmltodict.parse(data)
-
-    status = parse_status(response_dict)
+    status = parse_status(data)
 
     assert status.sleep == 0
 
@@ -120,9 +104,7 @@ def test_parse_status_name_album_artist():
             <streamUrl>RadioParadise:/0:4</streamUrl>
         </status>"""
 
-    response_dict = xmltodict.parse(data)
-
-    status = parse_status(response_dict)
+    status = parse_status(data)
 
     assert status.name == "Name"
     assert status.album == "Album"
@@ -163,9 +145,7 @@ def test_parse_status_title1_title2_title3():
             <streamUrl>RadioParadise:/0:4</streamUrl>
         </status>"""
 
-    response_dict = xmltodict.parse(data)
-
-    status = parse_status(response_dict)
+    status = parse_status(data)
 
     assert status.name == "Track Name"
     assert status.album == "Album Name"
@@ -181,9 +161,7 @@ def test_parse_sync_status_without_master():
           <bluetoothOutput/>
         </SyncStatus>"""
 
-    response_dict = xmltodict.parse(data)
-
-    sync_status = parse_sync_status(response_dict)
+    sync_status = parse_sync_status(data)
 
     assert sync_status.brand == "Bluesound"
     assert sync_status.model == "N130"
@@ -201,3 +179,64 @@ def test_parse_sync_status_without_master():
     assert sync_status.zone_slave is False
     assert sync_status.master is None
     assert sync_status.slaves is None
+
+
+def test_parse_presets():
+    data = """<presets prid="2">
+          <preset url="Spotify:play" id="1" name="My preset" image="/Sources/images/SpotifyIcon.png"/>
+          <preset url="Spotify:play" id="2" name="Second" volume="10" image="/Sources/images/SpotifyIcon.png"/>
+        </presets>"""
+
+    presets = parse_presets(data)
+
+    assert len(presets) == 2
+    assert presets[0].url == "Spotify:play"
+    assert presets[0].id == 1
+    assert presets[0].name == "My preset"
+    assert presets[0].image == "/Sources/images/SpotifyIcon.png"
+    assert presets[0].volume is None
+
+    assert presets[1].url == "Spotify:play"
+    assert presets[1].id == 2
+    assert presets[1].name == "Second"
+    assert presets[1].image == "/Sources/images/SpotifyIcon.png"
+    assert presets[1].volume == 10
+
+
+def test_parse_status_optionals():
+    data = """<status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
+            <state>playing</state>
+            <shuffle>1</shuffle>
+            
+            <volume>10</volume>
+            <db>-20.1</db>
+            
+            <mute>1</mute>
+            
+            <secs>10</secs>
+            <canSeek>1</canSeek>
+            
+            <sleep>15</sleep>
+            
+            <indexing>1</indexing>
+        </status>"""
+
+    status = parse_status(data)
+
+    assert status.input_id is None
+    assert status.service is None
+
+    assert status.album is None
+    assert status.artist is None
+    assert status.name is None
+    assert status.image is None
+
+    assert status.mute_volume is None
+    assert status.mute_volume_db is None
+
+    assert status.total_seconds is None
+
+    assert status.group_name is None
+    assert status.group_volume is None
+
+    assert status.stream_url is None
