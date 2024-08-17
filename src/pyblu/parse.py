@@ -3,9 +3,14 @@ from urllib.parse import unquote
 from lxml import etree
 
 from pyblu.entities import Input, PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
+from pyblu.errors import _wrap_in_unxpected_response_error
 
 
+@_wrap_in_unxpected_response_error
 def parse_add_slave(response: bytes) -> list[PairedPlayer]:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     slave_elements = tree.xpath("//addSlave/slave")
@@ -13,7 +18,11 @@ def parse_add_slave(response: bytes) -> list[PairedPlayer]:
     return [PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"])) for x in slave_elements]
 
 
+@_wrap_in_unxpected_response_error
 def parse_sync_status(response: bytes) -> SyncStatus:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
 
@@ -59,7 +68,11 @@ def parse_sync_status(response: bytes) -> SyncStatus:
     return sync_status
 
 
+@_wrap_in_unxpected_response_error
 def parse_status(response: bytes) -> Status:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     status_elements = tree.xpath("//status")
@@ -105,7 +118,11 @@ def parse_status(response: bytes) -> Status:
     return status
 
 
+@_wrap_in_unxpected_response_error
 def parse_volume(response: bytes) -> Volume:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     volume_elements = tree.xpath("//volume")
@@ -122,7 +139,11 @@ def parse_volume(response: bytes) -> Volume:
     return volume
 
 
+@_wrap_in_unxpected_response_error
 def parse_play_queue(response: bytes) -> PlayQueue:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     playlist_elements = tree.xpath("//playlist")
@@ -140,7 +161,11 @@ def parse_play_queue(response: bytes) -> PlayQueue:
     return play_queue
 
 
+@_wrap_in_unxpected_response_error
 def parse_presets(response: bytes) -> list[Preset]:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     preset_elements = tree.xpath("//presets/preset")
@@ -159,7 +184,11 @@ def parse_presets(response: bytes) -> list[Preset]:
     return presets
 
 
+@_wrap_in_unxpected_response_error
 def parse_state(response: bytes) -> str:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     state_elements = tree.xpath("//state")
@@ -170,7 +199,11 @@ def parse_state(response: bytes) -> str:
     return state_element.text
 
 
+@_wrap_in_unxpected_response_error
 def parse_sleep(response: bytes) -> int:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     sleep_elements = tree.xpath("//sleep")
@@ -181,7 +214,11 @@ def parse_sleep(response: bytes) -> int:
     return int(sleep_element.text) if sleep_element.text else 0
 
 
+@_wrap_in_unxpected_response_error
 def parse_inputs(response: bytes) -> list[Input]:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
     input_elements = tree.xpath("//radiotime/item")
