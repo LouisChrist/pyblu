@@ -11,8 +11,9 @@ AsyncFuncT = TypeVar("AsyncFuncT", bound=Callable[..., Awaitable[Any]])
 
 
 class PlayerError(Exception):
+    """Base class for exceptions in this package."""
+
     def __init__(self, message: str):
-        """Base class for exceptions in this package."""
         super().__init__(message)
 
 
