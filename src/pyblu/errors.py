@@ -1,4 +1,4 @@
-from typing import Callable, TypeVar, Any, cast
+from typing import Awaitable, Callable, TypeVar, Any, cast
 
 from functools import wraps
 
@@ -6,7 +6,8 @@ import aiohttp
 
 __all__ = ["PlayerError", "PlayerUnreachableError", "PlayerUnexpectedResponseError"]
 
-T = TypeVar("T", bound=Callable[..., Any])
+FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+AsyncFuncT = TypeVar("AsyncFuncT", bound=Callable[..., Awaitable[Any]])
 
 
 class PlayerError(Exception):
@@ -26,7 +27,7 @@ class PlayerUnexpectedResponseError(PlayerError):
     """Exception raised when the player returns an unexpected response. This is likely a bug in this library."""
 
 
-def _wrap_in_unxpected_response_error(func: T) -> T:
+def _wrap_in_unxpected_response_error(func: FuncT) -> FuncT:
     @wraps(func)
     def wrapped(*args, **kwargs):
         try:
@@ -34,17 +35,17 @@ def _wrap_in_unxpected_response_error(func: T) -> T:
         except Exception as e:
             raise PlayerUnexpectedResponseError(f"Unexpected response from player: {e}") from e
 
-    return cast(T, wrapped)
+    return cast(FuncT, wrapped)
 
 
-def _wrap_in_unreachable_error(func: T) -> T:
+def _wrap_in_unreachable_error(func: AsyncFuncT) -> AsyncFuncT:
     @wraps(func)
-    def wrapped(*args, **kwargs):
+    async def wrapped(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         except TimeoutError as e:
             raise PlayerUnreachableError(f"Timout during request: {e}") from e
         except aiohttp.ClientConnectionError as e:
             raise PlayerUnexpectedResponseError(f"Connection error: {e}") from e
 
-    return cast(T, wrapped)
+    return cast(AsyncFuncT, wrapped)
