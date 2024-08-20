@@ -37,7 +37,7 @@ class Status:
     mute_volume_db: float | None
     """If the player is muted, then this is the unmuted volume level in dB. Absent if the player is not muted."""
 
-    seconds: int
+    seconds: float
     """Current playback position in seconds"""
     total_seconds: float | None
     """Total track length in seconds"""

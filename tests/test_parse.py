@@ -31,6 +31,71 @@ def test_parse_add_slave_multiple_elements():
     assert slaves == [PairedPlayer(ip="1.1.1.1", port=11000), PairedPlayer(ip="2.2.2.2", port=11000)]
 
 
+def test_parse_status():
+    data = """<status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
+            <state>playing</state>
+            <shuffle>1</shuffle>
+
+            <inputId>input-1</inputId>
+            <service>Capture</service>
+
+            <image>Image</image>
+
+            <name>Name</name>
+            <artist>Artist</artist>
+            <album>Album</album>
+
+            <volume>10</volume>
+            <db>-20.1</db>
+
+            <mute>1</mute>
+            <muteVolume>20</muteVolume>
+            <muteDb>-20.1</muteDb>
+
+            <secs>10.2</secs>
+            <totlen>100.3</totlen>
+            <canSeek>1</canSeek>
+
+            <sleep>15</sleep>
+
+            <groupName>Group</groupName>
+            <groupVolume>20</groupVolume>
+
+            <indexing>1</indexing>
+            <streamUrl>RadioParadise:/0:4</streamUrl>
+        </status>"""
+
+    status = parse_status(data)
+
+    assert status.etag == "4e266c9fbfba6d13d1a4d6ff4bd2e1e6"
+    assert status.state == "playing"
+    assert status.shuffle
+    assert status.input_id == "input-1"
+    assert status.service == "Capture"
+    assert status.image == "Image"
+
+    assert status.album == "Album"
+    assert status.artist == "Artist"
+    assert status.name == "Name"
+
+    assert status.volume == 10
+    assert status.volume_db == -20.1
+    assert status.mute
+    assert status.mute_volume == 20
+    assert status.mute_volume_db == -20.1
+    assert status.seconds == 10.2
+    assert status.total_seconds == 100.3
+    assert status.can_seek
+
+    assert status.sleep == 15
+
+    assert status.group_name == "Group"
+    assert status.group_volume == 20
+    assert status.indexing
+
+    assert status.stream_url == "RadioParadise:/0:4"
+
+
 def test_parse_status_default_sleep():
     data = """<status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
             <state>playing</state>
@@ -52,8 +117,8 @@ def test_parse_status_default_sleep():
             <muteVolume>20</muteVolume>
             <muteDb>-20.1</muteDb>
             
-            <secs>10</secs>
-            <totlen>100</totlen>
+            <secs>10.1</secs>
+            <totlen>100.1</totlen>
             <canSeek>1</canSeek>
             
             <sleep/>
@@ -91,8 +156,8 @@ def test_parse_status_name_album_artist():
             <muteVolume>20</muteVolume>
             <muteDb>-20.1</muteDb>
             
-            <secs>10</secs>
-            <totlen>100</totlen>
+            <secs>10.2</secs>
+            <totlen>100.2</totlen>
             <canSeek>1</canSeek>
             
             <sleep>15</sleep>
