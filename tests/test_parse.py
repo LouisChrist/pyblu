@@ -95,6 +95,7 @@ def test_parse_status():
 
     assert status.stream_url == "RadioParadise:/0:4"
 
+
 def test_parse_status_default_sleep():
     data = """<status etag="4e266c9fbfba6d13d1a4d6ff4bd2e1e6">
             <state>playing</state>
