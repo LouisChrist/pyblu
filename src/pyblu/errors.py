@@ -47,6 +47,6 @@ def _wrap_in_unreachable_error(func: AsyncFuncT) -> AsyncFuncT:
         except TimeoutError as e:
             raise PlayerUnreachableError(f"Timout during request: {e}") from e
         except aiohttp.ClientConnectionError as e:
-            raise PlayerUnexpectedResponseError(f"Connection error: {e}") from e
+            raise PlayerUnreachableError(f"Connection error: {e}") from e
 
     return cast(AsyncFuncT, wrapped)
