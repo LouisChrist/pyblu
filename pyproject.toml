@@ -1,36 +1,30 @@
-[tool.poetry]
+[project]
 name = "pyblu"
 version = "1.0.2"
 description = ""
-authors = ["Louis Christ <mail@louischrist.de>"]
+authors = [{ name = "Louis Christ", email = "mail@louischrist.de" }]
 repository = "https://github.com/LouisChrist/pyblu"
-license = "MIT"
 readme = "README.md"
 packages = [
     { include = "pyblu", from = "src" },
 ]
+dependencies = [
+    "aiohttp == 3.10.5",
+    "lxml == 5.3.0"]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-aiohttp = "^3.9.0"
-lxml = "^5.0.0"
-
-[tool.poetry.group.dev.dependencies]
-pylint = "^3.2.5"
-black = "^24.4.2"
-pytest = "^8.2.2"
-aioresponses = "^0.7.6"
-pytest-asyncio = "^0.24.0"
-sphinx = "^8.0.0"
-invoke = "^2.2.0"
-semver = "^3.0.2"
-mypy = "^1.11.1"
-pygithub = "^2.3.0"
-types-lxml = "^2024.8.7"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+dev-dependencies = [
+    "pylint == 3.2.6",
+    "black == 24.8.0",
+    "pytest == 8.3.2",
+    "aioresponses == 0.7.6",
+    "pytest-asyncio == 0.24.0",
+    "sphinx == 8.0.2",
+    "invoke == 2.2.0",
+    "semver == 3.0.2",
+    "mypy == 1.11.2",
+    "pygithub == 2.4.0",
+    "types-lxml == 2024.8.7",]
 
 [tool.pylint."messages control"]
 disable = [
