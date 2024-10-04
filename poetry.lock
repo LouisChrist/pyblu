@@ -1534,13 +1534,13 @@ files = [
 
 [[package]]
 name = "types-lxml"
-version = "2024.8.7"
+version = "2024.9.16"
 description = "Complete lxml external type annotation"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types_lxml-2024.8.7-py3-none-any.whl", hash = "sha256:a0b8669b2dc57d47dcf31fbbee5007f8ed71b37406f4c7e5fa650e2480568eb9"},
-    {file = "types_lxml-2024.8.7.tar.gz", hash = "sha256:9ee5cdb1efd60f6eeb101b78f92591fd99202e4878b46d621b52f6cd67a9c80f"},
+    {file = "types_lxml-2024.9.16-py3-none-any.whl", hash = "sha256:bde062b76e701555aa84c23ba1cc6b22a3855dc1bf6970f48c04f2aab3ba806d"},
+    {file = "types_lxml-2024.9.16.tar.gz", hash = "sha256:1005984c8da5ceb929b5f168a804b8b7217c8e0c6459fa205aa19fd8d75571ab"},
 ]
 
 [package.dependencies]
@@ -1764,4 +1764,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7293c9d38c556f8940f7a0ef910d8e3d8cfe6b9cc771ac9d71fed640e21dc266"
+content-hash = "3013500266cc1c0412896893c6388bb329a18a9a8d977d1d18d8c17f82f7bb29"
