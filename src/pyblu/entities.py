@@ -147,7 +147,7 @@ class Preset:
     """Unique id of the preset"""
     url: str
     """URL of the preset. Can be used with *play_url* to play the preset"""
-    image: str
+    image: str | None
     """URL of the preset image"""
     volume: int | None
     """Volume level with a range of 0-100. None means the volume is not set."""

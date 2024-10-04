@@ -175,7 +175,7 @@ def parse_presets(response: bytes) -> list[Preset]:
             name=x.attrib["name"],
             id=int(x.attrib["id"]),
             url=x.attrib["url"],
-            image=x.attrib["image"],
+            image=x.attrib.get("image"),
             volume=int(x.attrib.get("volume")) if x.attrib.get("volume") else None,
         )
         for x in preset_elements

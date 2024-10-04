@@ -248,7 +248,7 @@ def test_parse_sync_status_without_master():
 
 def test_parse_presets():
     data = """<presets prid="2">
-          <preset url="Spotify:play" id="1" name="My preset" image="/Sources/images/SpotifyIcon.png"/>
+          <preset url="Spotify:play" id="1" name="My preset"/>
           <preset url="Spotify:play" id="2" name="Second" volume="10" image="/Sources/images/SpotifyIcon.png"/>
         </presets>"""
 
@@ -258,7 +258,7 @@ def test_parse_presets():
     assert presets[0].url == "Spotify:play"
     assert presets[0].id == 1
     assert presets[0].name == "My preset"
-    assert presets[0].image == "/Sources/images/SpotifyIcon.png"
+    assert presets[0].image is None
     assert presets[0].volume is None
 
     assert presets[1].url == "Spotify:play"
