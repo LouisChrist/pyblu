@@ -278,7 +278,6 @@ def test_parse_status_optionals():
             
             <mute>1</mute>
             
-            <secs>10</secs>
             <canSeek>1</canSeek>
             
             <sleep>15</sleep>
@@ -299,6 +298,7 @@ def test_parse_status_optionals():
     assert status.mute_volume is None
     assert status.mute_volume_db is None
 
+    assert status.seconds is None
     assert status.total_seconds is None
 
     assert status.group_name is None

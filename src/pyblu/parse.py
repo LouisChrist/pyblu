@@ -105,7 +105,7 @@ def parse_status(response: bytes) -> Status:
         mute=status_element.findtext("mute") == "1",
         mute_volume=int(status_element.findtext("muteVolume")) if status_element.findtext("muteVolume") else None,
         mute_volume_db=float(status_element.findtext("muteDb")) if status_element.findtext("muteDb") else None,
-        seconds=float(status_element.findtext("secs")),
+        seconds=float(status_element.findtext("secs")) if status_element.findtext("secs") else None,
         total_seconds=float(status_element.findtext("totlen")) if status_element.findtext("totlen") else None,
         can_seek=status_element.findtext("canSeek") == "1",
         sleep=int(status_element.findtext("sleep")) if status_element.findtext("sleep") else 0,
