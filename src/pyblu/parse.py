@@ -7,15 +7,15 @@ from pyblu.errors import _wrap_in_unxpected_response_error
 
 
 @_wrap_in_unxpected_response_error
-def parse_add_slave(response: bytes) -> list[PairedPlayer]:
+def parse_add_follower(response: bytes) -> list[PairedPlayer]:
     """
     :raises PlayerUnexpectedResponseError: If the response is not as expected.
     """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
-    slave_elements = tree.xpath("//addSlave/slave")
+    follower_elements = tree.xpath("//addSlave/slave")
 
-    return [PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"])) for x in slave_elements]
+    return [PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"])) for x in follower_elements]
 
 
 @_wrap_in_unxpected_response_error
@@ -26,18 +26,18 @@ def parse_sync_status(response: bytes) -> SyncStatus:
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
 
-    master: PairedPlayer | None = None
-    master_elements = tree.xpath("//SyncStatus/master")
-    if master_elements:
-        master_element = master_elements[0]
-        master_ip = master_element.text
-        master_port = master_element.attrib["port"]
-        master = PairedPlayer(ip=master_ip, port=int(master_port))
+    leader: PairedPlayer | None = None
+    leader_elements = tree.xpath("//SyncStatus/master")
+    if leader_elements:
+        leader_element = leader_elements[0]
+        leader_ip = leader_element.text
+        leader_port = leader_element.attrib["port"]
+        leader = PairedPlayer(ip=leader_ip, port=int(leader_port))
 
-    slaves: list[PairedPlayer] | None = None
-    slave_elements = tree.xpath("//SyncStatus/slave")
-    if slave_elements:
-        slaves = [PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"])) for x in slave_elements]
+    followers: list[PairedPlayer] | None = None
+    follower_elements = tree.xpath("//SyncStatus/slave")
+    if follower_elements:
+        followers = [PairedPlayer(ip=x.attrib["id"], port=int(x.attrib["port"])) for x in follower_elements]
 
     sync_status_elements = tree.xpath("//SyncStatus")
     assert len(sync_status_elements) == 1, "SyncStatus element not found or multiple found"
@@ -51,11 +51,11 @@ def parse_sync_status(response: bytes) -> SyncStatus:
         image=sync_status_element.attrib["icon"],
         initialized=sync_status_element.attrib.get("initialized") == "true",
         group=sync_status_element.attrib.get("group"),
-        master=master,
-        slaves=slaves,
+        leader=leader,
+        followers=followers,
         zone=sync_status_element.attrib.get("zone"),
-        zone_master=sync_status_element.attrib.get("zoneMaster") == "true",
-        zone_slave=sync_status_element.attrib.get("zoneMaster") == "true",
+        zone_leader=sync_status_element.attrib.get("zoneMaster") == "true",
+        zone_follower=sync_status_element.attrib.get("zoneMaster") == "true",
         brand=sync_status_element.attrib["brand"],
         model=sync_status_element.attrib["model"],
         model_name=sync_status_element.attrib["modelName"],

@@ -48,9 +48,9 @@ class Status:
     """Sleep timer in minutes. 0 means the sleep timer is off."""
 
     group_name: str | None
-    """Name of the group the player is in. Only present on master."""
+    """Name of the group the player is in. Only present on leader."""
     group_volume: int | None
-    """Volume level of the group. Only present on master. Range is 0-100."""
+    """Volume level of the group. Only present on leader. Range is 0-100."""
 
     indexing: bool
     """True if the player is currently indexing."""
@@ -87,17 +87,17 @@ class SyncStatus:
 
     group: str | None
     """Group name of the player"""
-    master: PairedPlayer | None
-    """Master player. Only present if the player is grouped and not master itself"""
-    slaves: list[PairedPlayer] | None
-    """List of slave players. Only present if the player is master"""
+    leader: PairedPlayer | None
+    """Player leading the group. Only present if the player is grouped and not leader itself"""
+    followers: list[PairedPlayer] | None
+    """List of following players. Only present if the player is leader of a group"""
 
     zone: str | None
     """Name of the zone the player is in. Zones are fixed groups."""
-    zone_master: bool | None
-    """True if the player is the master of the zone, false otherwise"""
-    zone_slave: bool | None
-    """True if the player is a slave in the zone, false otherwise"""
+    zone_leader: bool | None
+    """True if the player is the leader of the zone, false otherwise"""
+    zone_follower: bool | None
+    """True if the player is a follower in the zone, false otherwise"""
 
     brand: str
     """Brand name of the player"""

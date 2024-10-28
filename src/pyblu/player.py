@@ -1,7 +1,17 @@
 import aiohttp
 
 from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
-from pyblu.parse import parse_add_slave, parse_inputs, parse_sleep, parse_state, parse_sync_status, parse_status, parse_volume, parse_play_queue, parse_presets
+from pyblu.parse import (
+    parse_add_follower,
+    parse_inputs,
+    parse_sleep,
+    parse_state,
+    parse_sync_status,
+    parse_status,
+    parse_volume,
+    parse_play_queue,
+    parse_presets,
+)
 from pyblu.errors import _wrap_in_unreachable_error
 
 
@@ -117,13 +127,13 @@ class Player:
             return sync_status
 
     @_wrap_in_unreachable_error
-    async def volume(self, level: int | None = None, mute: bool | None = None, tell_slaves: bool | None = None, timeout: float | None = None) -> Volume:
+    async def volume(self, level: int | None = None, mute: bool | None = None, tell_followers: bool | None = None, timeout: float | None = None) -> Volume:
         """Get or set the volume of the player.
         Call without parameters to get the current volume. Call with parameters to set the volume.
 
         :param level: The volume level to set. Range is 0-100.
         :param mute: Whether to mute the player.
-        :param tell_slaves: Whether to tell grouped speakers to change their volume as well.
+        :param tell_followers: Whether to tell grouped speakers to change their volume as well.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
@@ -138,8 +148,8 @@ class Player:
             params["level"] = str(level)
         if mute is not None:
             params["mute"] = "1" if mute else "0"
-        if tell_slaves is not None:
-            params["tell_slaves"] = "1" if tell_slaves else "0"
+        if tell_followers is not None:
+            params["tell_slaves"] = "1" if tell_followers else "0"
 
         async with self._session.get(f"{self.base_url}/Volume", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
@@ -267,8 +277,8 @@ class Player:
             response.raise_for_status()
 
     @_wrap_in_unreachable_error
-    async def add_slave(self, ip: str, port: int = 11000, timeout: float | None = None) -> list[PairedPlayer]:
-        """Add a secondary player to the current player as a slave.
+    async def add_follower(self, ip: str, port: int = 11000, timeout: float | None = None) -> list[PairedPlayer]:
+        """Add a secondary player to the current player as a follower.
         If it fails the player won't be in the returned list.
 
         :param ip: The IP address of the player to add.
@@ -278,7 +288,7 @@ class Player:
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
         :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
 
-        :return: The list of slaves of the player.
+        :return: The list of followers of the player.
         """
         used_timeout = timeout if timeout is not None else self._default_timeout
 
@@ -290,42 +300,42 @@ class Player:
             response.raise_for_status()
             response_data = await response.read()
 
-            slaves_after_request = parse_add_slave(response_data)
+            followers_after_request = parse_add_follower(response_data)
 
-            return slaves_after_request
+            return followers_after_request
 
     @_wrap_in_unreachable_error
-    async def add_slaves(self, slaves: list[PairedPlayer], timeout: float | None = None) -> list[PairedPlayer]:
-        """Add a list of secondary players to the current player as slaves.
+    async def add_followers(self, followers: list[PairedPlayer], timeout: float | None = None) -> list[PairedPlayer]:
+        """Add a list of following players to the current player.
         If it fails the player won't be in the returned list.
 
-        Same as *add_slave* but with a list of players. Makes only one request to player.
+        Same as *add_follower* but with a list of players. Makes only one request to player.
 
-        :param slaves: The list of players to add.
+        :param followers: The list of players to add.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
         :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
 
-        :return: The list of slaves of the player.
+        :return: The list of followers of the player.
         """
         used_timeout = timeout if timeout is not None else self._default_timeout
 
         params = {
-            "slaves": ",".join(x.ip for x in slaves),
-            "ports": ",".join(str(x.port) for x in slaves),
+            "slaves": ",".join(x.ip for x in followers),
+            "ports": ",".join(str(x.port) for x in followers),
         }
         async with self._session.get(f"{self.base_url}/AddSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.read()
 
-            slaves_after_request = parse_add_slave(response_data)
+            followers_after_request = parse_add_follower(response_data)
 
-            return slaves_after_request
+            return followers_after_request
 
     @_wrap_in_unreachable_error
-    async def remove_slave(self, ip: str, port: int = 11000, timeout: float | None = None) -> SyncStatus:
-        """Remove a secondary player from the group.
+    async def remove_follower(self, ip: str, port: int = 11000, timeout: float | None = None) -> SyncStatus:
+        """Remove a following player from the group.
 
         :param ip: The IP address of the player to remove.
         :param port: The port of the player to remove. Default is 11000.
@@ -351,12 +361,12 @@ class Player:
             return sync_status
 
     @_wrap_in_unreachable_error
-    async def remove_slaves(self, slaves: list[PairedPlayer], timeout: float | None = None) -> SyncStatus:
-        """Remove a list of secondary players from the group.
+    async def remove_followers(self, followers: list[PairedPlayer], timeout: float | None = None) -> SyncStatus:
+        """Remove a list of following players from the group.
 
-        Same as *remove_slave* but with a list of players. Makes only one request to player.
+        Same as *remove_follower* but with a list of players. Makes only one request to player.
 
-        :param slaves: The list of players to remove.
+        :param followers: The list of players to remove.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
@@ -367,8 +377,8 @@ class Player:
         used_timeout = timeout if timeout is not None else self._default_timeout
 
         params = {
-            "slaves": ",".join(x.ip for x in slaves),
-            "ports": ",".join(str(x.port) for x in slaves),
+            "slaves": ",".join(x.ip for x in followers),
+            "ports": ",".join(str(x.port) for x in followers),
         }
         async with self._session.get(f"{self.base_url}/RemoveSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
