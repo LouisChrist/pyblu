@@ -1,34 +1,34 @@
 from pyblu import PairedPlayer
-from pyblu.parse import parse_add_slave, parse_presets, parse_status, parse_sync_status
+from pyblu.parse import parse_add_follower, parse_presets, parse_status, parse_sync_status
 
 
-def test_parse_add_slave_no_slave():
+def test_parse_add_follower_no_follower():
     data = """<addSlave></addSlave>"""
 
-    slaves = parse_add_slave(data)
+    followers = parse_add_follower(data)
 
-    assert slaves == []
+    assert followers == []
 
 
-def test_parse_add_slave_single_element():
+def test_parse_add_follower_single_element():
     data = """<addSlave>
             <slave id="1.1.1.1" port="11000"/>
         </addSlave>"""
 
-    slaves = parse_add_slave(data)
+    followers = parse_add_follower(data)
 
-    assert slaves == [PairedPlayer(ip="1.1.1.1", port=11000)]
+    assert followers == [PairedPlayer(ip="1.1.1.1", port=11000)]
 
 
-def test_parse_add_slave_multiple_elements():
+def test_parse_add_follower_multiple_elements():
     data = """<addSlave>
             <slave id="1.1.1.1" port="11000"/>
             <slave id="2.2.2.2" port="11000"/>
             </addSlave>"""
 
-    slaves = parse_add_slave(data)
+    followers = parse_add_follower(data)
 
-    assert slaves == [PairedPlayer(ip="1.1.1.1", port=11000), PairedPlayer(ip="2.2.2.2", port=11000)]
+    assert followers == [PairedPlayer(ip="1.1.1.1", port=11000), PairedPlayer(ip="2.2.2.2", port=11000)]
 
 
 def test_parse_status():
@@ -217,7 +217,7 @@ def test_parse_status_title1_title2_title3():
     assert status.artist == "Artist Name"
 
 
-def test_parse_sync_status_without_master():
+def test_parse_sync_status_without_leader():
     data = """<SyncStatus icon="/images/players/N125_nt.png"
         db="-17.1" modelName="NODE" model="N130"
         brand="Bluesound" initialized="true" id="1.1.1.1:11000" mac="00:11:22:33:44:55" volume="29" 
@@ -240,10 +240,10 @@ def test_parse_sync_status_without_master():
     assert sync_status.name == "Node"
     assert sync_status.etag == "707"
     assert sync_status.zone is None
-    assert sync_status.zone_master is False
-    assert sync_status.zone_slave is False
-    assert sync_status.master is None
-    assert sync_status.slaves is None
+    assert sync_status.zone_leader is False
+    assert sync_status.zone_follower is False
+    assert sync_status.leader is None
+    assert sync_status.followers is None
 
 
 def test_parse_presets():

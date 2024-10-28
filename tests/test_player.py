@@ -237,11 +237,11 @@ async def test_sync_status():
         assert sync_status.image == "/images/players/N125_nt.png"
         assert sync_status.initialized
         assert sync_status.group == "Node +2"
-        assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
-        assert sync_status.slaves == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
+        assert sync_status.leader == PairedPlayer(ip="192.168.1.100", port=11000)
+        assert sync_status.followers == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
         assert sync_status.zone == "Desk"
-        assert sync_status.zone_master
-        assert sync_status.zone_slave
+        assert sync_status.zone_leader
+        assert sync_status.zone_follower
         assert sync_status.brand == "Bluesound"
         assert sync_status.model == "N130"
         assert sync_status.model_name == "NODE"
@@ -251,7 +251,7 @@ async def test_sync_status():
         assert sync_status.volume == 29
 
 
-async def test_sync_status_one_slave():
+async def test_sync_status_one_follower():
     with aioresponses() as mocked:
         mocked.get(
             "http://node:11000/SyncStatus",
@@ -275,7 +275,7 @@ async def test_sync_status_one_slave():
 
         mocked.assert_called_once()
 
-        assert sync_status.slaves == [
+        assert sync_status.followers == [
             PairedPlayer(ip="192.168.1.153", port=11000),
         ]
 
@@ -312,7 +312,7 @@ async def test_sync_status_long_polling():
         mocked.assert_called_once()
 
 
-async def test_add_slave():
+async def test_add_follower():
     with aioresponses() as mocked:
         mocked.get(
             "http://node:11000/AddSlave?slave=1.1.1.1&port=11000",
@@ -325,16 +325,16 @@ async def test_add_slave():
         )
 
         async with Player("node") as client:
-            slaves = await client.add_slave("1.1.1.1", 11000)
+            followers = await client.add_follower("1.1.1.1", 11000)
 
         mocked.assert_called_once()
 
-        assert slaves == [
+        assert followers == [
             PairedPlayer(ip="1.1.1.1", port=11000),
         ]
 
 
-async def test_add_slaves():
+async def test_add_followers():
     with aioresponses() as mocked:
         mocked.get(
             "http://node:11000/AddSlave?slaves=1.1.1.1,2.2.2.2&ports=11000,11000",
@@ -348,7 +348,7 @@ async def test_add_slaves():
         )
 
         async with Player("node") as client:
-            slaves = await client.add_slaves(
+            followers = await client.add_followers(
                 [
                     PairedPlayer(ip="1.1.1.1", port=11000),
                     PairedPlayer(ip="2.2.2.2", port=11000),
@@ -357,13 +357,13 @@ async def test_add_slaves():
 
         mocked.assert_called_once()
 
-        assert slaves == [
+        assert followers == [
             PairedPlayer(ip="1.1.1.1", port=11000),
             PairedPlayer(ip="2.2.2.2", port=11000),
         ]
 
 
-async def test_remove_slave():
+async def test_remove_follower():
     with aioresponses() as mocked:
         mocked.get(
             "http://node:11000/RemoveSlave?slave=1.1.1.1&port=11000",
@@ -384,7 +384,7 @@ async def test_remove_slave():
         )
 
         async with Player("node") as client:
-            sync_status = await client.remove_slave("1.1.1.1", 11000)
+            sync_status = await client.remove_follower("1.1.1.1", 11000)
 
         mocked.assert_called_once()
 
@@ -395,11 +395,11 @@ async def test_remove_slave():
         assert sync_status.image == "/images/players/N125_nt.png"
         assert sync_status.initialized
         assert sync_status.group == "Node +2"
-        assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
-        assert sync_status.slaves == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
+        assert sync_status.leader == PairedPlayer(ip="192.168.1.100", port=11000)
+        assert sync_status.followers == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
         assert sync_status.zone == "Desk"
-        assert sync_status.zone_master
-        assert sync_status.zone_slave
+        assert sync_status.zone_leader
+        assert sync_status.zone_follower
         assert sync_status.brand == "Bluesound"
         assert sync_status.model == "N130"
         assert sync_status.model_name == "NODE"
@@ -409,7 +409,7 @@ async def test_remove_slave():
         assert sync_status.volume == 29
 
 
-async def test_remove_slaves():
+async def test_remove_followers():
     with aioresponses() as mocked:
         mocked.get(
             "http://node:11000/RemoveSlave?slaves=1.1.1.1,2.2.2.2&ports=11000,11000",
@@ -430,7 +430,7 @@ async def test_remove_slaves():
         )
 
         async with Player("node") as client:
-            sync_status = await client.remove_slaves(
+            sync_status = await client.remove_followers(
                 [
                     PairedPlayer(ip="1.1.1.1", port=11000),
                     PairedPlayer(ip="2.2.2.2", port=11000),
@@ -446,11 +446,11 @@ async def test_remove_slaves():
         assert sync_status.image == "/images/players/N125_nt.png"
         assert sync_status.initialized
         assert sync_status.group == "Node +2"
-        assert sync_status.master == PairedPlayer(ip="192.168.1.100", port=11000)
-        assert sync_status.slaves == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
+        assert sync_status.leader == PairedPlayer(ip="192.168.1.100", port=11000)
+        assert sync_status.followers == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
         assert sync_status.zone == "Desk"
-        assert sync_status.zone_master
-        assert sync_status.zone_slave
+        assert sync_status.zone_leader
+        assert sync_status.zone_follower
         assert sync_status.brand == "Bluesound"
         assert sync_status.model == "N130"
         assert sync_status.model_name == "NODE"
