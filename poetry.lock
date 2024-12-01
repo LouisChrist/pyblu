@@ -1540,13 +1540,13 @@ files = [
 
 [[package]]
 name = "types-lxml"
-version = "2024.9.16"
+version = "2024.11.8"
 description = "Complete lxml external type annotation"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "types_lxml-2024.9.16-py3-none-any.whl", hash = "sha256:bde062b76e701555aa84c23ba1cc6b22a3855dc1bf6970f48c04f2aab3ba806d"},
-    {file = "types_lxml-2024.9.16.tar.gz", hash = "sha256:1005984c8da5ceb929b5f168a804b8b7217c8e0c6459fa205aa19fd8d75571ab"},
+    {file = "types_lxml-2024.11.8-py3-none-any.whl", hash = "sha256:4b4fa7f9e2f1d5f58b98ac9852a75927e4e0f69363249f9cebc78db095c046e0"},
+    {file = "types_lxml-2024.11.8.tar.gz", hash = "sha256:0cdb4d943cb104e019b7273fd24af72a0826d0043b3e5100b672c3bb99028e00"},
 ]
 
 [package.dependencies]
@@ -1555,7 +1555,8 @@ types-beautifulsoup4 = ">=4.12,<5.0"
 typing_extensions = {version = ">=4.10,<5.0", markers = "python_version < \"3.13\""}
 
 [package.extras]
-test = ["beautifulsoup4 (>=4.8,<5.0)", "html5lib (==1.1)", "lxml (>=4.9)", "mypy (>=1.11.0,<1.12.0)", "pyright (>=1.1.351)", "pytest (>=7.0,<9)", "pytest-mypy-plugins (>=2.0)", "tox (>=4.0,<5.0)", "typeguard (>=3.0)", "typeguard (>=4.3.0)"]
+mypy = ["mypy (>=1.11,<2.0)"]
+pyright = ["pyright (>=1.1.351)"]
 
 [[package]]
 name = "typing-extensions"
@@ -1772,4 +1773,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "127ddb704c2bc73a8c0e17b31f074eefaf9b9275ece1b246425df1f9aeff9a50"
+content-hash = "e2362cadb1084a4dc90d6bcfb86bd7ad9100853e88936dd21b381eb38598486e"
