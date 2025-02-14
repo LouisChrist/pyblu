@@ -14,3 +14,10 @@ updates:
    directory: "/"
    schedule:
      interval: monthly
+   groups:
+     all:
+       patterns:
+         - "*"
+       update-types:
+         - patch
+         - minor
