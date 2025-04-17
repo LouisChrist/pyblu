@@ -635,7 +635,7 @@ async def test_inputs():
             status=200,
             body="""
         <radiotime service="Capture">
-          <item typeIndex="bluetooth-1" playerName="Node" text="Bluetooth" inputType="bluetooth" id="input3" URL="Capture%3Abluez%3Abluetooth" image="/images/BluetoothIcon.png" type="audio"/>
+          <item typeIndex="bluetooth-1" playerName="Node" text="Bluetooth" inputType="bluetooth" URL="Capture%3Abluez%3Abluetooth" image="/images/BluetoothIcon.png" type="audio"/>
           <item typeIndex="arc-1" playerName="Node" text="HDMI ARC" inputType="arc" id="input2" URL="Capture%3Ahw%3Aimxspdif%2C0%2F1%2F25%2F2%3Fid%3Dinput2" image="/images/capture/ic_tv.png" type="audio"/>
           <item playerName="Node" text="Spotify" id="Spotify" URL="Spotify%3Aplay" image="/Sources/images/SpotifyIcon.png" serviceType="CloudService" type="audio"/>
         </radiotime>
@@ -647,7 +647,7 @@ async def test_inputs():
         mocked.assert_called_once()
 
         assert inputs == [
-            Input(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture:bluez:bluetooth"),
+            Input(id=None, text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture:bluez:bluetooth"),
             Input(id="input2", text="HDMI ARC", image="/images/capture/ic_tv.png", url="Capture:hw:imxspdif,0/1/25/2?id=input2"),
             Input(id="Spotify", text="Spotify", image="/Sources/images/SpotifyIcon.png", url="Spotify:play"),
         ]

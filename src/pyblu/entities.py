@@ -155,7 +155,7 @@ class Preset:
 
 @dataclass
 class Input:
-    id: str
+    id: str | None
     """Unique id of the input"""
     text: str
     """User friendly name of the input"""

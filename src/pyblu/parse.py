@@ -225,7 +225,7 @@ def parse_inputs(response: bytes) -> list[Input]:
 
     inputs = [
         Input(
-            id=x.attrib["id"],
+            id=x.attrib.get("id"),
             text=x.attrib["text"],
             image=x.attrib["image"],
             url=unquote(x.attrib["URL"]),
