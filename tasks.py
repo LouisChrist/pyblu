@@ -60,7 +60,7 @@ def release(ctx: Context):
         print("There are uncommited changes")
         exit(1)
 
-    version = ctx.run("poetry version --short", hide=True).stdout.strip()
+    version = ctx.run("uv version --short", hide=True).stdout.strip()
     version = Version.parse(version)
 
     print(f"patch: {version.bump_patch()}")
@@ -78,7 +78,7 @@ def release(ctx: Context):
             print("Invalid choice")
             exit(1)
 
-    ctx.run(f"poetry version {choice}")
+    ctx.run(f"uv version --bump {choice}")
 
     print(f"Creating commit with tag v{bumped_version}")
     ctx.run("git add pyproject.toml", hide=True)
@@ -91,8 +91,9 @@ def release(ctx: Context):
     print("Creating release")
     githubRepo.create_git_release(f"v{bumped_version}", f"v{bumped_version}", generate_release_notes=True)
 
-    print("Publishing package")
-    ctx.run("poetry publish --build")
+    print("Building and publishing package")
+    ctx.run("uv build")
+    ctx.run("uv publish")
 
     print(f"Release v{bumped_version} created and published")
 
