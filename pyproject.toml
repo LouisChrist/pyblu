@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -15,6 +15,9 @@ dependencies = [
 
 [project.urls]
 repository = "https://github.com/LouisChrist/pyblu"
+
+[tool.hatch.build.targets.sdist]
+include = ["src"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pyblu"]
