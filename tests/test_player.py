@@ -638,6 +638,7 @@ async def test_inputs():
           <item typeIndex="bluetooth-1" playerName="Node" text="Bluetooth" inputType="bluetooth" URL="Capture%3Abluez%3Abluetooth" image="/images/BluetoothIcon.png" type="audio"/>
           <item typeIndex="arc-1" playerName="Node" text="HDMI ARC" inputType="arc" id="input2" URL="Capture%3Ahw%3Aimxspdif%2C0%2F1%2F25%2F2%3Fid%3Dinput2" image="/images/capture/ic_tv.png" type="audio"/>
           <item playerName="Node" text="Spotify" id="Spotify" URL="Spotify%3Aplay" image="/Sources/images/SpotifyIcon.png" serviceType="CloudService" type="audio"/>
+          <item id="xdynamic-Source7" type="audio" inputType="analog" URL="Capture%3Ahw%3Asoundchassis%2C0%2F1%2F25%2F2%3Fid%3Dxdynamic-Source7" image="/images/capture/ic_analoginput.png"/>
         </radiotime>
         """,
         )
@@ -650,6 +651,7 @@ async def test_inputs():
             Input(id=None, text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture:bluez:bluetooth"),
             Input(id="input2", text="HDMI ARC", image="/images/capture/ic_tv.png", url="Capture:hw:imxspdif,0/1/25/2?id=input2"),
             Input(id="Spotify", text="Spotify", image="/Sources/images/SpotifyIcon.png", url="Spotify:play"),
+            Input(id="xdynamic-Source7", text=None, image="/images/capture/ic_analoginput.png", url="Capture:hw:soundchassis,0/1/25/2?id=xdynamic-Source7"),
         ]
 
 
