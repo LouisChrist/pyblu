@@ -47,7 +47,7 @@ def release(ctx: Context):
     try:
         githubRepo = gh.get_repo("LouisChrist/pyblu")
     except github.GithubException:
-        print("No access to LouisChrist/pyblue")
+        print("No access to LouisChrist/pyblu")
         exit(1)
 
     current_branch = ctx.run("git branch --show-current", hide=True).stdout.strip()
