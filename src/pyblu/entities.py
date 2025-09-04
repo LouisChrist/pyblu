@@ -157,7 +157,7 @@ class Preset:
 class Input:
     id: str | None
     """Unique id of the input"""
-    text: str
+    text: str | None
     """User friendly name of the input"""
     image: str
     """URL of the input image"""
