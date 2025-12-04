@@ -6,7 +6,7 @@
 
 This is a Python library for interfacing with BluOS players. 
 It uses the 
-[BluOS API](https://bluesound-deutschland.de/wp-content/uploads/2022/01/Custom-Integration-API-v1.0_March-2021.pdf) 
+[BluOS API](https://bluos.io/wp-content/uploads/2025/06/BluOS-Custom-Integration-API_v1.7.pdf) 
 to control and query the status of BluOS players.
 Authentication is not required.
 
