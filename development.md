@@ -186,7 +186,7 @@ Error: `GITHUB_TOKEN_PYBLU environment variable is required`
 
 ### Uncommitted Changes
 
-Error: `There are uncommited changes`
+Error: `There are uncommitted changes`
 
 **Solutions**:
 - Commit or stash your changes before releasing
