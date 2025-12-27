@@ -91,12 +91,7 @@ def release(ctx: Context):
     print("Creating release")
     githubRepo.create_git_release(f"v{bumped_version}", f"v{bumped_version}", generate_release_notes=True)
 
-    print("Building and publishing package")
-    ctx.run("rm -r dist")
-    ctx.run("uv build --sdist --wheel")
-    ctx.run("uv publish")
-
-    print(f"Release v{bumped_version} created and published")
+    print(f"Release v{bumped_version} created. CI/CD will build and publish to PyPI.")
 
 
 @task
