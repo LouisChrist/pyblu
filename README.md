@@ -28,4 +28,8 @@ async def main():
 pip install pyblu
 ```
 
+## Development
+
+For information on contributing and releasing new versions, see the [Development Guide](development.md).
+
 
