@@ -133,7 +133,7 @@ git revert <commit-hash>
 git push origin main
 ```
 
-### 5. Create a Fixed Release
+### 4. Create a Fixed Release
 
 After rolling back:
 1. Fix the issue in the codebase
