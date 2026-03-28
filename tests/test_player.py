@@ -463,7 +463,7 @@ async def test_remove_followers():
 async def test_shuffle():
     with aioresponses() as mocked:
         mocked.get(
-            "http://node:11000/Shuffle?shuffle=1",
+            "http://node:11000/Shuffle?state=1",
             status=200,
             body="""
         <playlist id="1" modified="1" length="23" shuffle="1"/>
