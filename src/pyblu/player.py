@@ -403,7 +403,7 @@ class Player:
         used_timeout = timeout if timeout is not None else self._default_timeout
 
         params = {
-            "shuffle": "1" if shuffle else "0",
+            "state": "1" if shuffle else "0",
         }
         async with self._session.get(f"{self.base_url}/Shuffle", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
