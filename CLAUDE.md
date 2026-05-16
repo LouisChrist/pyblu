@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Keep this file up to date as the codebase evolves — update it when commands, architecture, or conventions change.
+
 ## Project Overview
 
 `pyblu` is an async Python library for controlling BluOS players via their HTTP API (port 11000). No authentication is required. The library is published to PyPI and uses `uv` for dependency management.
