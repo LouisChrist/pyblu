@@ -1,7 +1,9 @@
+import shutil
 import re
 import os
+import sys
 
-from invoke import task, Context
+from invoke import task, Context, Collection
 from semver import Version
 import github
 
@@ -114,3 +116,8 @@ def mypy(ctx: Context):
 def build_docs(ctx: Context):
     print("Building docs")
     ctx.run("sphinx-build -b html docs _site", hide=True)
+
+
+SHELL = shutil.which("bash") or shutil.which("sh")
+ns = Collection.from_module(sys.modules[__name__])
+ns.configure({"run": {"shell": SHELL}})
