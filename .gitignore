@@ -1,3 +1,6 @@
+# direnv
+.direnv/
+
 # uv
 uv.lock
 
