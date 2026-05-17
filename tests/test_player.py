@@ -9,7 +9,7 @@ import pytest
 
 from pyblu import Player, PairedPlayer
 from pyblu.entities import Preset, Input
-from pyblu.errors import PlayerUnreachableError
+from pyblu.errors import PlayerBrowseError, PlayerUnreachableError
 
 
 @async_mocketize(strict_mode=True)
@@ -767,3 +767,65 @@ async def test_get_maps_connection_error_to_unreachable():
     player = _player_with_failing_session(aiohttp.ClientConnectionError())
     with pytest.raises(PlayerUnreachableError):
         await player.status()
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_root():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Browse",
+        status=200,
+        body="""
+        <browse type="menu">
+          <item browseKey="playlists" text="Playlists" image="/images/p.png" type="link"/>
+          <item playURL="/Play?url=Capture%3Abluez%3Abluetooth" text="Bluetooth" image="/images/b.png" type="audio" inputType="bluetooth"/>
+        </browse>
+        """,
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            result = await client.browse()
+
+    assert len(Mocket.request_list()) == 1
+
+    assert result.type == "menu"
+    assert len(result.items) == 2
+    assert result.items[0].browse_key == "playlists"
+    assert result.items[1].play_url == "Capture:bluez:bluetooth"
+    assert result.items[1].input_type == "bluetooth"
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_with_key():
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000/Browse?key={quote('ServiceA:')}",
+        status=200,
+        body="""<browse type="items" serviceName="Service A"/>""",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            result = await client.browse(key="ServiceA:")
+
+    assert len(Mocket.request_list()) == 1
+
+    assert result.type == "items"
+    assert result.service_name == "Service A"
+    assert not result.items
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_error_response():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Browse?key=bad",
+        status=200,
+        body="<error><message>Invalid key</message><detail>not recognised</detail></error>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            with pytest.raises(PlayerBrowseError) as exc_info:
+                await client.browse(key="bad")
+
+    assert "Invalid key" in str(exc_info.value)
+    assert exc_info.value.details == ["not recognised"]

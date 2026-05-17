@@ -32,6 +32,15 @@ Data Classes
 .. autoclass:: pyblu.Input
    :members:
 
+.. autoclass:: pyblu.BrowseResult
+   :members:
+
+.. autoclass:: pyblu.BrowseItem
+   :members:
+
+.. autoclass:: pyblu.BrowseCategory
+   :members:
+
 Exceptions
 ----------
 
@@ -42,4 +51,7 @@ Exceptions
    :members:
 
 .. autoclass:: pyblu.errors.PlayerUnexpectedResponseError
+   :members:
+
+.. autoclass:: pyblu.errors.PlayerBrowseError
    :members:

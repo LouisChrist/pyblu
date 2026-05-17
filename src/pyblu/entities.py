@@ -163,3 +163,55 @@ class Input:
     """URL of the input image"""
     url: str
     """URL to play the input. Can be passed to *play_url*"""
+
+
+@dataclass
+class BrowseItem:
+    type: str
+    """Item type. Common values are "link" (descend with *browse_key*), "audio" (playable), "album", "track",
+    "artist", "playlist", "folder", "section", "text". The list is open — treat unknown values as a display hint only."""
+    text: str | None
+    """Primary label."""
+    text2: str | None
+    """Secondary label (e.g. artist when the item is an album)."""
+    image: str | None
+    """Icon or artwork URL."""
+    play_url: str | None
+    """Stream URL extracted from the item's *playURL* attribute. Pass to *Player.play_url* to play it.
+    *None* if the item is not directly playable or uses a non-/Play action URL (e.g. service-specific /Add)."""
+    browse_key: str | None
+    """Opaque key. Pass to *Player.browse* to descend into this item. *None* if the item is a leaf."""
+    input_type: str | None
+    """Input kind for items that represent a physical input (e.g. "bluetooth", "arc", "spdif"). Usually only set on the root menu."""
+
+
+@dataclass
+class BrowseCategory:
+    text: str | None
+    """Category heading."""
+    next_key: str | None
+    """Opaque key for the next page of items in this category. Pass to *Player.browse*."""
+    parent_key: str | None
+    """Opaque key for navigating up from this category. Pass to *Player.browse*."""
+    items: list[BrowseItem]
+    """Items in this category."""
+
+
+@dataclass
+class BrowseResult:
+    type: str
+    """Result list type. Common values are "menu", "items", "albums", "tracks", "playlists", "sections", "folders"."""
+    service: str | None
+    """Service id (e.g. "TuneIn", "Deezer"). Not for UI display."""
+    service_name: str | None
+    """Human-readable service name, suitable for UI."""
+    service_icon: str | None
+    """URL of an icon for the service."""
+    next_key: str | None
+    """Opaque key for the next page of results. Pass to *Player.browse*."""
+    parent_key: str | None
+    """Opaque key for navigating up the hierarchy. Pass to *Player.browse*."""
+    items: list[BrowseItem]
+    """Top-level items. Empty when the response is grouped into *categories*."""
+    categories: list[BrowseCategory]
+    """Categories. Empty unless the response groups items under headings."""
