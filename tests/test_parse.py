@@ -1,5 +1,14 @@
+import pytest
+
 from pyblu import PairedPlayer
-from pyblu.parse import parse_add_follower, parse_presets, parse_status, parse_sync_status
+from pyblu.errors import PlayerBrowseError
+from pyblu.parse import (
+    parse_add_follower,
+    parse_browse_result,
+    parse_presets,
+    parse_status,
+    parse_sync_status,
+)
 
 
 def test_parse_add_follower_no_follower():
@@ -305,3 +314,141 @@ def test_parse_status_optionals():
     assert status.group_volume is None
 
     assert status.stream_url is None
+
+
+def test_parse_browse_root_menu():
+    data = """<browse type="menu">
+  <item browseKey="playlists" text="Playlists" image="/images/icon_playlists.png" type="link"></item>
+  <item playURL="/Play?url=Capture%3Abluez%3Abluetooth" text="Bluetooth" image="/images/bluetooth.png" type="audio" inputType="bluetooth"></item>
+  <item browseKey="ServiceA:" text="Service A" image="/images/service_a.png" type="link"></item>
+</browse>"""
+
+    result = parse_browse_result(data)
+
+    assert result.type == "menu"
+    assert result.service is None
+    assert result.service_name is None
+    assert result.next_key is None
+    assert result.parent_key is None
+    assert not result.categories
+    assert len(result.items) == 3
+
+    playlists, bluetooth, service_a = result.items
+
+    assert playlists.type == "link"
+    assert playlists.text == "Playlists"
+    assert playlists.browse_key == "playlists"
+    assert playlists.play_url is None
+    assert playlists.input_type is None
+
+    assert bluetooth.type == "audio"
+    assert bluetooth.text == "Bluetooth"
+    assert bluetooth.play_url == "Capture:bluez:bluetooth"
+    assert bluetooth.browse_key is None
+    assert bluetooth.input_type == "bluetooth"
+
+    assert service_a.type == "link"
+    assert service_a.browse_key == "ServiceA:"
+    assert service_a.play_url is None
+
+
+def test_parse_browse_empty_list():
+    data = """<browse type="playlists"></browse>"""
+
+    result = parse_browse_result(data)
+
+    assert result.type == "playlists"
+    assert not result.items
+    assert not result.categories
+
+
+def test_parse_browse_service_menu():
+    data = """<browse serviceIcon="/icons/service_a.png" serviceName="Service A" service="ServiceA" type="items">
+  <item browseKey="ServiceA:browse/category-one" text="Category One" image="/icons/cat1.png" type="link"></item>
+  <item browseKey="ServiceA:browse/category-two" text="Category Two" image="/icons/cat2.png" type="link"></item>
+</browse>"""
+
+    result = parse_browse_result(data)
+
+    assert result.type == "items"
+    assert result.service == "ServiceA"
+    assert result.service_name == "Service A"
+    assert result.service_icon == "/icons/service_a.png"
+    assert len(result.items) == 2
+    assert result.items[0].browse_key == "ServiceA:browse/category-one"
+    assert result.items[1].text == "Category Two"
+
+
+def test_parse_browse_categories_ignore_context_menu():
+    data = """<browse serviceName="Generic" type="items">
+  <category text="Group One">
+    <item playURL="/Play?url=Service%3Astream-1&amp;title=Station+One&amp;image=http%3A%2F%2Fexample.com%2Fcover.jpg"
+          text="Station One" text2="Artist One" image="http://example.com/cover.jpg" type="audio">
+      <contextMenu>
+        <item actionURL="/Action?id=1" text="Action" type="favourite-add"></item>
+      </contextMenu>
+    </item>
+    <item playURL="/Play?url=Service%3Astream-2" text="Station Two" image="http://example.com/cover2.jpg" type="audio"></item>
+  </category>
+  <category text="Group Two">
+    <item playURL="/Play?url=Service%3Astream-3" text="Station Three" image="http://example.com/cover3.jpg" type="audio"></item>
+  </category>
+</browse>"""
+
+    result = parse_browse_result(data)
+
+    assert result.type == "items"
+    assert result.service_name == "Generic"
+    assert not result.items
+    assert len(result.categories) == 2
+
+    group_one, group_two = result.categories
+
+    assert group_one.text == "Group One"
+    assert len(group_one.items) == 2
+    assert group_one.items[0].text == "Station One"
+    assert group_one.items[0].text2 == "Artist One"
+    assert group_one.items[0].play_url == "Service:stream-1"
+    assert group_one.items[1].play_url == "Service:stream-2"
+
+    assert group_two.text == "Group Two"
+    assert len(group_two.items) == 1
+    assert group_two.items[0].play_url == "Service:stream-3"
+
+
+def test_parse_browse_pagination():
+    data = """<browse type="items" nextKey="Service:opaque-next-page-key" parentKey="Service:opaque-parent-key">
+  <item playURL="/Play?url=Service%3Astream-1" text="Item One" type="audio"></item>
+</browse>"""
+
+    result = parse_browse_result(data)
+
+    assert result.next_key == "Service:opaque-next-page-key"
+    assert result.parent_key == "Service:opaque-parent-key"
+    assert len(result.items) == 1
+
+
+def test_parse_browse_non_play_action_url_returns_none():
+    # Service-specific items use /Add?service=...&playnow=1 rather than /Play?url=X.
+    # The library exposes play_url=None for those — the caller cannot stream them via play_url().
+    data = """<browse type="albums">
+  <item playURL="/Add?service=Generic&amp;albumid=12345&amp;playnow=1" text="Album One" type="album"></item>
+</browse>"""
+
+    result = parse_browse_result(data)
+
+    assert result.items[0].play_url is None
+
+
+def test_parse_browse_error_response():
+    data = """<error>
+  <message>Invalid key</message>
+  <detail>key was not recognised</detail>
+  <detail>retry from root</detail>
+</error>"""
+
+    with pytest.raises(PlayerBrowseError) as exc_info:
+        parse_browse_result(data)
+
+    assert "Invalid key" in str(exc_info.value)
+    assert exc_info.value.details == ["key was not recognised", "retry from root"]

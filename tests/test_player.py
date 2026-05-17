@@ -5,6 +5,7 @@ import pytest
 
 from pyblu import Player, PairedPlayer
 from pyblu.entities import Preset, Input
+from pyblu.errors import PlayerBrowseError
 
 
 async def test_skip():
@@ -674,3 +675,59 @@ async def test_inputs_only_one():
         assert inputs == [
             Input(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture:bluez:bluetooth"),
         ]
+
+
+async def test_browse_root():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Browse",
+            status=200,
+            body="""
+        <browse type="menu">
+          <item browseKey="playlists" text="Playlists" image="/images/p.png" type="link"/>
+          <item playURL="/Play?url=Capture%3Abluez%3Abluetooth" text="Bluetooth" image="/images/b.png" type="audio" inputType="bluetooth"/>
+        </browse>
+        """,
+        )
+        async with Player("node") as client:
+            result = await client.browse()
+
+        mocked.assert_called_once()
+
+        assert result.type == "menu"
+        assert len(result.items) == 2
+        assert result.items[0].browse_key == "playlists"
+        assert result.items[1].play_url == "Capture:bluez:bluetooth"
+        assert result.items[1].input_type == "bluetooth"
+
+
+async def test_browse_with_key():
+    with aioresponses() as mocked:
+        mocked.get(
+            f"http://node:11000/Browse?key={quote('ServiceA:')}",
+            status=200,
+            body="""<browse type="items" serviceName="Service A"/>""",
+        )
+        async with Player("node") as client:
+            result = await client.browse(key="ServiceA:")
+
+        mocked.assert_called_once()
+
+        assert result.type == "items"
+        assert result.service_name == "Service A"
+        assert not result.items
+
+
+async def test_browse_error_response():
+    with aioresponses() as mocked:
+        mocked.get(
+            "http://node:11000/Browse?key=bad",
+            status=200,
+            body="<error><message>Invalid key</message><detail>not recognised</detail></error>",
+        )
+        async with Player("node") as client:
+            with pytest.raises(PlayerBrowseError) as exc_info:
+                await client.browse(key="bad")
+
+        assert "Invalid key" in str(exc_info.value)
+        assert exc_info.value.details == ["not recognised"]

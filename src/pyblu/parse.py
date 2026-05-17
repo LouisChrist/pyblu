@@ -1,9 +1,20 @@
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from lxml import etree
 
-from pyblu.entities import Input, PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
-from pyblu.errors import _wrap_in_unxpected_response_error
+from pyblu.entities import (
+    BrowseCategory,
+    BrowseItem,
+    BrowseResult,
+    Input,
+    PairedPlayer,
+    PlayQueue,
+    Preset,
+    Status,
+    SyncStatus,
+    Volume,
+)
+from pyblu.errors import PlayerBrowseError, _wrap_in_unxpected_response_error
 
 
 @_wrap_in_unxpected_response_error
@@ -212,6 +223,73 @@ def parse_sleep(response: bytes) -> int:
     sleep_element = sleep_elements[0]
 
     return int(sleep_element.text) if sleep_element.text else 0
+
+
+def _browse_item(x) -> BrowseItem:
+    # The url query param is extracted from the relative /Play?url=...&title=... attribute so it can be
+    # passed directly to Player.play_url. Returns None when the underlying URL is not a /Play?url=X
+    # (e.g. service-specific /Add?service=...&albumid=...&playnow=1).
+    play_url: str | None = None
+    play_url_attr = x.attrib.get("playURL")
+    if play_url_attr:
+        values = parse_qs(urlsplit(play_url_attr).query, keep_blank_values=True).get("url")
+        if values:
+            play_url = values[0]
+
+    return BrowseItem(
+        type=x.attrib["type"],
+        text=x.attrib.get("text"),
+        text2=x.attrib.get("text2"),
+        image=x.attrib.get("image"),
+        play_url=play_url,
+        browse_key=x.attrib.get("browseKey"),
+        input_type=x.attrib.get("inputType"),
+    )
+
+
+@_wrap_in_unxpected_response_error
+def parse_browse_result(response: bytes) -> BrowseResult:
+    """
+    :raises PlayerBrowseError: If the response is a structured <error> response from /Browse.
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+
+    error_elements = tree.xpath("//error")
+    if error_elements:
+        error_element = error_elements[0]
+        message = (error_element.findtext("message") or "").strip() or "<unknown error>"
+        details = [d.text.strip() for d in error_element.findall("detail") if d.text and d.text.strip()]
+        raise PlayerBrowseError(message, details)
+
+    browse_elements = tree.xpath("//browse")
+    assert len(browse_elements) == 1, "Browse element not found or multiple found"
+    browse_element = browse_elements[0]
+
+    items = [_browse_item(x) for x in browse_element.xpath("./item")]
+    categories = [
+        BrowseCategory(
+            text=x.attrib.get("text"),
+            next_key=x.attrib.get("nextKey"),
+            parent_key=x.attrib.get("parentKey"),
+            items=[_browse_item(y) for y in x.xpath("./item")],
+        )
+        for x in browse_element.xpath("./category")
+    ]
+
+    browse_result = BrowseResult(
+        type=browse_element.attrib["type"],
+        service=browse_element.attrib.get("service"),
+        service_name=browse_element.attrib.get("serviceName"),
+        service_icon=browse_element.attrib.get("serviceIcon"),
+        next_key=browse_element.attrib.get("nextKey"),
+        parent_key=browse_element.attrib.get("parentKey"),
+        items=items,
+        categories=categories,
+    )
+
+    return browse_result
 
 
 @_wrap_in_unxpected_response_error

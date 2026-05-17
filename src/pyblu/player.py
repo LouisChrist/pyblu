@@ -1,8 +1,9 @@
 import aiohttp
 
-from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
+from pyblu.entities import BrowseResult, Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
 from pyblu.parse import (
     parse_add_follower,
+    parse_browse_result,
     parse_inputs,
     parse_sleep,
     parse_state,
@@ -512,3 +513,34 @@ class Player:
             response_data = await response.read()
 
             return parse_inputs(response_data)
+
+    @_wrap_in_unreachable_error
+    async def browse(self, key: str | None = None, timeout: float | None = None) -> BrowseResult:
+        """Browse media available on the player.
+        Call without parameters to get the top-level menu. Call with **key** to descend, paginate, or navigate up.
+
+        **key** is an opaque value taken from a previous browse response: *browse_key* of a *BrowseItem*,
+        or *next_key* / *parent_key* of a *BrowseResult* or *BrowseCategory*. Do not parse or modify it.
+
+        Playable items expose *play_url* extracted from the underlying /Play URL, which can be passed directly to *play_url*.
+
+        :param key: The opaque key to browse. None returns the top-level menu.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerBrowseError: If the player returns a structured error response.
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The browse result.
+        """
+        used_timeout = timeout if timeout is not None else self._default_timeout
+
+        params: dict[str, str] = {}
+        if key is not None:
+            params["key"] = key
+
+        async with self._session.get(f"{self.base_url}/Browse", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
+            response.raise_for_status()
+            response_data = await response.read()
+
+            return parse_browse_result(response_data)
