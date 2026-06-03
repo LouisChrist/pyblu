@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyblu"
-version = "2.0.6"
+version = "2.0.7"
 description = ""
 license = "MIT"
 authors = [{ name = "Louis Christ", email = "mail@louischrist.de" }]
