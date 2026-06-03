@@ -9,6 +9,7 @@ description = ""
 license = "MIT"
 authors = [{ name = "Louis Christ", email = "mail@louischrist.de" }]
 readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
     "aiohttp >= 3.11.11",
     "lxml >= 5.0.0"]
@@ -22,8 +23,8 @@ include = ["src"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/pyblu"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pylint >= 3.2.6",
     "black >= 24.8.0",
     "pytest >= 8.3.2",
@@ -34,7 +35,9 @@ dev-dependencies = [
     "semver >= 3.0.2",
     "mypy >= 1.11.2",
     "pygithub >= 2.4.0",
-    "types-lxml >= 2024.8.7"]
+    "types-lxml >= 2024.8.7",
+    "aiohttp < 3.14"
+    ]
 
 [tool.pylint."messages control"]
 disable = [
