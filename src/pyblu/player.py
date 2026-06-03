@@ -44,14 +44,14 @@ class Player:
     def default_timeout(self) -> float:
         return self._default_timeout
 
-    async def close(self):
+    async def close(self) -> None:
         if self._session_owned:
             await self._session.close()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "Player":
         return self
 
-    async def __aexit__(self, *args):
+    async def __aexit__(self, *args) -> None:
         await self.close()
 
     @_wrap_in_unreachable_error
