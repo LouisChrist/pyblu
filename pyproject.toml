@@ -38,6 +38,9 @@ dev = [
     "types-lxml >= 2024.8.7"
     ]
 
+[tool.mypy]
+strict = true
+
 [tool.pylint."messages control"]
 disable = [
     "missing-function-docstring",
