@@ -196,6 +196,8 @@ def parse_state(response: bytes) -> str:
     assert len(state_elements) == 1, "State element not found or multiple found"
     state_element = state_elements[0]
 
+    assert isinstance(state_element.text, str)
+
     return state_element.text
 
 
