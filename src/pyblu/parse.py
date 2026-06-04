@@ -55,7 +55,7 @@ def parse_sync_status(response: bytes) -> SyncStatus:
         followers=followers,
         zone=sync_status_element.attrib.get("zone"),
         zone_leader=sync_status_element.attrib.get("zoneMaster") == "true",
-        zone_follower=sync_status_element.attrib.get("zoneMaster") == "true",
+        zone_follower=sync_status_element.attrib.get("zoneSlave") == "true",
         brand=sync_status_element.attrib["brand"],
         model=sync_status_element.attrib["model"],
         model_name=sync_status_element.attrib["modelName"],

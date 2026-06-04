@@ -233,7 +233,7 @@ async def test_sync_status():
     db="-17.1" modelName="NODE" model="N130"
     brand="Bluesound" initialized="true" id="1.1.1.1:11000" mac="00:11:22:33:44:55" volume="29"
     name="Node" etag="707" schemaVersion="34" syncStat="707" class="streamer"
-    group="Node +2" zone="Desk" zoneMaster="true" zoneSlave="true">
+    group="Node +2" zone="Desk" zoneMaster="true" zoneSlave="false">
       <pairWithSub/>
       <bluetoothOutput/>
       <master port="11000">192.168.1.100</master>
@@ -259,7 +259,7 @@ async def test_sync_status():
     assert sync_status.followers == [PairedPlayer(ip="192.168.1.153", port=11000), PairedPlayer(ip="192.168.1.234", port=11000)]
     assert sync_status.zone == "Desk"
     assert sync_status.zone_leader
-    assert sync_status.zone_follower
+    assert sync_status.zone_follower is False
     assert sync_status.brand == "Bluesound"
     assert sync_status.model == "N130"
     assert sync_status.model_name == "NODE"
