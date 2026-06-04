@@ -1,3 +1,5 @@
+from types import TracebackType
+
 import aiohttp
 
 from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
@@ -51,7 +53,12 @@ class Player:
     async def __aenter__(self) -> "Player":
         return self
 
-    async def __aexit__(self, *args) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         await self.close()
 
     @_wrap_in_unreachable_error
