@@ -210,7 +210,7 @@ class Player:
         """
         params: dict[str, str | int] = {}
         if toggle is not None:
-            params["toggle"] = "1"
+            params["toggle"] = "1" if toggle else "0"
 
         data = await self._get("/Pause", params=params, timeout=timeout)
         return parse_state(data)
