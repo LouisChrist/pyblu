@@ -72,7 +72,7 @@ class Player:
                 response.raise_for_status()
                 return await response.read()
         except TimeoutError as e:
-            raise PlayerUnreachableError(f"Timout during request: {e}") from e
+            raise PlayerUnreachableError(f"Timeout during request: {e}") from e
         except aiohttp.ClientConnectionError as e:
             raise PlayerUnreachableError(f"Connection error: {e}") from e
 
@@ -82,7 +82,7 @@ class Player:
         This endpoint supports long polling. If **etag** is set, the server will wait until the status changes or the timeout is reached.
         **etag** has to be the last etag received from the server.
 
-        **poll_timeout** has to be smaller than **timeout**. The **default_timout** and the default value for **poll_timeout** do not fulfill this requirement.
+        **poll_timeout** has to be smaller than **timeout**. The **default_timeout** and the default value for **poll_timeout** do not fulfill this requirement.
         This means that **timeout** has to be set when using long polling in most cases.
 
         :param etag: The last etag received from the server. Triggers long polling if set.
@@ -112,7 +112,7 @@ class Player:
         This endpoint supports long polling. If **etag** is set, the server will wait until the status changes or the timeout is reached.
         **etag** has to be the last etag received from the server.
 
-        **poll_timeout** has to be smaller than **timeout**. The **default_timout** and the default value for **poll_timeout** do not fulfill this requirement.
+        **poll_timeout** has to be smaller than **timeout**. The **default_timeout** and the default value for **poll_timeout** do not fulfill this requirement.
         This means that **timeout** has to be set when using long polling in most cases.
 
         :param etag: The last etag received from the server. Triggers long polling if set.
