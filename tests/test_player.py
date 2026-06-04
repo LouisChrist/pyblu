@@ -55,6 +55,28 @@ async def test_pause():
 
 
 @async_mocketize(strict_mode=True)
+async def test_pause_toggle_true():
+    Entry.single_register(Entry.GET, "http://node:11000/Pause?toggle=1", status=200, body="<state>playing</state>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            state = await client.pause(toggle=True)
+
+    assert state == "playing"
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_pause_toggle_false():
+    Entry.single_register(Entry.GET, "http://node:11000/Pause?toggle=0", status=200, body="<state>paused</state>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            state = await client.pause(toggle=False)
+
+    assert state == "paused"
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
 async def test_stop():
     Entry.single_register(Entry.GET, "http://node:11000/Stop", status=200, body="<state>stopped</state>")
     async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
