@@ -14,7 +14,7 @@ from pyblu.parse import (
     parse_play_queue,
     parse_presets,
 )
-from pyblu.errors import _wrap_in_unreachable_error
+from pyblu.errors import PlayerUnreachableError
 
 
 class Player:
@@ -61,14 +61,28 @@ class Player:
     ) -> None:
         await self.close()
 
-    @_wrap_in_unreachable_error
+    async def _get(self, path: str, params: dict[str, str | int] | None = None, timeout: float | None = None) -> bytes:
+        used_timeout = timeout if timeout is not None else self._default_timeout
+        try:
+            async with self._session.get(
+                f"{self.base_url}{path}",
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=used_timeout),
+            ) as response:
+                response.raise_for_status()
+                return await response.read()
+        except TimeoutError as e:
+            raise PlayerUnreachableError(f"Timeout during request: {e}") from e
+        except aiohttp.ClientConnectionError as e:
+            raise PlayerUnreachableError(f"Connection error: {e}") from e
+
     async def status(self, etag: str | None = None, poll_timeout: int = 30, timeout: float | None = None) -> Status:
         """Get the current status of the player.
 
         This endpoint supports long polling. If **etag** is set, the server will wait until the status changes or the timeout is reached.
         **etag** has to be the last etag received from the server.
 
-        **poll_timeout** has to be smaller than **timeout**. The **default_timout** and the default value for **poll_timeout** do not fulfill this requirement.
+        **poll_timeout** has to be smaller than **timeout**. The **default_timeout** and the default value for **poll_timeout** do not fulfill this requirement.
         This means that **timeout** has to be set when using long polling in most cases.
 
         :param etag: The last etag received from the server. Triggers long polling if set.
@@ -82,29 +96,23 @@ class Player:
         """
         used_timeout = timeout if timeout is not None else self._default_timeout
 
-        params: dict[str, str] = {}
+        params: dict[str, str | int] = {}
         if etag is not None:
             if poll_timeout >= used_timeout:
                 raise ValueError("poll_timeout has to be smaller than timeout")
             params["etag"] = etag
-            params["timeout"] = str(poll_timeout)
+            params["timeout"] = poll_timeout
 
-        async with self._session.get(f"{self.base_url}/Status", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/Status", params=params, timeout=timeout)
+        return parse_status(data)
 
-            status = parse_status(response_data)
-
-            return status
-
-    @_wrap_in_unreachable_error
     async def sync_status(self, etag: str | None = None, poll_timeout: int = 30, timeout: float | None = None) -> SyncStatus:
         """Get the SyncStatus of the player.
 
         This endpoint supports long polling. If **etag** is set, the server will wait until the status changes or the timeout is reached.
         **etag** has to be the last etag received from the server.
 
-        **poll_timeout** has to be smaller than **timeout**. The **default_timout** and the default value for **poll_timeout** do not fulfill this requirement.
+        **poll_timeout** has to be smaller than **timeout**. The **default_timeout** and the default value for **poll_timeout** do not fulfill this requirement.
         This means that **timeout** has to be set when using long polling in most cases.
 
         :param etag: The last etag received from the server. Triggers long polling if set.
@@ -118,22 +126,16 @@ class Player:
         """
         used_timeout = timeout if timeout is not None else self._default_timeout
 
-        params: dict[str, str] = {}
+        params: dict[str, str | int] = {}
         if etag is not None:
             if poll_timeout >= used_timeout:
                 raise ValueError("poll_timeout has to be smaller than timeout")
             params["etag"] = etag
-            params["timeout"] = str(poll_timeout)
+            params["timeout"] = poll_timeout
 
-        async with self._session.get(f"{self.base_url}/SyncStatus", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/SyncStatus", params=params, timeout=timeout)
+        return parse_sync_status(data)
 
-            sync_status = parse_sync_status(response_data)
-
-            return sync_status
-
-    @_wrap_in_unreachable_error
     async def volume(self, level: int | None = None, mute: bool | None = None, tell_followers: bool | None = None, timeout: float | None = None) -> Volume:
         """Get or set the volume of the player.
         Call without parameters to get the current volume. Call with parameters to set the volume.
@@ -148,9 +150,7 @@ class Player:
 
         :return: The current volume of the player.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params: dict[str, str] = {}
+        params: dict[str, str | int] = {}
         if level is not None:
             params["level"] = str(level)
         if mute is not None:
@@ -158,14 +158,9 @@ class Player:
         if tell_followers is not None:
             params["tell_slaves"] = "1" if tell_followers else "0"
 
-        async with self._session.get(f"{self.base_url}/Volume", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/Volume", params=params, timeout=timeout)
+        return parse_volume(data)
 
-            volume = parse_volume(response_data)
-            return volume
-
-    @_wrap_in_unreachable_error
     async def play(self, seek: int | None = None, timeout: float | None = None) -> str:
         """Start playing the current track. Can also be used to seek within the current track.
         Works only when paused, not when stopped.
@@ -178,19 +173,13 @@ class Player:
 
         :return: The playback state after command execution.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params = {}
+        params: dict[str, str | int] = {}
         if seek is not None:
             params["seek"] = seek
 
-        async with self._session.get(f"{self.base_url}/Play", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/Play", params=params, timeout=timeout)
+        return parse_state(data)
 
-            return parse_state(response_data)
-
-    @_wrap_in_unreachable_error
     async def play_url(self, url: str, timeout: float | None = None) -> str:
         """Start playing a track from a URL. Can also be used to select inputs. See *inputs* for available inputs.
 
@@ -202,18 +191,12 @@ class Player:
 
         :return: The playback state after command execution.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params = {
+        params: dict[str, str | int] = {
             "url": url,
         }
-        async with self._session.get(f"{self.base_url}/Play", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/Play", params=params, timeout=timeout)
+        return parse_state(data)
 
-            return parse_state(response_data)
-
-    @_wrap_in_unreachable_error
     async def pause(self, toggle: bool | None = None, timeout: float | None = None) -> str:
         """Pause the current track. **toggle** can be used to toggle between playing and pause.
 
@@ -225,19 +208,13 @@ class Player:
 
         :return: The playback state after command execution.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params = {}
+        params: dict[str, str | int] = {}
         if toggle is not None:
             params["toggle"] = "1"
 
-        async with self._session.get(f"{self.base_url}/Pause", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/Pause", params=params, timeout=timeout)
+        return parse_state(data)
 
-            return parse_state(response_data)
-
-    @_wrap_in_unreachable_error
     async def stop(self, timeout: float | None = None) -> str:
         """Stop the current track. Stopped playback cannot be resumed.
 
@@ -248,15 +225,9 @@ class Player:
 
         :return: The playback state after command execution.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
+        data = await self._get("/Stop", timeout=timeout)
+        return parse_state(data)
 
-        async with self._session.get(f"{self.base_url}/Stop", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
-
-            return parse_state(response_data)
-
-    @_wrap_in_unreachable_error
     async def skip(self, timeout: float | None = None) -> None:
         """Skip to the next track.
 
@@ -265,11 +236,8 @@ class Player:
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
         :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-        async with self._session.get(f"{self.base_url}/Skip", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
+        await self._get("/Skip", timeout=timeout)
 
-    @_wrap_in_unreachable_error
     async def back(self, timeout: float | None = None) -> None:
         """Go back to the previous track.
 
@@ -278,12 +246,8 @@ class Player:
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
         :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
+        await self._get("/Back", timeout=timeout)
 
-        async with self._session.get(f"{self.base_url}/Back", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-
-    @_wrap_in_unreachable_error
     async def add_follower(self, ip: str, port: int = 11000, timeout: float | None = None) -> list[PairedPlayer]:
         """Add a secondary player to the current player as a follower.
         If it fails the player won't be in the returned list.
@@ -297,21 +261,13 @@ class Player:
 
         :return: The list of followers of the player.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
         params: dict[str, str | int] = {
             "slave": ip,
             "port": port,
         }
-        async with self._session.get(f"{self.base_url}/AddSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/AddSlave", params=params, timeout=timeout)
+        return parse_add_follower(data)
 
-            followers_after_request = parse_add_follower(response_data)
-
-            return followers_after_request
-
-    @_wrap_in_unreachable_error
     async def add_followers(self, followers: list[PairedPlayer], timeout: float | None = None) -> list[PairedPlayer]:
         """Add a list of following players to the current player.
         If it fails the player won't be in the returned list.
@@ -326,21 +282,13 @@ class Player:
 
         :return: The list of followers of the player.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params = {
+        params: dict[str, str | int] = {
             "slaves": ",".join(x.ip for x in followers),
             "ports": ",".join(str(x.port) for x in followers),
         }
-        async with self._session.get(f"{self.base_url}/AddSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/AddSlave", params=params, timeout=timeout)
+        return parse_add_follower(data)
 
-            followers_after_request = parse_add_follower(response_data)
-
-            return followers_after_request
-
-    @_wrap_in_unreachable_error
     async def remove_follower(self, ip: str, port: int = 11000, timeout: float | None = None) -> SyncStatus:
         """Remove a following player from the group.
 
@@ -353,21 +301,13 @@ class Player:
 
         :return: The SyncStatus of the player.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
         params: dict[str, str | int] = {
             "slave": ip,
             "port": port,
         }
-        async with self._session.get(f"{self.base_url}/RemoveSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/RemoveSlave", params=params, timeout=timeout)
+        return parse_sync_status(data)
 
-            sync_status = parse_sync_status(response_data)
-
-            return sync_status
-
-    @_wrap_in_unreachable_error
     async def remove_followers(self, followers: list[PairedPlayer], timeout: float | None = None) -> SyncStatus:
         """Remove a list of following players from the group.
 
@@ -381,21 +321,13 @@ class Player:
 
         :return: The SyncStatus of the player.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params = {
+        params: dict[str, str | int] = {
             "slaves": ",".join(x.ip for x in followers),
             "ports": ",".join(str(x.port) for x in followers),
         }
-        async with self._session.get(f"{self.base_url}/RemoveSlave", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/RemoveSlave", params=params, timeout=timeout)
+        return parse_sync_status(data)
 
-            sync_status = parse_sync_status(response_data)
-
-            return sync_status
-
-    @_wrap_in_unreachable_error
     async def shuffle(self, shuffle: bool, timeout: float | None = None) -> PlayQueue:
         """Set shuffle on current play queue.
 
@@ -407,20 +339,12 @@ class Player:
 
         :return: The current play queue.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params = {
+        params: dict[str, str | int] = {
             "state": "1" if shuffle else "0",
         }
-        async with self._session.get(f"{self.base_url}/Shuffle", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
+        data = await self._get("/Shuffle", params=params, timeout=timeout)
+        return parse_play_queue(data)
 
-            play_queue = parse_play_queue(response_data)
-
-            return play_queue
-
-    @_wrap_in_unreachable_error
     async def clear(self, timeout: float | None = None) -> PlayQueue:
         """Clear the play queue.
 
@@ -431,17 +355,9 @@ class Player:
 
         :return: The current play queue.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
+        data = await self._get("/Clear", timeout=timeout)
+        return parse_play_queue(data)
 
-        async with self._session.get(f"{self.base_url}/Clear", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
-
-            play_queue = parse_play_queue(response_data)
-
-            return play_queue
-
-    @_wrap_in_unreachable_error
     async def sleep_timer(self, timeout: float | None = None) -> int:
         """Set sleep timer. Time steps are 15, 30, 45, 60, 90 minutes. Each call goes to next step.
         Resets to 0 if called when 90 minutes are set.
@@ -453,15 +369,9 @@ class Player:
 
         :return: The current sleep timer in minutes. 0 if no sleep timer is set.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
+        data = await self._get("/Sleep", timeout=timeout)
+        return parse_sleep(data)
 
-        async with self._session.get(f"{self.base_url}/Sleep", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
-
-            return parse_sleep(response_data)
-
-    @_wrap_in_unreachable_error
     async def presets(self, timeout: float | None = None) -> list[Preset]:
         """Get the list of presets of the player.
 
@@ -472,17 +382,9 @@ class Player:
 
         :return: The list of presets of the player.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
+        data = await self._get("/Presets", timeout=timeout)
+        return parse_presets(data)
 
-        async with self._session.get(f"{self.base_url}/Presets", timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
-
-            presets = parse_presets(response_data)
-
-            return presets
-
-    @_wrap_in_unreachable_error
     async def load_preset(self, preset_id: int, timeout: float | None = None) -> None:
         """Load a preset by ID.
 
@@ -492,15 +394,11 @@ class Player:
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
         :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params = {
+        params: dict[str, str | int] = {
             "id": preset_id,
         }
-        async with self._session.get(f"{self.base_url}/Preset", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
+        await self._get("/Preset", params=params, timeout=timeout)
 
-    @_wrap_in_unreachable_error
     async def inputs(self, timeout: float | None = None) -> list[Input]:
         """List all available inputs.
 
@@ -511,11 +409,6 @@ class Player:
 
         :return: The list of inputs of the player.
         """
-        used_timeout = timeout if timeout is not None else self._default_timeout
-
-        params = {"service": "Capture"}
-        async with self._session.get(f"{self.base_url}/RadioBrowse", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
-            response.raise_for_status()
-            response_data = await response.read()
-
-            return parse_inputs(response_data)
+        params: dict[str, str | int] = {"service": "Capture"}
+        data = await self._get("/RadioBrowse", params=params, timeout=timeout)
+        return parse_inputs(data)
