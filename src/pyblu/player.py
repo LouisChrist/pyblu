@@ -125,7 +125,7 @@ class Player:
             params["etag"] = etag
             params["timeout"] = str(poll_timeout)
 
-        async with self._session.get(f"{self.base_url}/SyncStatus", params=params) as response:
+        async with self._session.get(f"{self.base_url}/SyncStatus", params=params, timeout=aiohttp.ClientTimeout(total=used_timeout)) as response:
             response.raise_for_status()
             response_data = await response.read()
 
