@@ -55,16 +55,20 @@ The library has four modules with a clear separation of concerns:
 
 ### Testing Pattern
 
-Tests use `aioresponses` to mock HTTP calls and `pytest-asyncio` with `asyncio_mode = "auto"` (no `@pytest.mark.asyncio` decorator needed). `pythonpath = "src"` is set in `pyproject.toml` so imports work without installation.
+Tests use `mocket` to mock HTTP calls and `pytest-asyncio` with `asyncio_mode = "auto"` (no `@pytest.mark.asyncio` decorator needed). `pythonpath = "src"` is set in `pyproject.toml` so imports work without installation.
+
+`mocket` patches the OS socket layer, but aiohttp drives I/O through asyncio transports, so the session must be built with `MocketTCPConnector` and passed into `Player(session=...)` (the test's `async with` owns/closes that session — `Player` only closes sessions it created itself). Decorate each test with `@async_mocketize(strict_mode=True)` so any request without a matching registered entry raises `StrictMocketException` instead of falling through to the real network. Registering the full URL **including the query string** preserves query-param verification: `Entry` matches the querystring exactly by default, so a mismatched param means no entry is served and the request errors out in strict mode.
 
 ```python
+@async_mocketize(strict_mode=True)
 async def test_example():
-    with aioresponses() as mocked:
-        mocked.get("http://node:11000/SomeEndpoint", status=200, body="<xml/>")
-        async with Player("node") as client:
+    Entry.single_register(Entry.GET, "http://node:11000/SomeEndpoint?foo=1", status=200, body="<xml/>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
             result = await client.some_method()
-        mocked.assert_called_once()
-        assert result.field == expected
+
+    assert len(Mocket.request_list()) == 1
+    assert result.field == expected
 ```
 
 ### Adding a New Player Method
