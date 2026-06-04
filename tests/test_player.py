@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock, MagicMock
 from urllib.parse import quote
 
 import aiohttp
@@ -8,6 +9,7 @@ import pytest
 
 from pyblu import Player, PairedPlayer
 from pyblu.entities import Preset, Input
+from pyblu.errors import PlayerUnreachableError
 
 
 @async_mocketize(strict_mode=True)
@@ -724,3 +726,22 @@ async def test_inputs_only_one():
     assert inputs == [
         Input(id="input3", text="Bluetooth", image="/images/BluetoothIcon.png", url="Capture:bluez:bluetooth"),
     ]
+
+
+def _player_with_failing_session(exc: Exception) -> Player:
+    session = MagicMock()
+    session.get.return_value.__aenter__ = AsyncMock(side_effect=exc)
+    session.get.return_value.__aexit__ = AsyncMock(return_value=False)
+    return Player("node", session=session)
+
+
+async def test_get_maps_timeout_to_unreachable():
+    player = _player_with_failing_session(TimeoutError())
+    with pytest.raises(PlayerUnreachableError):
+        await player.status()
+
+
+async def test_get_maps_connection_error_to_unreachable():
+    player = _player_with_failing_session(aiohttp.ClientConnectionError())
+    with pytest.raises(PlayerUnreachableError):
+        await player.status()
