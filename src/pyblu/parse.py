@@ -285,6 +285,7 @@ def parse_browse_result(response: bytes) -> BrowseResult:
         service=browse_element.attrib.get("service"),
         service_name=browse_element.attrib.get("serviceName"),
         service_icon=browse_element.attrib.get("serviceIcon"),
+        search_key=browse_element.attrib.get("searchKey"),
         next_key=browse_element.attrib.get("nextKey"),
         parent_key=browse_element.attrib.get("parentKey"),
         items=items,

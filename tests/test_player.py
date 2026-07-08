@@ -815,6 +815,31 @@ async def test_browse_with_key():
 
 
 @async_mocketize(strict_mode=True)
+async def test_browse_search():
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000/Browse?key={quote('Airable:Search')}&q=jazz",
+        status=200,
+        body="""
+        <browse serviceName="Radio" searchKey="Airable:Search" type="menu">
+          <item browseKey="Airable:BrowseMenu/stations" text="Stations" type="link"/>
+          <item browseKey="Airable:BrowseMenu/podcasts" text="Podcasts" type="link"/>
+        </browse>
+        """,
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            result = await client.browse(key="Airable:Search", q="jazz")
+
+    assert len(Mocket.request_list()) == 1
+
+    assert result.search_key == "Airable:Search"
+    assert len(result.items) == 2
+    assert result.items[0].text == "Stations"
+    assert result.items[1].browse_key == "Airable:BrowseMenu/podcasts"
+
+
+@async_mocketize(strict_mode=True)
 async def test_browse_error_response():
     Entry.single_register(
         Entry.GET,

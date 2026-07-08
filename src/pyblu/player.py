@@ -414,16 +414,19 @@ class Player:
         data = await self._get("/RadioBrowse", params=params, timeout=timeout)
         return parse_inputs(data)
 
-    async def browse(self, key: str | None = None, timeout: float | None = None) -> BrowseResult:
+    async def browse(self, key: str | None = None, q: str | None = None, timeout: float | None = None) -> BrowseResult:
         """Browse media available on the player.
         Call without parameters to get the top-level menu. Call with **key** to descend, paginate, or navigate up.
 
         **key** is an opaque value taken from a previous browse response: *browse_key* of a *BrowseItem*,
-        or *next_key* / *parent_key* of a *BrowseResult* or *BrowseCategory*. Do not parse or modify it.
+        or *search_key* / *next_key* / *parent_key* of a *BrowseResult* or *BrowseCategory*. Do not parse or modify it.
+
+        To search, pass **q** together with a **key** taken from the *search_key* of a previous *BrowseResult*.
 
         Playable items expose *play_url* extracted from the underlying /Play URL, which can be passed directly to *play_url*.
 
         :param key: The opaque key to browse. None returns the top-level menu.
+        :param q: The search term. Only meaningful together with a *search_key* passed as **key**.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
         :raises PlayerBrowseError: If the player returns a structured error response.
@@ -435,6 +438,8 @@ class Player:
         params: dict[str, str | int] = {}
         if key is not None:
             params["key"] = key
+        if q is not None:
+            params["q"] = q
 
         data = await self._get("/Browse", params=params, timeout=timeout)
         return parse_browse_result(data)

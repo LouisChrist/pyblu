@@ -207,6 +207,9 @@ class BrowseResult:
     """Human-readable service name, suitable for UI."""
     service_icon: str | None
     """URL of an icon for the service."""
+    search_key: str | None
+    """Opaque key for searching the current service. Pass to *Player.browse* together with the **q**
+    parameter (the search term). *None* if search is not available here."""
     next_key: str | None
     """Opaque key for the next page of results. Pass to *Player.browse*."""
     parent_key: str | None

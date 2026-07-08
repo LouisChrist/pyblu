@@ -328,6 +328,7 @@ def test_parse_browse_root_menu():
     assert result.type == "menu"
     assert result.service is None
     assert result.service_name is None
+    assert result.search_key is None
     assert result.next_key is None
     assert result.parent_key is None
     assert not result.categories
@@ -414,6 +415,19 @@ def test_parse_browse_categories_ignore_context_menu():
     assert group_two.text == "Group Two"
     assert len(group_two.items) == 1
     assert group_two.items[0].play_url == "Service:stream-3"
+
+
+def test_parse_browse_search_key():
+    data = """<browse serviceIcon="/Sources/images/BluOSRadioIcon.png" serviceName="Radio" searchKey="Airable:Search" type="items">
+  <item browseKey="Airable:BrowseMenu/example" text="Most popular stations" type="link"></item>
+</browse>"""
+
+    result = parse_browse_result(data)
+
+    assert result.service_name == "Radio"
+    assert result.search_key == "Airable:Search"
+    assert len(result.items) == 1
+    assert result.items[0].text == "Most popular stations"
 
 
 def test_parse_browse_pagination():
