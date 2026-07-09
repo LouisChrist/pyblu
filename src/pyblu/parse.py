@@ -227,7 +227,7 @@ def parse_sleep(response: bytes) -> int:
     return int(sleep_element.text) if sleep_element.text else 0
 
 
-def _browse_item(x) -> BrowseItem:
+def _browse_item(x: etree._Element) -> BrowseItem:
     # The url query param is extracted from the relative /Play?url=...&title=... attribute so it can be
     # passed directly to Player.play_url. Returns None when the underlying URL is not a /Play?url=X
     # (e.g. service-specific /Add?service=...&albumid=...&playnow=1).
