@@ -171,9 +171,10 @@ class BrowseItem:
     """Item type. Common values are "link" (descend with *browse_key*), "audio" (playable), "album", "track",
     "artist", "playlist", "folder", "section", "text". The list is open — treat unknown values as a display hint only."""
     text: str | None
-    """Primary label."""
+    """Primary display label."""
     text2: str | None
-    """Secondary label (e.g. artist when the item is an album)."""
+    """Secondary display label from the BluOS ``text2`` attribute.
+    The meaning is service-specific: it may be an artist, station slogan, current show, date, or another subtitle."""
     image: str | None
     """Icon or artwork URL."""
     play_url: str | None
