@@ -6,6 +6,7 @@ from pyblu.entities import (
     BrowseCategory,
     BrowseItem,
     BrowseResult,
+    ContextMenuAction,
     Input,
     PairedPlayer,
     PlayQueue,
@@ -227,6 +228,14 @@ def parse_sleep(response: bytes) -> int:
     return int(sleep_element.text) if sleep_element.text else 0
 
 
+def _context_menu_action(x: etree._Element) -> ContextMenuAction:
+    return ContextMenuAction(
+        type=x.attrib["type"],
+        text=x.attrib.get("text"),
+        action_url=x.attrib["actionURL"],
+    )
+
+
 def _browse_item(x: etree._Element) -> BrowseItem:
     # The url query param is extracted from the relative /Play?url=...&title=... attribute so it can be
     # passed directly to Player.play_url. Returns None when the underlying URL is not a /Play?url=X
@@ -246,16 +255,12 @@ def _browse_item(x: etree._Element) -> BrowseItem:
         play_url=play_url,
         browse_key=x.attrib.get("browseKey"),
         input_type=x.attrib.get("inputType"),
+        context_menu_key=x.attrib.get("contextMenuKey"),
+        context_menu=[_context_menu_action(y) for y in x.xpath("./contextMenu/item")],
     )
 
 
-@_wrap_in_unxpected_response_error
-def parse_browse_result(response: bytes) -> BrowseResult:
-    """
-    :raises PlayerBrowseError: If the response is a structured <error> response from /Browse.
-    :raises PlayerUnexpectedResponseError: If the response is not as expected.
-    """
-    # pylint: disable=c-extension-no-member
+def _browse_element(response: bytes) -> etree._Element:
     tree = etree.fromstring(response)
 
     error_elements = tree.xpath("//error")
@@ -267,7 +272,18 @@ def parse_browse_result(response: bytes) -> BrowseResult:
 
     browse_elements = tree.xpath("//browse")
     assert len(browse_elements) == 1, "Browse element not found or multiple found"
-    browse_element = browse_elements[0]
+    browse_element: etree._Element = browse_elements[0]
+    return browse_element
+
+
+@_wrap_in_unxpected_response_error
+def parse_browse_result(response: bytes) -> BrowseResult:
+    """
+    :raises PlayerBrowseError: If the response is a structured <error> response from /Browse.
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    browse_element = _browse_element(response)
 
     items = [_browse_item(x) for x in browse_element.xpath("./item")]
     categories = [
@@ -293,6 +309,19 @@ def parse_browse_result(response: bytes) -> BrowseResult:
     )
 
     return browse_result
+
+
+@_wrap_in_unxpected_response_error
+def parse_context_menu(response: bytes) -> list[ContextMenuAction]:
+    """
+    :raises PlayerBrowseError: If the response is a structured <error> response from /Browse.
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    browse_element = _browse_element(response)
+    assert browse_element.attrib["type"] == "contextMenu", "Browse response is not a context menu"
+
+    return [_context_menu_action(x) for x in browse_element.xpath("./item")]
 
 
 @_wrap_in_unxpected_response_error

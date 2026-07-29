@@ -1,10 +1,11 @@
 import pytest
 
-from pyblu import PairedPlayer
+from pyblu import ContextMenuAction, PairedPlayer
 from pyblu.errors import PlayerBrowseError
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
+    parse_context_menu,
     parse_presets,
     parse_status,
     parse_sync_status,
@@ -380,13 +381,14 @@ def test_parse_browse_service_menu():
     assert result.items[1].text == "Category Two"
 
 
-def test_parse_browse_categories_ignore_context_menu():
+def test_parse_browse_categories_with_context_menus():
     data = """<browse serviceName="Generic" type="items">
   <category text="Group One">
     <item playURL="/Play?url=Service%3Astream-1&amp;title=Station+One&amp;image=http%3A%2F%2Fexample.com%2Fcover.jpg"
-          text="Station One" text2="Artist One" image="http://example.com/cover.jpg" type="audio">
+          contextMenuKey="Generic:ContextMenu/opaque%2Fkey%3Fid%3D1" text="Station One" text2="Artist One"
+          image="http://example.com/cover.jpg" type="audio">
       <contextMenu>
-        <item actionURL="/Action?id=1" text="Action" type="favourite-add"></item>
+        <item actionURL="/Action?id=1&amp;value=opaque%2Fvalue" text="Action" type="favourite-add"></item>
       </contextMenu>
     </item>
     <item playURL="/Play?url=Service%3Astream-2" text="Station Two" image="http://example.com/cover2.jpg" type="audio"></item>
@@ -410,7 +412,11 @@ def test_parse_browse_categories_ignore_context_menu():
     assert group_one.items[0].text == "Station One"
     assert group_one.items[0].text2 == "Artist One"
     assert group_one.items[0].play_url == "Service:stream-1"
+    assert group_one.items[0].context_menu_key == "Generic:ContextMenu/opaque%2Fkey%3Fid%3D1"
+    assert group_one.items[0].context_menu == [ContextMenuAction(type="favourite-add", text="Action", action_url="/Action?id=1&value=opaque%2Fvalue")]
     assert group_one.items[1].play_url == "Service:stream-2"
+    assert group_one.items[1].context_menu_key is None
+    assert not group_one.items[1].context_menu
 
     assert group_two.text == "Group Two"
     assert len(group_two.items) == 1
@@ -452,6 +458,32 @@ def test_parse_browse_non_play_action_url_returns_none():
     result = parse_browse_result(data)
 
     assert result.items[0].play_url is None
+
+
+def test_parse_context_menu():
+    data = """<browse type="contextMenu">
+  <item actionURL="/AddFavourite?service=Airable&amp;url=opaque%3Avalue%2F1" text="Favourite" type="favourite-add"/>
+  <item actionURL="/Add?file=episode%3A1&amp;playnow=-1&amp;where=last" text="Add last" type="queue-last"/>
+</browse>"""
+
+    actions = parse_context_menu(data)
+
+    assert actions == [
+        ContextMenuAction(
+            type="favourite-add",
+            text="Favourite",
+            action_url="/AddFavourite?service=Airable&url=opaque%3Avalue%2F1",
+        ),
+        ContextMenuAction(
+            type="queue-last",
+            text="Add last",
+            action_url="/Add?file=episode%3A1&playnow=-1&where=last",
+        ),
+    ]
+
+
+def test_parse_empty_context_menu():
+    assert parse_context_menu('<browse type="contextMenu"/>') == []
 
 
 def test_parse_browse_error_response():

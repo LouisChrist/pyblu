@@ -41,6 +41,9 @@ Data Classes
 .. autoclass:: pyblu.BrowseCategory
    :members:
 
+.. autoclass:: pyblu.ContextMenuAction
+   :members:
+
 Exceptions
 ----------
 

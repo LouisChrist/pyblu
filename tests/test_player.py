@@ -7,7 +7,7 @@ from mocket.mocks.mockhttp import Entry
 from mocket.plugins.aiohttp_connector import MocketTCPConnector
 import pytest
 
-from pyblu import Player, PairedPlayer
+from pyblu import ContextMenuAction, Player, PairedPlayer
 from pyblu.entities import Preset, Input
 from pyblu.errors import PlayerBrowseError, PlayerUnreachableError
 
@@ -854,3 +854,50 @@ async def test_browse_error_response():
 
     assert "Invalid key" in str(exc_info.value)
     assert exc_info.value.details == ["not recognised"]
+
+
+@async_mocketize(strict_mode=True)
+async def test_context_menu():
+    key = "Airable:ContextMenu/opaque?url=station%3A1&hasInfo=1"
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000/Browse?key={quote(key)}",
+        status=200,
+        body="""
+        <browse type="contextMenu">
+          <item actionURL="/AddFavourite?service=Airable&amp;url=opaque%3Astation%2F1" text="Favourite" type="favourite-add"/>
+        </browse>
+        """,
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            actions = await client.context_menu(key)
+
+    assert len(Mocket.request_list()) == 1
+    assert actions == [
+        ContextMenuAction(
+            type="favourite-add",
+            text="Favourite",
+            action_url="/AddFavourite?service=Airable&url=opaque%3Astation%2F1",
+        )
+    ]
+
+
+@async_mocketize(strict_mode=True)
+async def test_execute_context_menu_action():
+    action = ContextMenuAction(
+        type="favourite-add",
+        text="Favourite",
+        action_url="/AddFavourite?service=Airable&url=opaque%3Astation%2F1",
+    )
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1",
+        status=200,
+        body="<success/>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            await client.execute_context_menu_action(action)
+
+    assert len(Mocket.request_list()) == 1

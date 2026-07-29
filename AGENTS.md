@@ -33,9 +33,9 @@ The library has four modules with a clear separation of concerns:
 
 - **`player.py`** — `Player` class: the public API. Each method makes one HTTP GET request to the BluOS endpoint, passing arguments as query parameters, then delegates the raw response bytes to a parse function. All methods are async and decorated with `@_wrap_in_unreachable_error`.
 
-- **`parse.py`** — Stateless XML parsing functions. Each takes `bytes` from the HTTP response and returns a typed entity. Uses `lxml.etree` for parsing. All functions are decorated with `@_wrap_in_unxpected_response_error`.
+- **`parse.py`** — Stateless XML parsing functions. Each takes `bytes` from the HTTP response and returns a typed entity. Uses `lxml.etree` for parsing. All public parse functions are decorated with `@_wrap_in_unxpected_response_error`.
 
-- **`entities.py`** — Pure `@dataclass` types (`Status`, `Volume`, `SyncStatus`, `PairedPlayer`, `PlayQueue`, `Preset`, `Input`). No logic.
+- **`entities.py`** — Pure `@dataclass` types for player state and media browsing, including `BrowseResult`, `BrowseItem`, and `ContextMenuAction`. No logic.
 
 - **`errors.py`** — Exception hierarchy (`PlayerError` → `PlayerUnreachableError` / `PlayerUnexpectedResponseError`) and two decorator factories that wrap exceptions at the Player and parse layers respectively.
 
@@ -47,6 +47,7 @@ The library has four modules with a clear separation of concerns:
 - All operations use HTTP GET, including mutations (play, pause, volume set).
 - `inputs()` calls `/RadioBrowse?service=Capture`, not a dedicated inputs endpoint.
 - `play_url()` and `play()` both map to the `/Play` endpoint.
+- Browse context-menu keys and action URLs are opaque. Resolve keys through `context_menu()`; actions may mutate playback, the queue, presets, or service favorites.
 - The API uses "master/slave" terminology; the library exposes this as "leader/follower".
 
 **Long polling**: `status()` and `sync_status()` accept an `etag` parameter. When provided, `poll_timeout` must be strictly less than `timeout` — the Player method validates this and raises `ValueError` if violated.

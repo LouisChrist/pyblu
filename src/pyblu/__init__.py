@@ -5,6 +5,7 @@ from .entities import (
     BrowseCategory,
     BrowseItem,
     BrowseResult,
+    ContextMenuAction,
     Input,
     PairedPlayer,
     PlayQueue,
@@ -26,4 +27,5 @@ __all__ = [
     "BrowseResult",
     "BrowseItem",
     "BrowseCategory",
+    "ContextMenuAction",
 ]

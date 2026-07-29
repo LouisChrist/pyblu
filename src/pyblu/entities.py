@@ -166,6 +166,16 @@ class Input:
 
 
 @dataclass
+class ContextMenuAction:
+    type: str
+    """Service-specific action type. Treat unknown values as a display hint only."""
+    text: str | None
+    """Human-readable action label."""
+    action_url: str
+    """Opaque relative URL used by *Player.execute_context_menu_action*. Do not parse or modify it."""
+
+
+@dataclass
 class BrowseItem:
     type: str
     """Item type. Common values are "link" (descend with *browse_key*), "audio" (playable), "album", "track",
@@ -184,6 +194,10 @@ class BrowseItem:
     """Opaque key. Pass to *Player.browse* to descend into this item. *None* if the item is a leaf."""
     input_type: str | None
     """Input kind for items that represent a physical input (e.g. "bluetooth", "arc", "spdif"). Usually only set on the root menu."""
+    context_menu_key: str | None
+    """Opaque key for this item's context menu. Pass it to *Player.context_menu*."""
+    context_menu: list[ContextMenuAction]
+    """Inline context-menu actions. Usually empty because BluOS normally supplies *context_menu_key* instead."""
 
 
 @dataclass

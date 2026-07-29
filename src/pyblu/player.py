@@ -2,10 +2,11 @@ from types import TracebackType
 
 import aiohttp
 
-from pyblu.entities import BrowseResult, Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
+from pyblu.entities import BrowseResult, ContextMenuAction, Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
+    parse_context_menu,
     parse_inputs,
     parse_sleep,
     parse_state,
@@ -420,6 +421,7 @@ class Player:
 
         **key** is an opaque value taken from a previous browse response: *browse_key* of a *BrowseItem*,
         or *search_key* / *next_key* / *parent_key* of a *BrowseResult* or *BrowseCategory*. Do not parse or modify it.
+        Use *context_menu* rather than this method for a *context_menu_key*.
 
         To search, pass **q** together with a **key** taken from the *search_key* of a previous *BrowseResult*.
 
@@ -443,3 +445,33 @@ class Player:
 
         data = await self._get("/Browse", params=params, timeout=timeout)
         return parse_browse_result(data)
+
+    async def context_menu(self, key: str, timeout: float | None = None) -> list[ContextMenuAction]:
+        """Get the context-menu actions available for a browse item.
+
+        **key** is the opaque *context_menu_key* from a *BrowseItem*. Do not parse or modify it. Available actions are service-specific and can change.
+
+        :param key: The opaque context-menu key from a browse item.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerBrowseError: If the player returns a structured error response.
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The context-menu actions available for the item.
+        """
+        data = await self._get("/Browse", params={"key": key}, timeout=timeout)
+        return parse_context_menu(data)
+
+    async def execute_context_menu_action(self, action: ContextMenuAction, timeout: float | None = None) -> None:
+        """Execute a context-menu action returned by *context_menu* or embedded in a *BrowseItem*.
+
+        Context-menu actions can mutate player or service state: for example, they may start playback, modify the play queue,
+        add a preset, or change a favorite. The action's opaque relative URL is sent directly to the player.
+
+        :param action: The context-menu action to execute.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+        """
+        await self._get(action.action_url, timeout=timeout)
