@@ -310,10 +310,22 @@ def test_parse_play_queue_status():
 
     assert play_queue.id == "243"
     assert play_queue.name == ""
-    assert play_queue.modified
+    assert play_queue.modified is True
     assert play_queue.length == 13
-    assert not play_queue.shuffle
+    assert play_queue.shuffle is None
     assert play_queue.repeat is None
+    assert not play_queue.tracks
+
+
+def test_parse_empty_play_queue_listing_with_optional_metadata():
+    play_queue = parse_play_queue('<playlist length="0" repeat="0" shuffle="0" id="17"/>')
+
+    assert play_queue.id == "17"
+    assert play_queue.length == 0
+    assert play_queue.name is None
+    assert play_queue.modified is None
+    assert play_queue.shuffle is False
+    assert play_queue.repeat == 0
     assert not play_queue.tracks
 
 

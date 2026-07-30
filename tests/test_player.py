@@ -553,9 +553,9 @@ async def test_clear():
     assert len(Mocket.request_list()) == 1
 
     assert play_queue.id == "1"
-    assert not play_queue.modified
+    assert play_queue.modified is False
     assert play_queue.length == 0
-    assert not play_queue.shuffle
+    assert play_queue.shuffle is None
 
 
 @async_mocketize(strict_mode=True)
@@ -597,6 +597,10 @@ async def test_play_queue_status_only():
     assert len(Mocket.request_list()) == 1
     assert play_queue.id == "15"
     assert play_queue.length == 3
+    assert play_queue.name is None
+    assert play_queue.modified is True
+    assert play_queue.shuffle is None
+    assert play_queue.repeat is None
     assert play_queue.tracks == []
 
 
@@ -614,6 +618,8 @@ async def test_play_queue_page():
 
     assert len(Mocket.request_list()) == 1
     assert play_queue.length == 30
+    assert play_queue.modified is False
+    assert play_queue.shuffle is None
     assert play_queue.tracks[0].id == 10
 
 

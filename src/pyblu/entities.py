@@ -157,10 +157,10 @@ class PlayQueueTrack:
 class PlayQueue:
     id: str
     """Unique id for the current play queue state. Changes whenever the play queue changes."""
-    shuffle: bool
-    """Play queue is shuffled."""
-    modified: bool
-    """Play queue was modified since it was loaded."""
+    shuffle: bool | None
+    """Whether the play queue is shuffled, or *None* if the response does not include the shuffle state."""
+    modified: bool | None
+    """Whether the play queue was modified since it was loaded, or *None* if the response does not include this state."""
     length: int
     """Total number of tracks in the play queue, including tracks not returned by a paginated request."""
     name: str | None = None

@@ -157,6 +157,11 @@ def _attribute_or_child(element: etree._Element, name: str) -> str | None:
     return value if value is not None else element.findtext(name)
 
 
+def _optional_bool_attribute_or_child(element: etree._Element, name: str) -> bool | None:
+    value = _attribute_or_child(element, name)
+    return value == "1" if value is not None else None
+
+
 @_wrap_in_unxpected_response_error
 def parse_play_queue(response: bytes) -> PlayQueue:
     """
@@ -193,9 +198,9 @@ def parse_play_queue(response: bytes) -> PlayQueue:
 
     return PlayQueue(
         id=queue_id,
-        modified=_attribute_or_child(playlist_element, "modified") == "1",
+        modified=_optional_bool_attribute_or_child(playlist_element, "modified"),
         length=int(length),
-        shuffle=_attribute_or_child(playlist_element, "shuffle") == "1",
+        shuffle=_optional_bool_attribute_or_child(playlist_element, "shuffle"),
         name=_attribute_or_child(playlist_element, "name"),
         repeat=int(repeat) if (repeat := _attribute_or_child(playlist_element, "repeat")) is not None else None,
         tracks=tracks,
