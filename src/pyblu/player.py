@@ -2,7 +2,7 @@ from types import TracebackType
 
 import aiohttp
 
-from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
+from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input, ListeningMode
 from pyblu.parse import (
     parse_add_follower,
     parse_inputs,
@@ -13,6 +13,7 @@ from pyblu.parse import (
     parse_volume,
     parse_play_queue,
     parse_presets,
+    parse_listening_modes,
 )
 from pyblu.errors import PlayerUnreachableError
 
@@ -412,3 +413,56 @@ class Player:
         params: dict[str, str | int] = {"service": "Capture"}
         data = await self._get("/RadioBrowse", params=params, timeout=timeout)
         return parse_inputs(data)
+
+    async def listening_modes(self, timeout: float | None = None) -> list[ListeningMode]:
+        """Get the available listening modes.
+
+        Uses the undocumented /audioPreset endpoint.
+
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The current listening mode and list of available modes.
+        """
+        try:
+            data = await self._get("/audioPreset", timeout=timeout)
+            modes = parse_listening_modes(data)
+        except aiohttp.ClientResponseError:
+            modes = []
+        return modes
+
+    async def set_listening_mode(
+        self,
+        mode: str,
+        *,
+        timeout: float | None = None,
+    ) -> None:
+        """Set the listening mode.
+
+        Accepts friendly aliases (tv, music, movie, film, cinema) which are automatically
+        mapped to the values the device expects (TV, MUSIC, MOVIE).
+
+        Uses the undocumented /alsa_setting endpoint.
+
+        :param mode: The mode to set. Accepts full names (MUSIC, TV, MOVIE) or aliases (tv, music, movie, film, cinema). Case-insensitive.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The updated listening mode state (current + available).
+        """
+        mode_map = {
+            "tv": "TV",
+            "music": "MUSIC",
+            "movie": "MOVIE",
+            "film": "MOVIE",
+            "cinema": "MOVIE",
+        }
+
+        if not (mode_requested := mode_map.get(mode.strip().lower())):
+            raise ValueError(f"'{mode_requested}' is not a valid mode!")
+
+        await self._get("/alsa_setting", params={"preset": mode_requested}, timeout=timeout)

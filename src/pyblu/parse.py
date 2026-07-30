@@ -2,7 +2,7 @@ from urllib.parse import unquote
 
 from lxml import etree
 
-from pyblu.entities import Input, PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset
+from pyblu.entities import Input, PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset, ListeningMode
 from pyblu.errors import _wrap_in_unxpected_response_error
 
 
@@ -236,3 +236,25 @@ def parse_inputs(response: bytes) -> list[Input]:
     ]
 
     return inputs
+
+
+@_wrap_in_unxpected_response_error
+def parse_listening_modes(response: bytes) -> list[ListeningMode]:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+    # import pdb
+
+    # pdb.set_trace()
+    mode_elements = tree.xpath("//value")
+    modes = [
+        ListeningMode(
+            name=x.attrib.get("displayName"),
+            image=x.attrib.get("icon"),
+            active=x.attrib.get("name") == tree.get("value"),
+        )
+        for x in mode_elements
+    ]
+    return modes

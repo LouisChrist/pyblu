@@ -8,7 +8,7 @@ from mocket.plugins.aiohttp_connector import MocketTCPConnector
 import pytest
 
 from pyblu import Player, PairedPlayer
-from pyblu.entities import Preset, Input
+from pyblu.entities import Preset, Input, ListeningMode
 from pyblu.errors import PlayerUnreachableError
 
 
@@ -696,6 +696,33 @@ async def test_load_preset():
             await client.load_preset(1)
 
     assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_listening_modes():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/audioPreset",
+        status=200,
+        body="""
+        <setting id="preset" name="preset" displayName="Listening Mode" url="/alsa_setting" class="list" value="MOVIE" refresh="true" required="true" style="inline">
+            <value displayName="Music" name="MUSIC" icon="/images/settings/icon_music-mode.png" iconActive="/images/settings/icon_music-mode-active.png"/>
+            <value displayName="Movie" name="MOVIE" icon="/images/settings/icon_movies-mode.png" iconActive="/images/settings/icon_movies-mode-active.png"/>
+            <value displayName="TV" name="TV" icon="/images/settings/icon_tv-mode.png" iconActive="/images/settings/icon_tv-mode-active.png"/>
+        </setting>
+    """,
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            modes = await client.listening_modes()
+
+    assert len(Mocket.request_list()) == 1
+
+    assert modes == [
+        ListeningMode(name="Music", image="/images/settings/icon_music-mode.png", active=False),
+        ListeningMode(name="Movie", image="/images/settings/icon_movies-mode.png", active=True),
+        ListeningMode(name="TV", image="/images/settings/icon_tv-mode.png", active=False),
+    ]
 
 
 @async_mocketize(strict_mode=True)

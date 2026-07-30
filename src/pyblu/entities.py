@@ -56,7 +56,7 @@ class Status:
     """True if the player is currently indexing."""
 
     stream_url: str | None
-    """The presence of this element should be treated as a flag and its contents as an opaque value. 
+    """The presence of this element should be treated as a flag and its contents as an opaque value.
     Seems to be present for radio stations and to be the same as the url from the matching preset(for Radio Stations)."""
 
 
@@ -163,3 +163,13 @@ class Input:
     """URL of the input image"""
     url: str
     """URL to play the input. Can be passed to *play_url*"""
+
+
+@dataclass
+class ListeningMode:
+    name: str
+    """Name of the current listening mode"""
+    image: str
+    """URL of the mode image"""
+    active: bool
+    """ListeningMode is currently selected"""
