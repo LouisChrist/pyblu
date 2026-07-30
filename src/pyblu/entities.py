@@ -219,7 +219,7 @@ class BrowseItem:
     The meaning is service-specific: it may be an artist, station slogan, current show, date, or another subtitle."""
     image: str | None
     """Icon or artwork URL."""
-    play_url: str | None
+    play_action_url: str | None
     """Opaque relative URI from the item's *playURL* attribute. Use *Player.play_browse_item* to invoke it.
     *None* if the item does not provide a default play action."""
     browse_key: str | None
@@ -230,7 +230,7 @@ class BrowseItem:
     """Opaque key for this item's context menu. Pass it to *Player.context_menu*."""
     context_menu: list[ContextMenuAction]
     """Inline context-menu actions. Usually empty because BluOS normally supplies *context_menu_key* instead."""
-    autoplay_url: str | None = None
+    autoplay_action_url: str | None = None
     """Opaque relative URI from the item's *autoplayURL* attribute. Use *Player.play_browse_item* with **autoplay=True** to invoke it.
     *None* if the item does not provide an auto-fill play action."""
 

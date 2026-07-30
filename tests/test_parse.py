@@ -1,10 +1,11 @@
 import pytest
 
 from pyblu import ContextMenuAction, PairedPlayer, PlayQueueTrack
-from pyblu.errors import PlayerBrowseError, PlayerCommandError
+from pyblu.errors import PlayerBrowseError, PlayerCommandError, PlayerUnexpectedResponseError
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
+    parse_command_response,
     parse_context_menu,
     parse_deleted_play_queue_track,
     parse_moved_play_queue_track,
@@ -327,6 +328,23 @@ def test_parse_save_empty_play_queue_error():
         parse_saved_play_queue("<error>empty</error>")
 
 
+@pytest.mark.parametrize("data", [b"", b"<success/>", b"<state>play</state>", b"<playlist id='1'/>"])
+def test_parse_successful_command_response(data: bytes):
+    assert parse_command_response(data) is None
+
+
+def test_parse_command_error_response():
+    data = b"<error><message>Service unavailable</message><detail>Try again later</detail></error>"
+
+    with pytest.raises(PlayerCommandError, match="Service unavailable: Try again later"):
+        parse_command_response(data)
+
+
+def test_parse_invalid_command_response():
+    with pytest.raises(PlayerUnexpectedResponseError):
+        parse_command_response(b"not XML")
+
+
 def test_parse_presets():
     data = """<presets prid="2">
           <preset url="Spotify:play" id="1" name="My preset"/>
@@ -411,19 +429,19 @@ def test_parse_browse_root_menu():
     assert playlists.type == "link"
     assert playlists.text == "Playlists"
     assert playlists.browse_key == "playlists"
-    assert playlists.play_url is None
+    assert playlists.play_action_url is None
     assert playlists.input_type is None
 
     assert bluetooth.type == "audio"
     assert bluetooth.text == "Bluetooth"
-    assert bluetooth.play_url == "/Play?url=Capture%3Abluez%3Abluetooth"
-    assert bluetooth.autoplay_url is None
+    assert bluetooth.play_action_url == "/Play?url=Capture%3Abluez%3Abluetooth"
+    assert bluetooth.autoplay_action_url is None
     assert bluetooth.browse_key is None
     assert bluetooth.input_type == "bluetooth"
 
     assert service_a.type == "link"
     assert service_a.browse_key == "ServiceA:"
-    assert service_a.play_url is None
+    assert service_a.play_action_url is None
 
 
 def test_parse_browse_empty_list():
@@ -484,18 +502,18 @@ def test_parse_browse_categories_with_context_menus():
     assert len(group_one.items) == 2
     assert group_one.items[0].text == "Station One"
     assert group_one.items[0].text2 == "Artist One"
-    assert group_one.items[0].play_url == "/Play?url=Service%3Astream-1&title=Station+One&image=http%3A%2F%2Fexample.com%2Fcover.jpg"
-    assert group_one.items[0].autoplay_url is None
+    assert group_one.items[0].play_action_url == "/Play?url=Service%3Astream-1&title=Station+One&image=http%3A%2F%2Fexample.com%2Fcover.jpg"
+    assert group_one.items[0].autoplay_action_url is None
     assert group_one.items[0].context_menu_key == "Generic:ContextMenu/opaque%2Fkey%3Fid%3D1"
     assert group_one.items[0].context_menu == [ContextMenuAction(type="favourite-add", text="Action", action_url="/Action?id=1&value=opaque%2Fvalue")]
-    assert group_one.items[1].play_url == "/Play?url=Service%3Astream-2"
-    assert group_one.items[1].autoplay_url == "/Play?url=Service%3Astream-2&autofill=1"
+    assert group_one.items[1].play_action_url == "/Play?url=Service%3Astream-2"
+    assert group_one.items[1].autoplay_action_url == "/Play?url=Service%3Astream-2&autofill=1"
     assert group_one.items[1].context_menu_key is None
     assert not group_one.items[1].context_menu
 
     assert group_two.text == "Group Two"
     assert len(group_two.items) == 1
-    assert group_two.items[0].play_url == "/Play?url=Service%3Astream-3"
+    assert group_two.items[0].play_action_url == "/Play?url=Service%3Astream-3"
 
 
 def test_parse_browse_search_key():
@@ -530,7 +548,7 @@ def test_parse_browse_preserves_non_play_action_url():
 
     result = parse_browse_result(data)
 
-    assert result.items[0].play_url == "/Add?service=Generic&albumid=12345&playnow=1"
+    assert result.items[0].play_action_url == "/Add?service=Generic&albumid=12345&playnow=1"
 
 
 def test_parse_context_menu():

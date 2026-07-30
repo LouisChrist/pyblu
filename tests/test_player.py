@@ -903,7 +903,7 @@ async def test_browse_root():
     assert result.type == "menu"
     assert len(result.items) == 2
     assert result.items[0].browse_key == "playlists"
-    assert result.items[1].play_url == "/Play?url=Capture%3Abluez%3Abluetooth"
+    assert result.items[1].play_action_url == "/Play?url=Capture%3Abluez%3Abluetooth"
     assert result.items[1].input_type == "bluetooth"
 
 
@@ -996,8 +996,8 @@ def _browse_item_with_play_actions() -> BrowseItem:
         text="Album",
         text2=None,
         image=None,
-        play_url="/Add?service=ServiceA&albumid=1&playnow=1",
-        autoplay_url="/Add?service=ServiceA&albumid=1&autofill=1",
+        play_action_url="/Add?service=ServiceA&albumid=1&playnow=1",
+        autoplay_action_url="/Add?service=ServiceA&albumid=1&autofill=1",
         browse_key=None,
         input_type=None,
         context_menu_key=None,
@@ -1016,6 +1016,22 @@ async def test_play_browse_item():
     async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
         async with Player("node", session=session) as client:
             await client.play_browse_item(_browse_item_with_play_actions())
+
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_play_browse_item_command_error():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Add?service=ServiceA&albumid=1&playnow=1",
+        status=200,
+        body="<error><message>Service unavailable</message></error>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            with pytest.raises(PlayerCommandError, match="Service unavailable"):
+                await client.play_browse_item(_browse_item_with_play_actions())
 
     assert len(Mocket.request_list()) == 1
 
@@ -1041,8 +1057,8 @@ async def test_play_browse_item_rejects_missing_action():
         text="Folder",
         text2=None,
         image=None,
-        play_url=None,
-        autoplay_url=None,
+        play_action_url=None,
+        autoplay_action_url=None,
         browse_key="folder",
         input_type=None,
         context_menu_key=None,
@@ -1098,5 +1114,26 @@ async def test_execute_context_menu_action():
     async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
         async with Player("node", session=session) as client:
             await client.execute_context_menu_action(action)
+
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_execute_context_menu_action_command_error():
+    action = ContextMenuAction(
+        type="favourite-add",
+        text="Favourite",
+        action_url="/AddFavourite?service=Airable&url=opaque%3Astation%2F1",
+    )
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1",
+        status=200,
+        body="<error><message>Service unavailable</message></error>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            with pytest.raises(PlayerCommandError, match="Service unavailable"):
+                await client.execute_context_menu_action(action)
 
     assert len(Mocket.request_list()) == 1

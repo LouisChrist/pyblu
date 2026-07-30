@@ -60,7 +60,7 @@ The library has four modules with a clear separation of concerns:
 - All operations use HTTP GET, including mutations (play, pause, volume set).
 - `inputs()` calls `/RadioBrowse?service=Capture`, not a dedicated inputs endpoint.
 - `play_url()` and `play()` both map to the `/Play` endpoint.
-- Browse context-menu keys and action URLs are opaque. Resolve keys through `context_menu()`; actions may mutate playback, the queue, presets, or service favorites.
+- Browse keys, `playURL` / `autoplayURL`, and context-menu action URLs are opaque. They map to `BrowseItem.play_action_url` / `autoplay_action_url`; do not pass them to `Player.play_url()`. Resolve context-menu keys through `context_menu()` and invoke the returned URIs unchanged; actions may mutate playback, the queue, presets, or service favorites.
 - `/Playlist` returns queue metadata as child elements for `length=1`, but as attributes for full and paginated listings; `parse_play_queue()` supports both forms.
 - The API uses "master/slave" terminology; the library exposes this as "leader/follower".
 

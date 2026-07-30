@@ -303,6 +303,29 @@ def parse_sleep(response: bytes) -> int:
     return int(sleep_element.text) if sleep_element.text else 0
 
 
+@_wrap_in_unxpected_response_error
+def parse_command_response(response: bytes) -> None:
+    """Raise *PlayerCommandError* if an opaque command returns an error response.
+
+    Successful command responses vary by endpoint and are intentionally ignored.
+
+    :raises PlayerCommandError: If the player intentionally rejects the command.
+    :raises PlayerUnexpectedResponseError: If the response is not valid XML.
+    """
+    if not response.strip():
+        return
+
+    tree = etree.fromstring(response)
+    if tree.tag != "error":
+        return
+
+    message = (tree.findtext("message") or tree.text or "").strip() or "The player rejected the command"
+    details = [detail.text.strip() for detail in tree.findall("detail") if detail.text and detail.text.strip()]
+    if details:
+        message = f"{message}: {'; '.join(details)}"
+    raise PlayerCommandError(message)
+
+
 def _context_menu_action(x: etree._Element) -> ContextMenuAction:
     return ContextMenuAction(
         type=x.attrib["type"],
@@ -317,8 +340,8 @@ def _browse_item(x: etree._Element) -> BrowseItem:
         text=x.attrib.get("text"),
         text2=x.attrib.get("text2"),
         image=x.attrib.get("image"),
-        play_url=x.attrib.get("playURL"),
-        autoplay_url=x.attrib.get("autoplayURL"),
+        play_action_url=x.attrib.get("playURL"),
+        autoplay_action_url=x.attrib.get("autoplayURL"),
         browse_key=x.attrib.get("browseKey"),
         input_type=x.attrib.get("inputType"),
         context_menu_key=x.attrib.get("contextMenuKey"),
