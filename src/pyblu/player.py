@@ -2,7 +2,7 @@ from types import TracebackType
 
 import aiohttp
 
-from pyblu.entities import BrowseItem, BrowseResult, ContextMenuAction, Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
+from pyblu.entities import BrowseResult, ContextMenuAction, Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
@@ -81,10 +81,6 @@ class Player:
             raise PlayerUnreachableError(f"Timeout during request: {e}") from e
         except aiohttp.ClientConnectionError as e:
             raise PlayerUnreachableError(f"Connection error: {e}") from e
-
-    async def _execute_action_url(self, action_url: str, timeout: float | None = None) -> None:
-        data = await self._get(action_url, timeout=timeout)
-        parse_command_response(data)
 
     async def status(self, etag: str | None = None, poll_timeout: int = 30, timeout: float | None = None) -> Status:
         """Get the current status of the player.
@@ -193,8 +189,9 @@ class Player:
     async def play_url(self, url: str, timeout: float | None = None) -> str:
         """Start playing a track from a source URL. Can also be used to select inputs. See *inputs* for available inputs.
 
-        This method constructs a /Play request from a stream URL or BluOS source identifier. To invoke the opaque
-        action URI from a *BrowseItem*, use *play_browse_item* instead.
+        This method constructs a /Play request from a stream URL or BluOS source identifier. Do not pass it an action
+        URI from the browse API; invoke *BrowseItem.play_action_url*, *BrowseItem.autoplay_action_url*, and
+        *ContextMenuAction.action_url* values with *execute_action* instead.
 
         :param url: The stream URL or BluOS source identifier to play.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
@@ -209,6 +206,24 @@ class Player:
         }
         data = await self._get("/Play", params=params, timeout=timeout)
         return parse_state(data)
+
+    async def execute_action(self, action_url: str, timeout: float | None = None) -> None:
+        """Invoke an opaque action URI returned by the browse API.
+
+        Pass a *BrowseItem.play_action_url*, *BrowseItem.autoplay_action_url*, or *ContextMenuAction.action_url*
+        to this method without parsing, decoding, or otherwise modifying it. Unlike *play_url*, this method does not
+        construct a /Play request: the complete action URI is sent directly to the player. Actions can start playback,
+        modify the play queue, add a preset, or change a service favorite.
+
+        :param action_url: An opaque action URI supplied by the player.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerCommandError: If the player rejects the action.
+        :raises PlayerUnexpectedResponseError: If the command response is not valid XML.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+        """
+        data = await self._get(action_url, timeout=timeout)
+        parse_command_response(data)
 
     async def pause(self, toggle: bool | None = None, timeout: float | None = None) -> str:
         """Pause the current track. **toggle** can be used to toggle between playing and pause.
@@ -523,7 +538,7 @@ class Player:
         To search, pass **q** together with a **key** taken from the *search_key* of a previous *BrowseResult*.
         Set **with_context_menu_items** to include each item's context-menu actions in the response.
 
-        Playable items expose opaque *play_action_url* and optionally *autoplay_action_url* values. Invoke them with *play_browse_item*.
+        Playable items expose opaque *play_action_url* and optionally *autoplay_action_url* values. Invoke either value with *execute_action*.
 
         :param key: The opaque key to browse. None returns the top-level menu.
         :param q: The search term. Only meaningful together with a *search_key* passed as **key**.
@@ -547,29 +562,6 @@ class Player:
         data = await self._get("/Browse", params=params, timeout=timeout)
         return parse_browse_result(data)
 
-    async def play_browse_item(self, item: BrowseItem, autoplay: bool = False, timeout: float | None = None) -> None:
-        """Invoke a browse item's play action.
-
-        The opaque URI supplied by the player is sent back unchanged. By default this uses *BrowseItem.play_action_url*.
-        Set **autoplay** to use *BrowseItem.autoplay_action_url*, which may add subsequent tracks from the containing object
-        to the auto-fill section of the play queue.
-
-        :param item: The browse item to play.
-        :param autoplay: Use the item's auto-fill play action instead of its default play action.
-        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
-
-        :raises ValueError: If the item does not provide the selected play action.
-        :raises PlayerCommandError: If the player rejects the play action.
-        :raises PlayerUnexpectedResponseError: If the command response is not valid XML.
-        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
-        """
-        action_url = item.autoplay_action_url if autoplay else item.play_action_url
-        if action_url is None:
-            action_name = "autoplayURL" if autoplay else "playURL"
-            raise ValueError(f"Browse item does not provide {action_name}")
-
-        await self._execute_action_url(action_url, timeout=timeout)
-
     async def context_menu(self, key: str, timeout: float | None = None) -> list[ContextMenuAction]:
         """Get the context-menu actions available for a browse item.
 
@@ -586,18 +578,3 @@ class Player:
         """
         data = await self._get("/Browse", params={"key": key}, timeout=timeout)
         return parse_context_menu(data)
-
-    async def execute_context_menu_action(self, action: ContextMenuAction, timeout: float | None = None) -> None:
-        """Execute a context-menu action returned by *context_menu* or embedded in a *BrowseItem*.
-
-        Context-menu actions can mutate player or service state: for example, they may start playback, modify the play queue,
-        add a preset, or change a favorite. The action's opaque relative URL is sent directly to the player.
-
-        :param action: The context-menu action to execute.
-        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
-
-        :raises PlayerCommandError: If the player rejects the action.
-        :raises PlayerUnexpectedResponseError: If the command response is not valid XML.
-        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
-        """
-        await self._execute_action_url(action.action_url, timeout=timeout)

@@ -204,7 +204,7 @@ class ContextMenuAction:
     text: str | None
     """Human-readable action label."""
     action_url: str
-    """Opaque relative URL used by *Player.execute_context_menu_action*. Do not parse or modify it."""
+    """Opaque relative action URI. Pass it unchanged to *Player.execute_action*."""
 
 
 @dataclass
@@ -220,8 +220,8 @@ class BrowseItem:
     image: str | None
     """Icon or artwork URL."""
     play_action_url: str | None
-    """Opaque relative URI from the item's *playURL* attribute. Use *Player.play_browse_item* to invoke it.
-    *None* if the item does not provide a default play action."""
+    """Opaque relative URI from the item's *playURL* attribute. Pass it unchanged to *Player.execute_action*.
+    *None* if the item does not provide a default play action. Do not pass this value to *Player.play_url*."""
     browse_key: str | None
     """Opaque key. Pass to *Player.browse* to descend into this item. *None* if the item is a leaf."""
     input_type: str | None
@@ -231,8 +231,8 @@ class BrowseItem:
     context_menu: list[ContextMenuAction]
     """Inline context-menu actions. Usually empty because BluOS normally supplies *context_menu_key* instead."""
     autoplay_action_url: str | None = None
-    """Opaque relative URI from the item's *autoplayURL* attribute. Use *Player.play_browse_item* with **autoplay=True** to invoke it.
-    *None* if the item does not provide an auto-fill play action."""
+    """Opaque relative URI from the item's *autoplayURL* attribute. Pass it unchanged to *Player.execute_action*.
+    *None* if the item does not provide an auto-fill play action. Do not pass this value to *Player.play_url*."""
 
 
 @dataclass
