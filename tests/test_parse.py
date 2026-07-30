@@ -416,7 +416,8 @@ def test_parse_browse_root_menu():
 
     assert bluetooth.type == "audio"
     assert bluetooth.text == "Bluetooth"
-    assert bluetooth.play_url == "Capture:bluez:bluetooth"
+    assert bluetooth.play_url == "/Play?url=Capture%3Abluez%3Abluetooth"
+    assert bluetooth.autoplay_url is None
     assert bluetooth.browse_key is None
     assert bluetooth.input_type == "bluetooth"
 
@@ -462,7 +463,8 @@ def test_parse_browse_categories_with_context_menus():
         <item actionURL="/Action?id=1&amp;value=opaque%2Fvalue" text="Action" type="favourite-add"></item>
       </contextMenu>
     </item>
-    <item playURL="/Play?url=Service%3Astream-2" text="Station Two" image="http://example.com/cover2.jpg" type="audio"></item>
+    <item playURL="/Play?url=Service%3Astream-2" autoplayURL="/Play?url=Service%3Astream-2&amp;autofill=1"
+          text="Station Two" image="http://example.com/cover2.jpg" type="audio"></item>
   </category>
   <category text="Group Two">
     <item playURL="/Play?url=Service%3Astream-3" text="Station Three" image="http://example.com/cover3.jpg" type="audio"></item>
@@ -482,16 +484,18 @@ def test_parse_browse_categories_with_context_menus():
     assert len(group_one.items) == 2
     assert group_one.items[0].text == "Station One"
     assert group_one.items[0].text2 == "Artist One"
-    assert group_one.items[0].play_url == "Service:stream-1"
+    assert group_one.items[0].play_url == "/Play?url=Service%3Astream-1&title=Station+One&image=http%3A%2F%2Fexample.com%2Fcover.jpg"
+    assert group_one.items[0].autoplay_url is None
     assert group_one.items[0].context_menu_key == "Generic:ContextMenu/opaque%2Fkey%3Fid%3D1"
     assert group_one.items[0].context_menu == [ContextMenuAction(type="favourite-add", text="Action", action_url="/Action?id=1&value=opaque%2Fvalue")]
-    assert group_one.items[1].play_url == "Service:stream-2"
+    assert group_one.items[1].play_url == "/Play?url=Service%3Astream-2"
+    assert group_one.items[1].autoplay_url == "/Play?url=Service%3Astream-2&autofill=1"
     assert group_one.items[1].context_menu_key is None
     assert not group_one.items[1].context_menu
 
     assert group_two.text == "Group Two"
     assert len(group_two.items) == 1
-    assert group_two.items[0].play_url == "Service:stream-3"
+    assert group_two.items[0].play_url == "/Play?url=Service%3Astream-3"
 
 
 def test_parse_browse_search_key():
@@ -519,16 +523,14 @@ def test_parse_browse_pagination():
     assert len(result.items) == 1
 
 
-def test_parse_browse_non_play_action_url_returns_none():
-    # Service-specific items use /Add?service=...&playnow=1 rather than /Play?url=X.
-    # The library exposes play_url=None for those — the caller cannot stream them via play_url().
+def test_parse_browse_preserves_non_play_action_url():
     data = """<browse type="albums">
   <item playURL="/Add?service=Generic&amp;albumid=12345&amp;playnow=1" text="Album One" type="album"></item>
 </browse>"""
 
     result = parse_browse_result(data)
 
-    assert result.items[0].play_url is None
+    assert result.items[0].play_url == "/Add?service=Generic&albumid=12345&playnow=1"
 
 
 def test_parse_context_menu():

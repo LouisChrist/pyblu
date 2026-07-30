@@ -2,7 +2,7 @@ from types import TracebackType
 
 import aiohttp
 
-from pyblu.entities import BrowseResult, ContextMenuAction, Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
+from pyblu.entities import BrowseItem, BrowseResult, ContextMenuAction, Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
@@ -498,7 +498,13 @@ class Player:
         data = await self._get("/RadioBrowse", params=params, timeout=timeout)
         return parse_inputs(data)
 
-    async def browse(self, key: str | None = None, q: str | None = None, timeout: float | None = None) -> BrowseResult:
+    async def browse(
+        self,
+        key: str | None = None,
+        q: str | None = None,
+        timeout: float | None = None,
+        with_context_menu_items: bool = False,
+    ) -> BrowseResult:
         """Browse media available on the player.
         Call without parameters to get the top-level menu. Call with **key** to descend, paginate, or navigate up.
 
@@ -507,12 +513,14 @@ class Player:
         Use *context_menu* rather than this method for a *context_menu_key*.
 
         To search, pass **q** together with a **key** taken from the *search_key* of a previous *BrowseResult*.
+        Set **with_context_menu_items** to include each item's context-menu actions in the response.
 
-        Playable items expose *play_url* extracted from the underlying /Play URL, which can be passed directly to *play_url*.
+        Playable items expose opaque *play_url* and optionally *autoplay_url* values. Invoke them with *play_browse_item*.
 
         :param key: The opaque key to browse. None returns the top-level menu.
         :param q: The search term. Only meaningful together with a *search_key* passed as **key**.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+        :param with_context_menu_items: Include inline context-menu actions for returned items.
 
         :raises PlayerBrowseError: If the player returns a structured error response.
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
@@ -525,9 +533,32 @@ class Player:
             params["key"] = key
         if q is not None:
             params["q"] = q
+        if with_context_menu_items:
+            params["withContextMenuItems"] = 1
 
         data = await self._get("/Browse", params=params, timeout=timeout)
         return parse_browse_result(data)
+
+    async def play_browse_item(self, item: BrowseItem, autoplay: bool = False, timeout: float | None = None) -> None:
+        """Invoke a browse item's play action.
+
+        The opaque URI supplied by the player is sent back unchanged. By default this uses *BrowseItem.play_url*.
+        Set **autoplay** to use *BrowseItem.autoplay_url*, which may add subsequent tracks from the containing object
+        to the auto-fill section of the play queue.
+
+        :param item: The browse item to play.
+        :param autoplay: Use the item's auto-fill play action instead of its default play action.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises ValueError: If the item does not provide the selected play action.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+        """
+        action_url = item.autoplay_url if autoplay else item.play_url
+        if action_url is None:
+            action_name = "autoplayURL" if autoplay else "playURL"
+            raise ValueError(f"Browse item does not provide {action_name}")
+
+        await self._get(action_url, timeout=timeout)
 
     async def context_menu(self, key: str, timeout: float | None = None) -> list[ContextMenuAction]:
         """Get the context-menu actions available for a browse item.

@@ -220,8 +220,8 @@ class BrowseItem:
     image: str | None
     """Icon or artwork URL."""
     play_url: str | None
-    """Stream URL extracted from the item's *playURL* attribute. Pass to *Player.play_url* to play it.
-    *None* if the item is not directly playable or uses a non-/Play action URL (e.g. service-specific /Add)."""
+    """Opaque relative URI from the item's *playURL* attribute. Use *Player.play_browse_item* to invoke it.
+    *None* if the item does not provide a default play action."""
     browse_key: str | None
     """Opaque key. Pass to *Player.browse* to descend into this item. *None* if the item is a leaf."""
     input_type: str | None
@@ -230,6 +230,9 @@ class BrowseItem:
     """Opaque key for this item's context menu. Pass it to *Player.context_menu*."""
     context_menu: list[ContextMenuAction]
     """Inline context-menu actions. Usually empty because BluOS normally supplies *context_menu_key* instead."""
+    autoplay_url: str | None = None
+    """Opaque relative URI from the item's *autoplayURL* attribute. Use *Player.play_browse_item* with **autoplay=True** to invoke it.
+    *None* if the item does not provide an auto-fill play action."""
 
 
 @dataclass

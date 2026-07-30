@@ -9,7 +9,7 @@ from mocket.mocks.mockhttp import Entry
 from mocket.plugins.aiohttp_connector import MocketTCPConnector
 import pytest
 
-from pyblu import ContextMenuAction, Player, PairedPlayer
+from pyblu import BrowseItem, ContextMenuAction, Player, PairedPlayer
 from pyblu.entities import Preset, Input
 from pyblu.errors import PlayerBrowseError, PlayerCommandError, PlayerUnreachableError
 
@@ -903,7 +903,7 @@ async def test_browse_root():
     assert result.type == "menu"
     assert len(result.items) == 2
     assert result.items[0].browse_key == "playlists"
-    assert result.items[1].play_url == "Capture:bluez:bluetooth"
+    assert result.items[1].play_url == "/Play?url=Capture%3Abluez%3Abluetooth"
     assert result.items[1].input_type == "bluetooth"
 
 
@@ -924,6 +924,28 @@ async def test_browse_with_key():
     assert result.type == "items"
     assert result.service_name == "Service A"
     assert not result.items
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_with_inline_context_menu_items():
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000/Browse?key={quote('ServiceA:albums')}&withContextMenuItems=1",
+        status=200,
+        body="""<browse type="albums">
+          <item playURL="/Add?service=ServiceA&amp;albumid=1&amp;playnow=1" text="Album" type="album">
+            <contextMenu>
+              <item actionURL="/Add?service=ServiceA&amp;albumid=1" text="Add" type="add-last"/>
+            </contextMenu>
+          </item>
+        </browse>""",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            result = await client.browse(key="ServiceA:albums", with_context_menu_items=True)
+
+    assert len(Mocket.request_list()) == 1
+    assert result.items[0].context_menu == [ContextMenuAction(type="add-last", text="Add", action_url="/Add?service=ServiceA&albumid=1")]
 
 
 @async_mocketize(strict_mode=True)
@@ -966,6 +988,71 @@ async def test_browse_error_response():
 
     assert "Invalid key" in str(exc_info.value)
     assert exc_info.value.details == ["not recognised"]
+
+
+def _browse_item_with_play_actions() -> BrowseItem:
+    return BrowseItem(
+        type="album",
+        text="Album",
+        text2=None,
+        image=None,
+        play_url="/Add?service=ServiceA&albumid=1&playnow=1",
+        autoplay_url="/Add?service=ServiceA&albumid=1&autofill=1",
+        browse_key=None,
+        input_type=None,
+        context_menu_key=None,
+        context_menu=[],
+    )
+
+
+@async_mocketize(strict_mode=True)
+async def test_play_browse_item():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Add?service=ServiceA&albumid=1&playnow=1",
+        status=200,
+        body="<success/>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            await client.play_browse_item(_browse_item_with_play_actions())
+
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_autoplay_browse_item():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Add?service=ServiceA&albumid=1&autofill=1",
+        status=200,
+        body="<success/>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            await client.play_browse_item(_browse_item_with_play_actions(), autoplay=True)
+
+    assert len(Mocket.request_list()) == 1
+
+
+async def test_play_browse_item_rejects_missing_action():
+    item = BrowseItem(
+        type="link",
+        text="Folder",
+        text2=None,
+        image=None,
+        play_url=None,
+        autoplay_url=None,
+        browse_key="folder",
+        input_type=None,
+        context_menu_key=None,
+        context_menu=[],
+    )
+    async with Player("node") as client:
+        with pytest.raises(ValueError, match="playURL"):
+            await client.play_browse_item(item)
+        with pytest.raises(ValueError, match="autoplayURL"):
+            await client.play_browse_item(item, autoplay=True)
 
 
 @async_mocketize(strict_mode=True)

@@ -1,4 +1,4 @@
-from urllib.parse import parse_qs, unquote, urlsplit
+from urllib.parse import unquote
 
 from lxml import etree
 
@@ -312,22 +312,13 @@ def _context_menu_action(x: etree._Element) -> ContextMenuAction:
 
 
 def _browse_item(x: etree._Element) -> BrowseItem:
-    # The url query param is extracted from the relative /Play?url=...&title=... attribute so it can be
-    # passed directly to Player.play_url. Returns None when the underlying URL is not a /Play?url=X
-    # (e.g. service-specific /Add?service=...&albumid=...&playnow=1).
-    play_url: str | None = None
-    play_url_attr = x.attrib.get("playURL")
-    if play_url_attr:
-        values = parse_qs(urlsplit(play_url_attr).query, keep_blank_values=True).get("url")
-        if values:
-            play_url = values[0]
-
     return BrowseItem(
         type=x.attrib["type"],
         text=x.attrib.get("text"),
         text2=x.attrib.get("text2"),
         image=x.attrib.get("image"),
-        play_url=play_url,
+        play_url=x.attrib.get("playURL"),
+        autoplay_url=x.attrib.get("autoplayURL"),
         browse_key=x.attrib.get("browseKey"),
         input_type=x.attrib.get("inputType"),
         context_menu_key=x.attrib.get("contextMenuKey"),
