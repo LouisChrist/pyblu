@@ -41,7 +41,9 @@ Both fields are optional, so check for ``None`` before invoking them:
 
 .. code-block:: python
 
-   result = await player.browse(key="Service:albums")
+   root = await player.browse()
+   browse_item = next(item for item in root.items if item.browse_key is not None)
+   result = await player.browse(key=browse_item.browse_key)
    item = result.items[0]
 
    if item.play_action_url is not None:
@@ -77,8 +79,10 @@ Alternatively, request inline actions while browsing:
 
 .. code-block:: python
 
+   root = await player.browse()
+   browse_item = next(item for item in root.items if item.browse_key is not None)
    result = await player.browse(
-       key="Service:albums",
+       key=browse_item.browse_key,
        with_context_menu_items=True,
    )
    item = result.items[0]

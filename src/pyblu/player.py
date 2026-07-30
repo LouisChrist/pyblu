@@ -535,13 +535,14 @@ class Player:
         or *search_key* / *next_key* / *parent_key* of a *BrowseResult* or *BrowseCategory*. Do not parse or modify it.
         Use *context_menu* rather than this method for a *context_menu_key*.
 
-        To search, pass **q** together with a **key** taken from the *search_key* of a previous *BrowseResult*.
+        To search within a service or deeper browse context, pass **q** together with a **key** taken from the
+        *search_key* of a previous *BrowseResult*. Pass **q** without **key** to perform a top-level search.
         Set **with_context_menu_items** to include each item's context-menu actions in the response.
 
         Playable items expose opaque *play_action_url* and optionally *autoplay_action_url* values. Invoke either value with *execute_action*.
 
         :param key: The opaque key to browse. None returns the top-level menu.
-        :param q: The search term. Only meaningful together with a *search_key* passed as **key**.
+        :param q: The search term. Without **key**, performs a top-level search; with **key**, searches the context identified by a *search_key*.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
         :param with_context_menu_items: Include inline context-menu actions for returned items.
 
