@@ -441,12 +441,9 @@ class Player:
     ) -> None:
         """Set the listening mode.
 
-        Accepts friendly aliases (tv, music, movie, film, cinema) which are automatically
-        mapped to the values the device expects (TV, MUSIC, MOVIE).
-
         Uses the undocumented /alsa_setting endpoint.
 
-        :param mode: The mode to set. Accepts full names (MUSIC, TV, MOVIE) or aliases (tv, music, movie, film, cinema). Case-insensitive.
+        :param mode: The mode to set.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
@@ -454,15 +451,5 @@ class Player:
 
         :return: The updated listening mode state (current + available).
         """
-        mode_map = {
-            "tv": "TV",
-            "music": "MUSIC",
-            "movie": "MOVIE",
-            "film": "MOVIE",
-            "cinema": "MOVIE",
-        }
 
-        if not (mode_requested := mode_map.get(mode.strip().lower())):
-            raise ValueError(f"'{mode_requested}' is not a valid mode!")
-
-        await self._get("/alsa_setting", params={"preset": mode_requested}, timeout=timeout)
+        await self._get("/alsa_setting", params={"preset": mode}, timeout=timeout)
