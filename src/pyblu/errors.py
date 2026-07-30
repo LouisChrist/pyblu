@@ -2,7 +2,7 @@ from functools import wraps
 from collections.abc import Callable
 from typing import ParamSpec, TypeVar
 
-__all__ = ["PlayerError", "PlayerUnreachableError", "PlayerUnexpectedResponseError", "PlayerBrowseError"]
+__all__ = ["PlayerError", "PlayerUnreachableError", "PlayerUnexpectedResponseError", "PlayerCommandError", "PlayerBrowseError"]
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -24,6 +24,10 @@ class PlayerUnreachableError(PlayerError):
 
 class PlayerUnexpectedResponseError(PlayerError):
     """Exception raised when the player returns an unexpected response. This is likely a bug in this library."""
+
+
+class PlayerCommandError(PlayerError):
+    """Exception raised when the player intentionally rejects a command."""
 
 
 class PlayerBrowseError(PlayerError):

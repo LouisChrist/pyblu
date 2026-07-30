@@ -1,7 +1,7 @@
 import pytest
 
 from pyblu import ContextMenuAction, PairedPlayer, PlayQueueTrack
-from pyblu.errors import PlayerBrowseError
+from pyblu.errors import PlayerBrowseError, PlayerCommandError
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
@@ -320,6 +320,11 @@ def test_parse_play_queue_mutation_responses():
     assert parse_deleted_play_queue_track("<deleted>9</deleted>") == 9
     assert parse_moved_play_queue_track("<moved>moved</moved>") is None
     assert parse_saved_play_queue("<saved><entries>126</entries></saved>") == 126
+
+
+def test_parse_save_empty_play_queue_error():
+    with pytest.raises(PlayerCommandError, match="Cannot save an empty play queue"):
+        parse_saved_play_queue("<error>empty</error>")
 
 
 def test_parse_presets():

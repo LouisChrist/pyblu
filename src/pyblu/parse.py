@@ -16,7 +16,7 @@ from pyblu.entities import (
     SyncStatus,
     Volume,
 )
-from pyblu.errors import PlayerBrowseError, _wrap_in_unxpected_response_error
+from pyblu.errors import PlayerBrowseError, PlayerCommandError, _wrap_in_unxpected_response_error
 
 
 @_wrap_in_unxpected_response_error
@@ -236,6 +236,11 @@ def parse_saved_play_queue(response: bytes) -> int:
     """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
+    if tree.tag == "error":
+        error = (tree.text or "").strip()
+        message = "Cannot save an empty play queue" if error == "empty" else error or "The player rejected the save command"
+        raise PlayerCommandError(message)
+
     entries_elements = tree.xpath("//saved/entries")
 
     assert len(entries_elements) == 1, "Saved entries element not found or multiple found"

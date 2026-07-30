@@ -434,6 +434,7 @@ class Player:
         :param name: The name of the saved playlist.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
+        :raises PlayerCommandError: If the player rejects the save command, such as when the play queue is empty.
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
         :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
 

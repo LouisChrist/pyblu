@@ -11,7 +11,7 @@ import pytest
 
 from pyblu import ContextMenuAction, Player, PairedPlayer
 from pyblu.entities import Preset, Input
-from pyblu.errors import PlayerBrowseError, PlayerUnreachableError
+from pyblu.errors import PlayerBrowseError, PlayerCommandError, PlayerUnreachableError
 
 
 @async_mocketize(strict_mode=True)
@@ -655,6 +655,17 @@ async def test_save_play_queue():
 
     assert len(Mocket.request_list()) == 1
     assert entries == 126
+
+
+@async_mocketize(strict_mode=True)
+async def test_save_empty_play_queue():
+    Entry.single_register(Entry.GET, "http://node:11000/Save?name=Empty", status=200, body="<error>empty</error>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            with pytest.raises(PlayerCommandError, match="Cannot save an empty play queue"):
+                await client.save_play_queue("Empty")
+
+    assert len(Mocket.request_list()) == 1
 
 
 @async_mocketize(strict_mode=True)

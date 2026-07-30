@@ -59,5 +59,8 @@ Exceptions
 .. autoclass:: pyblu.errors.PlayerUnexpectedResponseError
    :members:
 
+.. autoclass:: pyblu.errors.PlayerCommandError
+   :members:
+
 .. autoclass:: pyblu.errors.PlayerBrowseError
    :members:
