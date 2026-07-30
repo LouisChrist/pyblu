@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -128,15 +128,47 @@ class Volume:
 
 
 @dataclass
+class PlayQueueTrack:
+    id: int
+    """Position of the track in the play queue, starting from 0."""
+    title: str | None = None
+    """Track title."""
+    artist: str | None = None
+    """Artist name."""
+    album: str | None = None
+    """Album name."""
+    filename: str | None = None
+    """Service-specific filename. Treat this as an opaque value."""
+    image: str | None = None
+    """URL of the track artwork."""
+    duration: float | None = None
+    """Track duration in seconds."""
+    service: str | None = None
+    """Music service that supplied the track."""
+    song_id: str | None = None
+    """Service-specific song id."""
+    album_id: str | None = None
+    """Service-specific album id."""
+    artist_id: str | None = None
+    """Service-specific artist id."""
+
+
+@dataclass
 class PlayQueue:
     id: str
     """Unique id for the current play queue state. Changes whenever the play queue changes."""
     shuffle: bool
-    """PlayQueue is shuffled"""
+    """Play queue is shuffled."""
     modified: bool
-    """PlayQueue was modified since it was loaded"""
+    """Play queue was modified since it was loaded."""
     length: int
-    """Number of tracks in the play queue"""
+    """Total number of tracks in the play queue, including tracks not returned by a paginated request."""
+    name: str | None = None
+    """Name of the current play queue."""
+    repeat: int | None = None
+    """Repeat mode: 0 repeats the queue, 1 repeats the current track, and 2 disables repeat."""
+    tracks: list[PlayQueueTrack] = field(default_factory=list)
+    """Tracks returned by the request. Empty for a status-only request or an empty queue."""
 
 
 @dataclass

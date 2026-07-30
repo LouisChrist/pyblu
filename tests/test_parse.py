@@ -1,12 +1,16 @@
 import pytest
 
-from pyblu import ContextMenuAction, PairedPlayer
+from pyblu import ContextMenuAction, PairedPlayer, PlayQueueTrack
 from pyblu.errors import PlayerBrowseError
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
     parse_context_menu,
+    parse_deleted_play_queue_track,
+    parse_moved_play_queue_track,
+    parse_play_queue,
     parse_presets,
+    parse_saved_play_queue,
     parse_status,
     parse_sync_status,
 )
@@ -254,6 +258,68 @@ def test_parse_sync_status_without_leader():
     assert sync_status.zone_follower is False
     assert sync_status.leader is None
     assert sync_status.followers is None
+
+
+def test_parse_play_queue_listing():
+    data = """<playlist name="Calm Piano" modified="0" length="160" shuffle="1" repeat="2" id="1054">
+      <song albumid="61483452" service="Deezer" artistid="6396188" songid="Deezer:487381362" id="25">
+        <title>2002</title>
+        <art>Anne-Marie</art>
+        <alb>Speak Your Mind</alb>
+        <time>185.5</time>
+        <fn>Deezer:487381362</fn>
+        <image>/Artwork?song=487381362</image>
+      </song>
+    </playlist>"""
+
+    play_queue = parse_play_queue(data)
+
+    assert play_queue.id == "1054"
+    assert play_queue.name == "Calm Piano"
+    assert not play_queue.modified
+    assert play_queue.length == 160
+    assert play_queue.shuffle
+    assert play_queue.repeat == 2
+    assert play_queue.tracks == [
+        PlayQueueTrack(
+            id=25,
+            title="2002",
+            artist="Anne-Marie",
+            album="Speak Your Mind",
+            filename="Deezer:487381362",
+            image="/Artwork?song=487381362",
+            duration=185.5,
+            service="Deezer",
+            song_id="Deezer:487381362",
+            album_id="61483452",
+            artist_id="6396188",
+        )
+    ]
+
+
+def test_parse_play_queue_status():
+    data = """<playlist>
+      <length>13</length>
+      <id>243</id>
+      <name></name>
+      <modified>1</modified>
+    </playlist>"""
+
+    play_queue = parse_play_queue(data)
+
+    assert play_queue.id == "243"
+    assert play_queue.name == ""
+    assert play_queue.modified
+    assert play_queue.length == 13
+    assert not play_queue.shuffle
+    assert play_queue.repeat is None
+    assert not play_queue.tracks
+
+
+def test_parse_play_queue_mutation_responses():
+    assert parse_deleted_play_queue_track("<deleted>9</deleted>") == 9
+    assert parse_moved_play_queue_track("<moved>moved</moved>") is None
+    assert parse_saved_play_queue("<saved><entries>126</entries></saved>") == 126
 
 
 def test_parse_presets():

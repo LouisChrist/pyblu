@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 from unittest.mock import AsyncMock, MagicMock
 from urllib.parse import quote
 
@@ -554,6 +556,105 @@ async def test_clear():
     assert not play_queue.modified
     assert play_queue.length == 0
     assert not play_queue.shuffle
+
+
+@async_mocketize(strict_mode=True)
+async def test_play_queue():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Playlist",
+        status=200,
+        body="""<playlist name="Queue" modified="1" length="1" shuffle="0" repeat="2" id="12">
+          <song songid="Service:track-1" service="Service" id="0">
+            <title>Track</title><art>Artist</art><alb>Album</alb><fn>Service:track-1</fn>
+          </song>
+        </playlist>""",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            play_queue = await client.play_queue()
+
+    assert len(Mocket.request_list()) == 1
+    assert play_queue.name == "Queue"
+    assert play_queue.length == 1
+    assert play_queue.repeat == 2
+    assert play_queue.tracks[0].title == "Track"
+    assert play_queue.tracks[0].id == 0
+
+
+@async_mocketize(strict_mode=True)
+async def test_play_queue_status_only():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Playlist?length=1",
+        status=200,
+        body="<playlist><length>3</length><id>15</id><modified>1</modified></playlist>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            play_queue = await client.play_queue(status_only=True)
+
+    assert len(Mocket.request_list()) == 1
+    assert play_queue.id == "15"
+    assert play_queue.length == 3
+    assert play_queue.tracks == []
+
+
+@async_mocketize(strict_mode=True)
+async def test_play_queue_page():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Playlist?start=10&end=19",
+        status=200,
+        body='<playlist modified="0" length="30" id="16"><song id="10"><title>Track 10</title></song></playlist>',
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            play_queue = await client.play_queue(start=10, end=19)
+
+    assert len(Mocket.request_list()) == 1
+    assert play_queue.length == 30
+    assert play_queue.tracks[0].id == 10
+
+
+async def test_play_queue_rejects_incomplete_or_conflicting_pagination():
+    async with Player("node") as client:
+        with pytest.raises(ValueError, match="start and end"):
+            await client.play_queue(start=0)
+        with pytest.raises(ValueError, match="status_only"):
+            await client.play_queue(start=0, end=9, status_only=True)
+
+
+@async_mocketize(strict_mode=True)
+async def test_delete_play_queue_track():
+    Entry.single_register(Entry.GET, "http://node:11000/Delete?id=9", status=200, body="<deleted>9</deleted>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            deleted_id = await client.delete_play_queue_track(9)
+
+    assert len(Mocket.request_list()) == 1
+    assert deleted_id == 9
+
+
+@async_mocketize(strict_mode=True)
+async def test_move_play_queue_track():
+    Entry.single_register(Entry.GET, "http://node:11000/Move?new=8&old=2", status=200, body="<moved>moved</moved>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            await client.move_play_queue_track(old_position=2, new_position=8)
+
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_save_play_queue():
+    Entry.single_register(Entry.GET, "http://node:11000/Save?name=Dinner+Music", status=200, body="<saved><entries>126</entries></saved>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            entries = await client.save_play_queue("Dinner Music")
+
+    assert len(Mocket.request_list()) == 1
+    assert entries == 126
 
 
 @async_mocketize(strict_mode=True)

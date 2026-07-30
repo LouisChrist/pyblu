@@ -7,14 +7,17 @@ from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
     parse_context_menu,
+    parse_deleted_play_queue_track,
     parse_inputs,
+    parse_moved_play_queue_track,
+    parse_play_queue,
+    parse_presets,
+    parse_saved_play_queue,
     parse_sleep,
     parse_state,
     parse_sync_status,
     parse_status,
     parse_volume,
-    parse_play_queue,
-    parse_presets,
 )
 from pyblu.errors import PlayerUnreachableError
 
@@ -330,6 +333,71 @@ class Player:
         data = await self._get("/RemoveSlave", params=params, timeout=timeout)
         return parse_sync_status(data)
 
+    async def play_queue(
+        self,
+        start: int | None = None,
+        end: int | None = None,
+        status_only: bool = False,
+        timeout: float | None = None,
+    ) -> PlayQueue:
+        """Get the current play queue.
+
+        Use **start** and **end** to retrieve an inclusive page of tracks. Both positions start at 0 and must be supplied together.
+        Use **status_only** to retrieve only queue metadata. Calling without pagination or **status_only** returns every track and may produce a large response.
+
+        :param start: The first track position to include, starting from 0.
+        :param end: The last track position to include, inclusive.
+        :param status_only: Return queue metadata without track details.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+        :raises ValueError: If only one pagination position is supplied, or pagination and **status_only** are combined.
+
+        :return: The current play queue and the requested tracks.
+        """
+        if (start is None) != (end is None):
+            raise ValueError("start and end have to be supplied together")
+        if status_only and start is not None:
+            raise ValueError("status_only cannot be combined with start and end")
+
+        params: dict[str, str | int] = {}
+        if status_only:
+            params["length"] = 1
+        elif start is not None and end is not None:
+            params["start"] = start
+            params["end"] = end
+
+        data = await self._get("/Playlist", params=params, timeout=timeout)
+        return parse_play_queue(data)
+
+    async def delete_play_queue_track(self, track_id: int, timeout: float | None = None) -> int:
+        """Delete a track from the current play queue.
+
+        :param track_id: The track id from *PlayQueueTrack.id*.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The id of the deleted track.
+        """
+        data = await self._get("/Delete", params={"id": track_id}, timeout=timeout)
+        return parse_deleted_play_queue_track(data)
+
+    async def move_play_queue_track(self, old_position: int, new_position: int, timeout: float | None = None) -> None:
+        """Move a track within the current play queue.
+
+        :param old_position: The current track position from *PlayQueueTrack.id*.
+        :param new_position: The destination position.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+        """
+        data = await self._get("/Move", params={"new": new_position, "old": old_position}, timeout=timeout)
+        parse_moved_play_queue_track(data)
+
     async def shuffle(self, shuffle: bool, timeout: float | None = None) -> PlayQueue:
         """Set shuffle on current play queue.
 
@@ -359,6 +427,20 @@ class Player:
         """
         data = await self._get("/Clear", timeout=timeout)
         return parse_play_queue(data)
+
+    async def save_play_queue(self, name: str, timeout: float | None = None) -> int:
+        """Save the current play queue as a named BluOS playlist.
+
+        :param name: The name of the saved playlist.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The number of tracks saved.
+        """
+        data = await self._get("/Save", params={"name": name}, timeout=timeout)
+        return parse_saved_play_queue(data)
 
     async def sleep_timer(self, timeout: float | None = None) -> int:
         """Set sleep timer. Time steps are 15, 30, 45, 60, 90 minutes. Each call goes to next step.

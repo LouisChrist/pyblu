@@ -29,6 +29,9 @@ Data Classes
 .. autoclass:: pyblu.PlayQueue
    :members:
 
+.. autoclass:: pyblu.PlayQueueTrack
+   :members:
+
 .. autoclass:: pyblu.Input
    :members:
 

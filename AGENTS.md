@@ -35,7 +35,7 @@ The library has four modules with a clear separation of concerns:
 
 - **`parse.py`** — Stateless XML parsing functions. Each takes `bytes` from the HTTP response and returns a typed entity. Uses `lxml.etree` for parsing. All public parse functions are decorated with `@_wrap_in_unxpected_response_error`.
 
-- **`entities.py`** — Pure `@dataclass` types for player state and media browsing, including `BrowseResult`, `BrowseItem`, and `ContextMenuAction`. No logic.
+- **`entities.py`** — Pure `@dataclass` types for player state, play queues, and media browsing, including `PlayQueue`, `PlayQueueTrack`, `BrowseResult`, `BrowseItem`, and `ContextMenuAction`. No logic.
 
 - **`errors.py`** — Exception hierarchy (`PlayerError` → `PlayerUnreachableError` / `PlayerUnexpectedResponseError`) and two decorator factories that wrap exceptions at the Player and parse layers respectively.
 
@@ -48,6 +48,7 @@ The library has four modules with a clear separation of concerns:
 - `inputs()` calls `/RadioBrowse?service=Capture`, not a dedicated inputs endpoint.
 - `play_url()` and `play()` both map to the `/Play` endpoint.
 - Browse context-menu keys and action URLs are opaque. Resolve keys through `context_menu()`; actions may mutate playback, the queue, presets, or service favorites.
+- `/Playlist` returns queue metadata as child elements for `length=1`, but as attributes for full and paginated listings; `parse_play_queue()` supports both forms.
 - The API uses "master/slave" terminology; the library exposes this as "leader/follower".
 
 **Long polling**: `status()` and `sync_status()` accept an `etag` parameter. When provided, `poll_timeout` must be strictly less than `timeout` — the Player method validates this and raises `ValueError` if violated.

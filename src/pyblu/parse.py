@@ -10,6 +10,7 @@ from pyblu.entities import (
     Input,
     PairedPlayer,
     PlayQueue,
+    PlayQueueTrack,
     Preset,
     Status,
     SyncStatus,
@@ -151,6 +152,11 @@ def parse_volume(response: bytes) -> Volume:
     return volume
 
 
+def _attribute_or_child(element: etree._Element, name: str) -> str | None:
+    value = element.attrib.get(name)
+    return value if value is not None else element.findtext(name)
+
+
 @_wrap_in_unxpected_response_error
 def parse_play_queue(response: bytes) -> PlayQueue:
     """
@@ -163,14 +169,78 @@ def parse_play_queue(response: bytes) -> PlayQueue:
     assert len(playlist_elements) == 1, "Playlist element not found or multiple found"
     playlist_element = playlist_elements[0]
 
-    play_queue = PlayQueue(
-        id=playlist_element.attrib["id"],
-        modified=playlist_element.attrib.get("modified") == "1",
-        length=int(playlist_element.attrib["length"]),
-        shuffle=playlist_element.attrib.get("shuffle") == "1",
+    queue_id = _attribute_or_child(playlist_element, "id")
+    length = _attribute_or_child(playlist_element, "length")
+    assert queue_id is not None, "Playlist id not found"
+    assert length is not None, "Playlist length not found"
+
+    tracks = [
+        PlayQueueTrack(
+            id=int(x.attrib["id"]),
+            title=x.findtext("title"),
+            artist=x.findtext("art"),
+            album=x.findtext("alb"),
+            filename=x.findtext("fn"),
+            image=x.findtext("image"),
+            duration=float(duration) if (duration := x.findtext("time")) is not None else None,
+            service=x.attrib.get("service"),
+            song_id=x.attrib.get("songid"),
+            album_id=x.attrib.get("albumid"),
+            artist_id=x.attrib.get("artistid"),
+        )
+        for x in playlist_element.xpath("./song")
+    ]
+
+    return PlayQueue(
+        id=queue_id,
+        modified=_attribute_or_child(playlist_element, "modified") == "1",
+        length=int(length),
+        shuffle=_attribute_or_child(playlist_element, "shuffle") == "1",
+        name=_attribute_or_child(playlist_element, "name"),
+        repeat=int(repeat) if (repeat := _attribute_or_child(playlist_element, "repeat")) is not None else None,
+        tracks=tracks,
     )
 
-    return play_queue
+
+@_wrap_in_unxpected_response_error
+def parse_deleted_play_queue_track(response: bytes) -> int:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+    deleted_elements = tree.xpath("//deleted")
+
+    assert len(deleted_elements) == 1, "Deleted element not found or multiple found"
+    assert deleted_elements[0].text is not None, "Deleted track id not found"
+    return int(deleted_elements[0].text)
+
+
+@_wrap_in_unxpected_response_error
+def parse_moved_play_queue_track(response: bytes) -> None:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+    moved_elements = tree.xpath("//moved")
+
+    assert len(moved_elements) == 1, "Moved element not found or multiple found"
+    assert moved_elements[0].text == "moved", "Track was not moved"
+
+
+@_wrap_in_unxpected_response_error
+def parse_saved_play_queue(response: bytes) -> int:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+    entries_elements = tree.xpath("//saved/entries")
+
+    assert len(entries_elements) == 1, "Saved entries element not found or multiple found"
+    assert entries_elements[0].text is not None, "Saved entry count not found"
+    return int(entries_elements[0].text)
 
 
 @_wrap_in_unxpected_response_error
