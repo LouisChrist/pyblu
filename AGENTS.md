@@ -8,6 +8,19 @@ Keep this file up to date as the codebase evolves — update it when commands, a
 
 `pyblu` is an async Python library for controlling BluOS players via their HTTP API (port 11000). No authentication is required. The library is published to PyPI and uses `uv` for dependency management.
 
+## BluOS API Documentation
+
+Use the official BluOS Custom Integration API PDF linked near the top of `README.md` as the source of truth for endpoints and response formats. Download that document directly instead of searching the web. To make it searchable locally:
+
+```bash
+api_url=$(grep -o 'https://[^)]*\.pdf' README.md | head -1)
+curl -fL "$api_url" -o /tmp/bluos-api.pdf
+pdftotext -layout /tmp/bluos-api.pdf /tmp/bluos-api.txt
+rg -n -C 10 '/Playlist|/Delete|/Move|/Save' /tmp/bluos-api.txt
+```
+
+The PDF and extracted text are temporary reference files; do not commit them.
+
 ## Commands
 
 ```bash
@@ -37,7 +50,7 @@ The library has four modules with a clear separation of concerns:
 
 - **`entities.py`** — Pure `@dataclass` types for player state, play queues, and media browsing, including `PlayQueue`, `PlayQueueTrack`, `BrowseResult`, `BrowseItem`, and `ContextMenuAction`. No logic.
 
-- **`errors.py`** — Exception hierarchy (`PlayerError` → `PlayerUnreachableError` / `PlayerUnexpectedResponseError`) and two decorator factories that wrap exceptions at the Player and parse layers respectively.
+- **`errors.py`** — Exception hierarchy (`PlayerError` → `PlayerUnreachableError` / `PlayerUnexpectedResponseError` / `PlayerCommandError` / `PlayerBrowseError`) and decorators/helpers for translating transport, parser, and structured player errors.
 
 ### Key Conventions
 
