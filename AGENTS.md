@@ -37,7 +37,7 @@ uv run invoke format-and-lint    # black + pylint together
 uv run invoke test               # pytest
 uv run invoke mypy               # mypy
 uv run invoke build-docs         # sphinx docs → _site/
-uv run invoke release            # interactive release (requires GITHUB_TOKEN_PYBLU env var)
+uv run invoke release            # select a stable/dev release (requires GITHUB_TOKEN_PYBLU env var)
 ```
 
 ## Architecture
