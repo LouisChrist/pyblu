@@ -48,8 +48,7 @@ uv run invoke release
 ```
 
 3. The script will:
-   - Display current version and bump options (patch/minor/major)
-   - Prompt you to select which version component to bump
+   - Display an interactive list of stable and development version bumps, including their resulting versions
    - Update `pyproject.toml` with the new version
    - Create a git commit with message `Release v{version}`
    - Create a git tag `v{version}`
@@ -62,6 +61,25 @@ uv run invoke release
    - Publishes to PyPI using Trusted Publisher authentication
 
 5. Monitor the release workflow at: https://github.com/LouisChrist/pyblu/actions
+
+### Development Releases
+
+PyPI supports PEP 440 development releases. The normal release command presents stable patch, minor, and major releases alongside their development equivalents, with a preview of every resulting version:
+
+```text
+Patch release              2.0.9
+Minor release              2.1.0
+Major release              3.0.0
+Patch development release  2.0.9.dev1
+Minor development release  2.1.0.dev1
+Major development release  3.0.0.dev1
+```
+
+Use the arrow keys to select a release and Enter to confirm it. Press Ctrl+C to abort without changing the version.
+
+When the current version is already a development release, the selector only offers to increment its development number (`2.0.9.dev1` → `2.0.9.dev2`) or promote it to stable (`2.0.9.dev2` → `2.0.9`). Patch, minor, and major bumps are unavailable until the development version has been promoted, preventing the current development target from being skipped. Development versions are published by the normal release workflow and marked as pre-releases on GitHub.
+
+Users can opt into development releases with `pip install --pre pyblu`, or install an exact version with `pip install pyblu==2.0.9.dev2`.
 
 ### Dry-Run Testing
 
@@ -137,7 +155,7 @@ git push origin main
 
 After rolling back:
 1. Fix the issue in the codebase
-2. Run `uv run invoke release` again to create a new release with the fix
+2. Run the release task again and select the appropriate version to create a new release with the fix
 
 ## Troubleshooting
 
@@ -149,7 +167,7 @@ If lint, typecheck, or tests fail:
 3. The tag already exists, so you need to:
    - Delete the tag (see rollback procedure)
    - Fix the code
-   - Run `uv run invoke release` again
+   - Run the release task again and select the appropriate version
 
 ### Trusted Publisher Authentication Fails
 
@@ -173,7 +191,8 @@ If the publish step can't find the built packages:
 If you try to re-release a version:
 - PyPI will reject it (versions are immutable)
 - You must bump to a new version number
-- Consider using a post-release version (e.g., `1.2.3.post1`) for quick fixes
+- For a development release, publish the next development number (for example, `1.2.3.dev1` → `1.2.3.dev2`)
+- Consider using a post-release version (e.g., `1.2.3.post1`) for stable-release packaging fixes
 
 ### GitHub Token Issues
 
