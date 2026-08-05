@@ -2,13 +2,13 @@ from unittest.mock import AsyncMock, MagicMock
 from urllib.parse import quote
 
 import aiohttp
-from mocket import async_mocketize, Mocket
+import pytest
+from mocket import Mocket, async_mocketize
 from mocket.mocks.mockhttp import Entry
 from mocket.plugins.aiohttp_connector import MocketTCPConnector
-import pytest
 
-from pyblu import Player, PairedPlayer
-from pyblu.entities import Preset, Input, ListeningMode
+from pyblu import PairedPlayer, Player, SubwooferModeValue
+from pyblu.entities import Input, ListeningModeValue, Preset
 from pyblu.errors import PlayerUnreachableError
 
 
@@ -702,26 +702,59 @@ async def test_load_preset():
 async def test_listening_modes():
     Entry.single_register(
         Entry.GET,
-        "http://node:11000/audioPreset",
+        "http://node:11000/Settings?id=audio",
         status=200,
         body="""
-        <setting id="preset" name="preset" displayName="Listening Mode" url="/alsa_setting" class="list" value="MOVIE" refresh="true" required="true" style="inline">
-            <value displayName="Music" name="MUSIC" icon="/images/settings/icon_music-mode.png" iconActive="/images/settings/icon_music-mode-active.png"/>
-            <value displayName="Movie" name="MOVIE" icon="/images/settings/icon_movies-mode.png" iconActive="/images/settings/icon_movies-mode-active.png"/>
-            <value displayName="TV" name="TV" icon="/images/settings/icon_tv-mode.png" iconActive="/images/settings/icon_tv-mode-active.png"/>
-        </setting>
+        <settings pageId="audio" schemaVersion="28">
+            <menuGroup id="audio" defaults="false" displayName="Audio" icon="/images/settings/ic_audio.png" url="/audiomodes">
+                <setting id="preset" name="preset" displayName="Listening Mode" url="/alsa_setting" class="list" value="TV" refresh="true" required="true" style="inline">
+                    <value displayName="Music" name="MUSIC" icon="/images/settings/icon_music-mode.png" iconActive="/images/settings/icon_music-mode-active.png"/>
+                    <value displayName="Movie" name="MOVIE" icon="/images/settings/icon_movies-mode.png" iconActive="/images/settings/icon_movies-mode-active.png"/>
+                    <value displayName="TV" name="TV" icon="/images/settings/icon_tv-mode.png" iconActive="/images/settings/icon_tv-mode-active.png"/>
+                </setting>
+            </menuGroup>
+        </settings>
     """,
     )
     async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
         async with Player("node", session=session) as client:
-            modes = await client.listening_modes()
+            modes = await client.settings.listening_mode.options()
 
     assert len(Mocket.request_list()) == 1
 
     assert modes == [
-        ListeningMode(name="Music", image="/images/settings/icon_music-mode.png", active=False),
-        ListeningMode(name="Movie", image="/images/settings/icon_movies-mode.png", active=True),
-        ListeningMode(name="TV", image="/images/settings/icon_tv-mode.png", active=False),
+        ListeningModeValue(name="MUSIC", display_name="Music", icon="/images/settings/icon_music-mode.png", active=False),
+        ListeningModeValue(name="MOVIE", display_name="Movie", icon="/images/settings/icon_movies-mode.png", active=False),
+        ListeningModeValue(name="TV", display_name="TV", icon="/images/settings/icon_tv-mode.png", active=True),
+    ]
+
+
+@async_mocketize(strict_mode=True)
+async def test_subwoofer_modes():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Settings?id=audio",
+        status=200,
+        body="""
+        <settings pageId="audio" schemaVersion="28">
+            <menuGroup id="audio" defaults="false" displayName="Audio" icon="/images/settings/ic_audio.png" url="/audiomodes">
+                <setting id="subwoofer" name="subwoofer" displayName="Subwoofer" url="/audiomodes" icon="/images/settings/icon_subwoofer.png" class="boolean" value="withsub">
+                    <value displayName="Off" name="default"/>
+                    <value displayName="On" name="withsub"/>
+                </setting>
+            </menuGroup>
+        </settings>
+    """,
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            modes = await client.settings.subwoofer_mode.options()
+
+    assert len(Mocket.request_list()) == 1
+
+    assert modes == [
+        SubwooferModeValue(name="default", display_name="Off", active=False),
+        SubwooferModeValue(name="withsub", display_name="On", active=True),
     ]
 
 

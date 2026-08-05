@@ -166,10 +166,22 @@ class Input:
 
 
 @dataclass
-class ListeningMode:
+class ListeningModeValue:
     name: str
     """Name of the current listening mode"""
-    image: str
-    """URL of the mode image"""
+    display_name: str
+    """Formatted name of the current listening mode"""
+    icon: str
+    """URL of the mode icon"""
     active: bool
-    """ListeningMode is currently selected"""
+    """If the mode is currently selected"""
+
+
+@dataclass
+class SubwooferModeValue:
+    name: str
+    """Name of the current listening mode"""
+    display_name: str
+    """Formatted name of the current listening mode"""
+    active: bool
+    """If the mode is currently selected"""

@@ -2,20 +2,28 @@ from types import TracebackType
 
 import aiohttp
 
-from pyblu.entities import Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input, ListeningMode
+from pyblu.entities import (
+    Input,
+    PairedPlayer,
+    PlayQueue,
+    Preset,
+    Status,
+    SyncStatus,
+    Volume,
+)
+from pyblu.errors import PlayerUnreachableError
 from pyblu.parse import (
     parse_add_follower,
     parse_inputs,
-    parse_sleep,
-    parse_state,
-    parse_sync_status,
-    parse_status,
-    parse_volume,
     parse_play_queue,
     parse_presets,
-    parse_listening_modes,
+    parse_sleep,
+    parse_state,
+    parse_status,
+    parse_sync_status,
+    parse_volume,
 )
-from pyblu.errors import PlayerUnreachableError
+from pyblu.settings import Settings
 
 
 class Player:
@@ -42,6 +50,7 @@ class Player:
         else:
             self._session_owned = True
             self._session = aiohttp.ClientSession()
+        self.settings = Settings(get=self._get)
 
     @property
     def default_timeout(self) -> float:
@@ -413,43 +422,3 @@ class Player:
         params: dict[str, str | int] = {"service": "Capture"}
         data = await self._get("/RadioBrowse", params=params, timeout=timeout)
         return parse_inputs(data)
-
-    async def listening_modes(self, timeout: float | None = None) -> list[ListeningMode]:
-        """Get the available listening modes.
-
-        Uses the undocumented /audioPreset endpoint.
-
-        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
-
-        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
-        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
-
-        :return: The current listening mode and list of available modes.
-        """
-        try:
-            data = await self._get("/audioPreset", timeout=timeout)
-            modes = parse_listening_modes(data)
-        except aiohttp.ClientResponseError:
-            modes = []
-        return modes
-
-    async def set_listening_mode(
-        self,
-        mode: str,
-        *,
-        timeout: float | None = None,
-    ) -> None:
-        """Set the listening mode.
-
-        Uses the undocumented /alsa_setting endpoint.
-
-        :param mode: The mode to set.
-        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
-
-        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
-        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
-
-        :return: The updated listening mode state (current + available).
-        """
-
-        await self._get("/alsa_setting", params={"preset": mode}, timeout=timeout)

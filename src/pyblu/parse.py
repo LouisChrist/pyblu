@@ -2,7 +2,17 @@ from urllib.parse import unquote
 
 from lxml import etree
 
-from pyblu.entities import Input, PairedPlayer, SyncStatus, Status, Volume, PlayQueue, Preset, ListeningMode
+from pyblu.entities import (
+    Input,
+    ListeningModeValue,
+    PairedPlayer,
+    PlayQueue,
+    Preset,
+    Status,
+    SubwooferModeValue,
+    SyncStatus,
+    Volume,
+)
 from pyblu.errors import _wrap_in_unxpected_response_error
 
 
@@ -239,22 +249,38 @@ def parse_inputs(response: bytes) -> list[Input]:
 
 
 @_wrap_in_unxpected_response_error
-def parse_listening_modes(response: bytes) -> list[ListeningMode]:
+def parse_listening_modes(response: bytes) -> list[ListeningModeValue]:
     """
     :raises PlayerUnexpectedResponseError: If the response is not as expected.
     """
     # pylint: disable=c-extension-no-member
     tree = etree.fromstring(response)
-    # import pdb
+    mode_elements = tree.xpath("//setting[@id='preset']")
+    if len(mode_elements) == 0:
+        return []
 
-    # pdb.set_trace()
-    mode_elements = tree.xpath("//value")
+    mode_active = mode_elements[0].attrib["value"]
     modes = [
-        ListeningMode(
-            name=x.attrib.get("displayName"),
-            image=x.attrib.get("icon"),
-            active=x.attrib.get("name") == tree.get("value"),
-        )
-        for x in mode_elements
+        ListeningModeValue(name=val.attrib["name"], display_name=val.attrib["displayName"], icon=val.attrib["icon"], active=val.attrib["name"] == mode_active)
+        for val in mode_elements[0]
+    ]
+    return modes
+
+
+@_wrap_in_unxpected_response_error
+def parse_subwoofer_modes(response: bytes) -> list[SubwooferModeValue]:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+    mode_elements = tree.xpath("//setting[@id='subwoofer']")
+    if len(mode_elements) == 0:
+        return []
+
+    mode_active = mode_elements[0].attrib["value"]
+    modes = [
+        SubwooferModeValue(name=val.attrib["name"], display_name=val.attrib["displayName"], active=val.attrib["name"] == mode_active)
+        for val in mode_elements[0]
     ]
     return modes
