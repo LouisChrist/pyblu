@@ -1,4 +1,5 @@
 from types import TracebackType
+from urllib.parse import urljoin
 
 import aiohttp
 
@@ -73,7 +74,7 @@ class Player:
         used_timeout = timeout if timeout is not None else self._default_timeout
         try:
             async with self._session.get(
-                f"{self.base_url}{path}",
+                urljoin(f"{self.base_url}/", path),
                 params=params,
                 timeout=aiohttp.ClientTimeout(total=used_timeout),
             ) as response:

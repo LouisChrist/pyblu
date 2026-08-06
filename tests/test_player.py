@@ -1057,16 +1057,16 @@ async def test_browse_error_response():
 
 
 @pytest.mark.parametrize(
-    "action_url",
+    ("action_url", "request_url"),
     [
-        "/Play?url=Service%3Astream-1&title=Station+One",
-        "/Add?service=ServiceA&albumid=1&autofill=1",
-        "/AddFavourite?service=Airable&url=opaque%3Astation%2F1",
+        ("/Play?url=Service%3Astream-1&title=Station+One", "http://node:11000/Play?url=Service%3Astream-1&title=Station+One"),
+        ("Add?service=ServiceA&albumid=1&autofill=1", "http://node:11000/Add?service=ServiceA&albumid=1&autofill=1"),
+        ("http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1", "http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1"),
     ],
 )
 @async_mocketize(strict_mode=True)
-async def test_execute_action(action_url: str):
-    Entry.single_register(Entry.GET, f"http://node:11000{action_url}", status=200, body="<success/>")
+async def test_execute_action(action_url: str, request_url: str):
+    Entry.single_register(Entry.GET, request_url, status=200, body="<success/>")
 
     async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
         async with Player("node", session=session) as client:
