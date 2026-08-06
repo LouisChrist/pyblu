@@ -111,7 +111,7 @@ def release(ctx: Context):
     ctx.run(f"uv version {bump_args}")
 
     print(f"Creating commit with tag v{bumped_version}")
-    ctx.run("git add pyproject.toml uv.lock", hide=True)
+    ctx.run("git add pyproject.toml", hide=True)
     ctx.run(f"git commit -m 'Release v{bumped_version}'", hide=True)
     ctx.run(f"git tag -m v{bumped_version} v{bumped_version}", hide=True)
 

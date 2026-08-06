@@ -62,7 +62,7 @@ uv run invoke release
 
 3. The script will:
    - Display an interactive list of stable and development version bumps, including their resulting versions
-   - Update the version in `pyproject.toml` and `uv.lock`
+   - Update the version in `pyproject.toml`
    - Create a git commit with message `Release v{version}`
    - Create a git tag `v{version}`
    - Push the commit and tag to GitHub
