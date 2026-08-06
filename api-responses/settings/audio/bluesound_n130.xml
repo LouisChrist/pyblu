@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<settings pageId="audio" schemaVersion="28">
+  <menuGroup id="audio" defaults="false" displayName="Audio" icon="/images/settings/ic_audio.png" url="/audiomodes">
+    <setting id="eq-switch" name="eq-switch" displayName="Tone Controls" url="/alsa_setting" icon="/images/settings/ic_eqonoff.png" class="boolean" value="OFF" hideIfDisabled="true">
+      <dependsOn name="mqaDisable" value="OFF"/>
+    </setting>
+    <setting id="eq-treble" name="eq-treble" displayName="Treble" url="/alsa_setting" icon="/images/settings/icon_treble.png" class="range" value="0" hideIfDisabled="true">
+      <value min="-6" max="6" step="0.5" units="dB"/>
+      <dependsOn name="eq-switch" value="ON"/>
+    </setting>
+    <setting id="eq-bass" name="eq-bass" displayName="Bass" url="/alsa_setting" icon="/images/settings/icon_bass.png" class="range" value="0" hideIfDisabled="true">
+      <value min="-6" max="6" step="0.5" units="dB"/>
+      <dependsOn name="eq-switch" value="ON"/>
+    </setting>
+    <setting id="subwoofer" name="subwoofer" displayName="Subwoofer" url="/audiomodes" icon="/images/settings/icon_subwoofer.png" class="boolean" value="default">
+      <value displayName="Off" name="default"/>
+      <value displayName="On" name="withsub"/>
+    </setting>
+    <setting id="eq-crossover" name="eq-crossover" displayName="Crossover" url="/alsa_setting" icon="/images/settings/ic_crossover.png" class="range" value="80" hideIfDisabled="true">
+      <value min="40" max="200" step="10" units="Hz"/>
+      <dependsOn name="subwoofer" value="withsub"/>
+    </setting>
+    <setting id="replayGainMode" name="replayGainMode" displayName="Replay-gain" url="/audiomodes" icon="/images/settings/ic_replaygain.png" class="list" value="none" description="Disabled">
+      <value displayName="Disabled" name="none"/>
+      <value displayName="Track gain" name="track"/>
+      <value displayName="Album gain" name="album"/>
+      <value displayName="Smart gain" name="smart"/>
+      <dependsOn name="mqaDisable" value="OFF"/>
+    </setting>
+    <setting id="channelMode" name="channelMode" displayName="Output mode" url="/audiomodes" icon="/images/settings/ic_channelmode.png" class="list" value="default" description="Stereo" hideIfDisabled="true">
+      <value displayName="Stereo" name="default"/>
+      <value displayName="Left" name="left"/>
+      <value displayName="Right" name="right"/>
+      <value displayName="Mono" name="mono"/>
+    </setting>
+    <setting id="mqaDisable" name="mqaDisable" displayName="Digital Passthrough" url="/audiomodes" icon="/images/settings/ic_mqadisable.png" class="boolean" value="OFF" explanation="When Digital Passthrough is turned ON, BluOS sends the original audio stream to an external DAC, bypassing BluOS's internal MQA decoder.">
+      <dependsOn name="replayGainMode" value="none"/>
+      <dependsOn name="fixedVolume" value="ON"/>
+      <dependsOn name="eq-switch" value="OFF"/>
+    </setting>
+    <setting id="fixedVolume" name="fixedVolume" displayName="Output level fixed" icon="/images/settings/ic_fixedvolume.png" class="boolean" value="OFF">
+      <dependsOn name="mqaDisable" value="OFF"/>
+    </setting>
+    <setting id="volumeLimits" name="volumeLimits" displayName="Volume limits (dB)" icon="/images/settings/ic_volumelimits.png" class="dual-range" value="-44,0" hideIfDisabled="true">
+      <value min="-90" max="0" minRange="30" units="dB"/>
+      <dependsOn name="fixedVolume" value="OFF"/>
+    </setting>
+    <setting id="enableClockTrim" name="enableClockTrim" displayName="Audio clock trim" url="/audiomodes" icon="/images/settings/ic_audioclocktrim.png" class="boolean" value="ON" explanation="BluOS uses small adjustments to the audio clock to maintain glitch-free audio synchronization. Disable this when using an external DAC that cannot cope with these adjustments."/>
+    <setting id="reset" name="reset" displayName="Reset All" url="/alsa_setting" icon="/images/settings/icon_reset.png" class="button" style="center"/>
+  </menuGroup>
+</settings>

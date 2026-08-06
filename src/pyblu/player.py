@@ -2,7 +2,8 @@ from types import TracebackType
 
 import aiohttp
 
-from pyblu.entities import BrowseResult, ContextMenuAction, Status, Volume, SyncStatus, PairedPlayer, PlayQueue, Preset, Input
+from pyblu.entities import BrowseResult, ContextMenuAction, Input, PairedPlayer, PlayQueue, Preset, Status, SyncStatus, Volume
+from pyblu.errors import PlayerUnreachableError
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
@@ -16,11 +17,11 @@ from pyblu.parse import (
     parse_saved_play_queue,
     parse_sleep,
     parse_state,
-    parse_sync_status,
     parse_status,
+    parse_sync_status,
     parse_volume,
 )
-from pyblu.errors import PlayerUnreachableError
+from pyblu.settings import Settings
 
 
 class Player:
@@ -47,6 +48,7 @@ class Player:
         else:
             self._session_owned = True
             self._session = aiohttp.ClientSession()
+        self.settings = Settings(get=self._get)
 
     @property
     def default_timeout(self) -> float:

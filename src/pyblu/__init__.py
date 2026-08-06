@@ -1,33 +1,37 @@
 """A Python library for controlling BluOS players."""
 
-from .player import Player
 from .entities import (
     BrowseCategory,
     BrowseItem,
     BrowseResult,
     ContextMenuAction,
     Input,
+    ListeningModeValue,
     PairedPlayer,
     PlayQueue,
     PlayQueueTrack,
     Preset,
     Status,
+    SubwooferModeValue,
     SyncStatus,
     Volume,
 )
+from .player import Player
 
 __all__ = [
-    "Player",
-    "Status",
-    "Volume",
-    "SyncStatus",
+    "BrowseCategory",
+    "BrowseItem",
+    "BrowseResult",
+    "ContextMenuAction",
+    "Input",
+    "ListeningModeValue",
     "PairedPlayer",
     "PlayQueue",
     "PlayQueueTrack",
+    "Player",
     "Preset",
-    "Input",
-    "BrowseResult",
-    "BrowseItem",
-    "BrowseCategory",
-    "ContextMenuAction",
+    "Status",
+    "SubwooferModeValue",
+    "SyncStatus",
+    "Volume",
 ]

@@ -56,7 +56,7 @@ class Status:
     """True if the player is currently indexing."""
 
     stream_url: str | None
-    """The presence of this element should be treated as a flag and its contents as an opaque value. 
+    """The presence of this element should be treated as a flag and its contents as an opaque value.
     Seems to be present for radio stations and to be the same as the url from the matching preset(for Radio Stations)."""
 
 
@@ -268,3 +268,25 @@ class BrowseResult:
     """Top-level items. Empty when the response is grouped into *categories*."""
     categories: list[BrowseCategory]
     """Categories. Empty unless the response groups items under headings."""
+
+
+@dataclass
+class ListeningModeValue:
+    name: str
+    """Name of the current listening mode"""
+    display_name: str
+    """Formatted name of the current listening mode"""
+    icon: str
+    """URL of the mode icon"""
+    active: bool
+    """If the mode is currently selected"""
+
+
+@dataclass
+class SubwooferModeValue:
+    name: str
+    """Name of the current listening mode"""
+    display_name: str
+    """Formatted name of the current listening mode"""
+    active: bool
+    """If the mode is currently selected"""
