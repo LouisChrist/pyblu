@@ -1,0 +1,54 @@
+<settings pageId="audio" schemaVersion="28">
+<menuGroup id="audio" defaults="false" displayName="Audio" icon="/images/settings/ic_audio.png" url="/audiomodes">
+<setting id="preset" name="preset" displayName="Listening Mode" url="/alsa_setting" class="list" value="MOVIE" refresh="true" required="true" style="inline">
+<value displayName="Music" name="MUSIC" icon="/images/settings/icon_music-mode.png" iconActive="/images/settings/icon_music-mode-active.png"/>
+<value displayName="Movie" name="MOVIE" icon="/images/settings/icon_movies-mode.png" iconActive="/images/settings/icon_movies-mode-active.png"/>
+<value displayName="TV" name="TV" icon="/images/settings/icon_tv-mode.png" iconActive="/images/settings/icon_tv-mode-active.png"/>
+</setting>
+<setting id="eq-switch" name="eq-switch" displayName="Tone Controls" url="/alsa_setting" icon="/images/settings/ic_eqonoff.png" class="boolean" value="OFF" hideIfDisabled="true"/>
+<setting id="eq-treble" name="eq-treble" displayName="Treble" url="/alsa_setting" icon="/images/settings/icon_treble.png" class="range" value="0" hideIfDisabled="true">
+<value min="-6" max="6" step="0.5" units="dB"/>
+<dependsOn name="eq-switch" value="ON"/>
+</setting>
+<setting id="eq-bass" name="eq-bass" displayName="Bass" url="/alsa_setting" icon="/images/settings/icon_bass.png" class="range" value="0" hideIfDisabled="true">
+<value min="-6" max="6" step="0.5" units="dB"/>
+<dependsOn name="eq-switch" value="ON"/>
+</setting>
+<setting id="eq-balance" name="eq-balance" displayName="Balance" url="/alsa_setting" icon="/images/settings/ic_balance.png" class="range" value="0" hideIfDisabled="true" style="balance">
+<value min="-7" max="7" step="0.5"/>
+</setting>
+<setting id="centre" name="centre" displayName="Centre Channel" url="/setting" icon="/images/settings/ic_channelmode.png" class="boolean" value="ON" refresh="true"/>
+<setting id="eq-centre-trim" name="eq-centre-trim" displayName="Centre Volume Trim" url="/alsa_setting" icon="/images/settings/ic_volume.png" class="range" value="0" hideIfDisabled="true">
+<value min="-10" max="10" step="0.5"/>
+<dependsOn name="centre" value="ON"/>
+</setting>
+<setting id="subwoofer" name="subwoofer" displayName="Subwoofer" url="/audiomodes" icon="/images/settings/icon_subwoofer.png" class="boolean" value="withsub">
+<value displayName="Off" name="default"/>
+<value displayName="On" name="withsub"/>
+</setting>
+<setting id="eq-crossover" name="eq-crossover" displayName="Crossover" url="/alsa_setting" icon="/images/settings/ic_crossover.png" class="range" value="80" hideIfDisabled="true">
+<value min="40" max="200" step="10" units="Hz"/>
+<dependsOn name="subwoofer" value="withsub"/>
+</setting>
+<setting id="replayGainMode" name="replayGainMode" displayName="Replay-gain" url="/audiomodes" icon="/images/settings/ic_replaygain.png" class="list" value="none" description="Disabled">
+<value displayName="Disabled" name="none"/>
+<value displayName="Track gain" name="track"/>
+<value displayName="Album gain" name="album"/>
+<value displayName="Smart gain" name="smart"/>
+</setting>
+<setting id="channelMode" name="channelMode" displayName="Output mode" url="/audiomodes" icon="/images/settings/ic_channelmode.png" class="list" value="default" description="Stereo" hideIfDisabled="true">
+<value displayName="Stereo" name="default"/>
+<value displayName="Left" name="left"/>
+<value displayName="Right" name="right"/>
+<value displayName="Mono" name="mono"/>
+<dependsOn name="centre" value="OFF"/>
+</setting>
+<setting id="ears" name="ears" displayName="Stereo surround" url="/audiomodes" icon="/images/settings/ic_channelmode.png" class="boolean" value="OFF">
+<dependsOn name="centre" value="ON"/>
+</setting>
+<setting id="volumeLimits" name="volumeLimits" displayName="Volume limits (dB)" icon="/images/settings/ic_volumelimits.png" class="dual-range" value="-90,0" hideIfDisabled="true">
+<value min="-90" max="0" minRange="30" units="dB"/>
+</setting>
+<setting id="reset" name="reset" displayName="Reset All" url="/alsa_setting" icon="/images/settings/icon_reset.png" class="button" style="center"/>
+</menuGroup>
+</settings>
