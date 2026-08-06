@@ -16,7 +16,7 @@ class ListeningMode:
         for val in await self._query_endpoint(timeout):
             if val.active:
                 return val.display_name
-        return "Unknown"
+        return None
 
     async def set(self, mode: str, timeout: float | None = None) -> None:
         await self._get("/alsa_setting", params={"preset": mode}, timeout=timeout)
@@ -24,7 +24,7 @@ class ListeningMode:
     async def is_available(self, timeout: float | None = None) -> bool:
         return len(await self._query_endpoint(timeout)) > 0
 
-    async def options(self, timeout: float | None = None) -> list[ListeningModeValue]:
+    async def values(self, timeout: float | None = None) -> list[ListeningModeValue]:
         return await self._query_endpoint(timeout)
 
 
@@ -40,7 +40,7 @@ class SubwooferMode:
         for val in await self._query_endpoint(timeout):
             if val.active:
                 return val.display_name
-        return "Unknown"
+        return None
 
     async def set(self, mode: str, timeout: float | None = None) -> None:
         await self._get("/audiomodes", params={"subwoofer": mode}, timeout=timeout)
@@ -48,7 +48,7 @@ class SubwooferMode:
     async def is_available(self, timeout: float | None = None) -> bool:
         return len(await self._query_endpoint(timeout)) > 0
 
-    async def options(self, timeout: float | None = None) -> list[SubwooferModeValue]:
+    async def values(self, timeout: float | None = None) -> list[SubwooferModeValue]:
         return await self._query_endpoint(timeout)
 
 
