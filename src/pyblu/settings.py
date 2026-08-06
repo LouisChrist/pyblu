@@ -52,7 +52,7 @@ class SubwooferMode:
         return await self._query_endpoint(timeout)
 
 
-class Settings:
+class Settings:  # pylint: disable=too-few-public-methods
     def __init__(self, get: Callable[..., Awaitable[bytes]]):
         self.listening_mode = ListeningMode(get)
         self.subwoofer_mode = SubwooferMode(get)

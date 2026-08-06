@@ -718,7 +718,7 @@ async def test_listening_modes():
     )
     async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
         async with Player("node", session=session) as client:
-            modes = await client.settings.listening_mode.options()
+            modes = await client.settings.listening_mode.values()
 
     assert len(Mocket.request_list()) == 1
 
@@ -748,7 +748,7 @@ async def test_subwoofer_modes():
     )
     async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
         async with Player("node", session=session) as client:
-            modes = await client.settings.subwoofer_mode.options()
+            modes = await client.settings.subwoofer_mode.values()
 
     assert len(Mocket.request_list()) == 1
 
