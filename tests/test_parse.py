@@ -428,7 +428,6 @@ def test_parse_browse_root_menu():
     result = parse_browse_result(data)
 
     assert result.type == "menu"
-    assert result.service is None
     assert result.service_name is None
     assert result.search_key is None
     assert result.next_key is None
@@ -467,7 +466,7 @@ def test_parse_browse_empty_list():
 
 
 def test_parse_browse_service_menu():
-    data = """<browse serviceIcon="/icons/service_a.png" serviceName="Service A" service="ServiceA" type="items">
+    data = """<browse serviceIcon="/icons/service_a.png" serviceName="Service A" type="items">
   <item browseKey="ServiceA:browse/category-one" text="Category One" image="/icons/cat1.png" type="link"></item>
   <item browseKey="ServiceA:browse/category-two" text="Category Two" image="/icons/cat2.png" type="link"></item>
 </browse>"""
@@ -475,7 +474,6 @@ def test_parse_browse_service_menu():
     result = parse_browse_result(data)
 
     assert result.type == "items"
-    assert result.service == "ServiceA"
     assert result.service_name == "Service A"
     assert result.service_icon == "/icons/service_a.png"
     assert len(result.items) == 2

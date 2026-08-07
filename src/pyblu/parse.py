@@ -394,7 +394,6 @@ def parse_browse_result(response: bytes) -> BrowseResult:
 
     browse_result = BrowseResult(
         type=browse_element.attrib["type"],
-        service=browse_element.attrib.get("service"),
         service_name=browse_element.attrib.get("serviceName"),
         service_icon=browse_element.attrib.get("serviceIcon"),
         search_key=browse_element.attrib.get("searchKey"),

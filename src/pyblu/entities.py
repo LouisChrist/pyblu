@@ -251,8 +251,6 @@ class BrowseCategory:
 class BrowseResult:
     type: str
     """Result list type. Common values are "menu", "items", "albums", "tracks", "playlists", "sections", "folders"."""
-    service: str | None
-    """Service id (e.g. "TuneIn", "Deezer"). Not for UI display."""
     service_name: str | None
     """Human-readable service name, suitable for UI."""
     service_icon: str | None
