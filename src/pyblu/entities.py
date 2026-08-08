@@ -233,6 +233,12 @@ class BrowseItem:
     autoplay_action_url: str | None = None
     """Opaque relative URI from the item's *autoplayURL* attribute. Pass it unchanged to *Player.execute_action*.
     *None* if the item does not provide an auto-fill play action. Do not pass this value to *Player.play_url*."""
+    duration: int | None = None
+    """Duration in seconds for a track or collection."""
+    is_favourite: bool | None = None
+    """Whether the item is a favourite."""
+    tracks: int | None = None
+    """Number of tracks in a collection."""
 
 
 @dataclass

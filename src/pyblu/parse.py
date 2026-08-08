@@ -164,6 +164,11 @@ def _optional_bool_attribute_or_child(element: etree._Element, name: str) -> boo
     return value == "1" if value is not None else None
 
 
+def _optional_bool_attribute(element: etree._Element, name: str) -> bool | None:
+    value = element.attrib.get(name)
+    return value.lower() in ("1", "true") if value is not None else None
+
+
 @_wrap_in_unxpected_response_error
 def parse_play_queue(response: bytes) -> PlayQueue:
     """
@@ -353,6 +358,9 @@ def _browse_item(x: etree._Element) -> BrowseItem:
         input_type=x.attrib.get("inputType"),
         context_menu_key=x.attrib.get("contextMenuKey"),
         context_menu=[_context_menu_action(y) for y in x.xpath("./contextMenu/item")],
+        duration=int(duration) if (duration := x.attrib.get("duration")) is not None else None,
+        is_favourite=_optional_bool_attribute(x, "isFavourite"),
+        tracks=int(tracks) if (tracks := x.attrib.get("tracks")) is not None else None,
     )
 
 

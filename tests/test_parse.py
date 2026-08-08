@@ -442,6 +442,9 @@ def test_parse_browse_root_menu():
     assert playlists.browse_key == "playlists"
     assert playlists.play_action_url is None
     assert playlists.input_type is None
+    assert playlists.duration is None
+    assert playlists.is_favourite is None
+    assert playlists.tracks is None
 
     assert bluetooth.type == "audio"
     assert bluetooth.text == "Bluetooth"
@@ -559,6 +562,24 @@ def test_parse_browse_preserves_non_play_action_url():
     result = parse_browse_result(data)
 
     assert result.items[0].play_action_url == "/Add?service=Generic&albumid=12345&playnow=1"
+
+
+def test_parse_browse_item_media_metadata():
+    data = """<browse type="albums">
+  <item browseKey="Tidal:MG/Tidal-Album?albumid=15425468" text="Graceland" text2="Paul Simon"
+        duration="2596" tracks="11" isFavourite="true" type="album"/>
+  <item text="2. Graceland" duration="291" isFavourite="false" type="track"/>
+</browse>"""
+
+    result = parse_browse_result(data)
+
+    album, track = result.items
+    assert album.duration == 2596
+    assert album.is_favourite is True
+    assert album.tracks == 11
+    assert track.duration == 291
+    assert track.is_favourite is False
+    assert track.tracks is None
 
 
 def test_parse_context_menu():
