@@ -1,11 +1,22 @@
-from collections.abc import Awaitable, Callable
+from typing import Protocol
 
 from pyblu.entities import ListeningModeValue, SubwooferModeValue
 from pyblu.parse import parse_listening_modes, parse_subwoofer_modes
 
+type QueryParams = dict[str, str | int]
+
+
+class _HttpGet(Protocol):  # pylint: disable=too-few-public-methods
+    async def __call__(
+        self,
+        path: str,
+        params: QueryParams | None = None,
+        timeout: float | None = None,
+    ) -> bytes: ...
+
 
 class ListeningMode:
-    def __init__(self, get: Callable[..., Awaitable[bytes]]):
+    def __init__(self, get: _HttpGet):
         self._get = get
 
     async def _query_endpoint(self, timeout: float | None = None) -> list[ListeningModeValue]:
@@ -29,7 +40,7 @@ class ListeningMode:
 
 
 class SubwooferMode:
-    def __init__(self, get: Callable[..., Awaitable[bytes]]):
+    def __init__(self, get: _HttpGet):
         self._get = get
 
     async def _query_endpoint(self, timeout: float | None = None) -> list[SubwooferModeValue]:
@@ -53,6 +64,6 @@ class SubwooferMode:
 
 
 class Settings:  # pylint: disable=too-few-public-methods
-    def __init__(self, get: Callable[..., Awaitable[bytes]]):
+    def __init__(self, get: _HttpGet):
         self.listening_mode = ListeningMode(get)
         self.subwoofer_mode = SubwooferMode(get)
