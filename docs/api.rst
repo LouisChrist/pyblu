@@ -29,7 +29,22 @@ Data Classes
 .. autoclass:: pyblu.PlayQueue
    :members:
 
+.. autoclass:: pyblu.PlayQueueTrack
+   :members:
+
 .. autoclass:: pyblu.Input
+   :members:
+
+.. autoclass:: pyblu.BrowseResult
+   :members:
+
+.. autoclass:: pyblu.BrowseItem
+   :members:
+
+.. autoclass:: pyblu.BrowseCategory
+   :members:
+
+.. autoclass:: pyblu.ContextMenuAction
    :members:
 
 Exceptions
@@ -42,4 +57,10 @@ Exceptions
    :members:
 
 .. autoclass:: pyblu.errors.PlayerUnexpectedResponseError
+   :members:
+
+.. autoclass:: pyblu.errors.PlayerCommandError
+   :members:
+
+.. autoclass:: pyblu.errors.PlayerBrowseError
    :members:

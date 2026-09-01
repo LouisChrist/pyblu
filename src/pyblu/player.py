@@ -1,22 +1,21 @@
 from types import TracebackType
+from urllib.parse import urljoin
 
 import aiohttp
 
-from pyblu.entities import (
-    Input,
-    PairedPlayer,
-    PlayQueue,
-    Preset,
-    Status,
-    SyncStatus,
-    Volume,
-)
+from pyblu.entities import BrowseResult, ContextMenuAction, Input, PairedPlayer, PlayQueue, Preset, Status, SyncStatus, Volume
 from pyblu.errors import PlayerUnreachableError
 from pyblu.parse import (
     parse_add_follower,
+    parse_browse_result,
+    parse_command_response,
+    parse_context_menu,
+    parse_deleted_play_queue_track,
     parse_inputs,
+    parse_moved_play_queue_track,
     parse_play_queue,
     parse_presets,
+    parse_saved_play_queue,
     parse_sleep,
     parse_state,
     parse_status,
@@ -75,7 +74,7 @@ class Player:
         used_timeout = timeout if timeout is not None else self._default_timeout
         try:
             async with self._session.get(
-                f"{self.base_url}{path}",
+                urljoin(f"{self.base_url}/", path),
                 params=params,
                 timeout=aiohttp.ClientTimeout(total=used_timeout),
             ) as response:
@@ -191,9 +190,13 @@ class Player:
         return parse_state(data)
 
     async def play_url(self, url: str, timeout: float | None = None) -> str:
-        """Start playing a track from a URL. Can also be used to select inputs. See *inputs* for available inputs.
+        """Start playing a track from a source URL. Can also be used to select inputs. See *inputs* for available inputs.
 
-        :param url: The URL of the track to play.
+        This method constructs a /Play request from a stream URL or BluOS source identifier. Do not pass it an action
+        URI from the browse API; invoke *BrowseItem.play_action_url*, *BrowseItem.autoplay_action_url*, and
+        *ContextMenuAction.action_url* values with *execute_action* instead.
+
+        :param url: The stream URL or BluOS source identifier to play.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
@@ -206,6 +209,24 @@ class Player:
         }
         data = await self._get("/Play", params=params, timeout=timeout)
         return parse_state(data)
+
+    async def execute_action(self, action_url: str, timeout: float | None = None) -> None:
+        """Invoke an opaque action URI returned by the browse API.
+
+        Pass a *BrowseItem.play_action_url*, *BrowseItem.autoplay_action_url*, or *ContextMenuAction.action_url*
+        to this method without parsing, decoding, or otherwise modifying it. Unlike *play_url*, this method does not
+        construct a /Play request: the complete action URI is sent directly to the player. Actions can start playback,
+        modify the play queue, add a preset, or change a service favorite.
+
+        :param action_url: An opaque action URI supplied by the player.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerCommandError: If the player rejects the action.
+        :raises PlayerUnexpectedResponseError: If the command response is not valid XML.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+        """
+        data = await self._get(action_url, timeout=timeout)
+        parse_command_response(data)
 
     async def pause(self, toggle: bool | None = None, timeout: float | None = None) -> str:
         """Pause the current track. **toggle** can be used to toggle between playing and pause.
@@ -338,6 +359,71 @@ class Player:
         data = await self._get("/RemoveSlave", params=params, timeout=timeout)
         return parse_sync_status(data)
 
+    async def play_queue(
+        self,
+        start: int | None = None,
+        end: int | None = None,
+        status_only: bool = False,
+        timeout: float | None = None,
+    ) -> PlayQueue:
+        """Get the current play queue.
+
+        Use **start** and **end** to retrieve an inclusive page of tracks. Both positions start at 0 and must be supplied together.
+        Use **status_only** to retrieve only queue metadata. Calling without pagination or **status_only** returns every track and may produce a large response.
+
+        :param start: The first track position to include, starting from 0.
+        :param end: The last track position to include, inclusive.
+        :param status_only: Return queue metadata without track details.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+        :raises ValueError: If only one pagination position is supplied, or pagination and **status_only** are combined.
+
+        :return: The current play queue and the requested tracks.
+        """
+        if (start is None) != (end is None):
+            raise ValueError("start and end have to be supplied together")
+        if status_only and start is not None:
+            raise ValueError("status_only cannot be combined with start and end")
+
+        params: dict[str, str | int] = {}
+        if status_only:
+            params["length"] = 1
+        elif start is not None and end is not None:
+            params["start"] = start
+            params["end"] = end
+
+        data = await self._get("/Playlist", params=params, timeout=timeout)
+        return parse_play_queue(data)
+
+    async def delete_play_queue_track(self, track_id: int, timeout: float | None = None) -> int:
+        """Delete a track from the current play queue.
+
+        :param track_id: The track id from *PlayQueueTrack.id*.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The id of the deleted track.
+        """
+        data = await self._get("/Delete", params={"id": track_id}, timeout=timeout)
+        return parse_deleted_play_queue_track(data)
+
+    async def move_play_queue_track(self, old_position: int, new_position: int, timeout: float | None = None) -> None:
+        """Move a track within the current play queue.
+
+        :param old_position: The current track position from *PlayQueueTrack.id*.
+        :param new_position: The destination position.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+        """
+        data = await self._get("/Move", params={"new": new_position, "old": old_position}, timeout=timeout)
+        parse_moved_play_queue_track(data)
+
     async def shuffle(self, shuffle: bool, timeout: float | None = None) -> PlayQueue:
         """Set shuffle on current play queue.
 
@@ -367,6 +453,21 @@ class Player:
         """
         data = await self._get("/Clear", timeout=timeout)
         return parse_play_queue(data)
+
+    async def save_play_queue(self, name: str, timeout: float | None = None) -> int:
+        """Save the current play queue as a named BluOS playlist.
+
+        :param name: The name of the saved playlist.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerCommandError: If the player rejects the save command, such as when the play queue is empty.
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The number of tracks saved.
+        """
+        data = await self._get("/Save", params={"name": name}, timeout=timeout)
+        return parse_saved_play_queue(data)
 
     async def sleep_timer(self, timeout: float | None = None) -> int:
         """Set sleep timer. Time steps are 15, 30, 45, 60, 90 minutes. Each call goes to next step.
@@ -422,3 +523,62 @@ class Player:
         params: dict[str, str | int] = {"service": "Capture"}
         data = await self._get("/RadioBrowse", params=params, timeout=timeout)
         return parse_inputs(data)
+
+    async def browse(
+        self,
+        key: str | None = None,
+        q: str | None = None,
+        timeout: float | None = None,
+        with_context_menu_items: bool = False,
+    ) -> BrowseResult:
+        """Browse media available on the player.
+        Call without parameters to get the top-level menu. Call with **key** to descend, paginate, or navigate up.
+
+        **key** is an opaque value taken from a previous browse response: *browse_key* of a *BrowseItem*,
+        or *search_key* / *next_key* / *parent_key* of a *BrowseResult* or *BrowseCategory*. Do not parse or modify it.
+        Use *context_menu* rather than this method for a *context_menu_key*.
+
+        To search within a service or deeper browse context, pass **q** together with a **key** taken from the
+        *search_key* of a previous *BrowseResult*. Pass **q** without **key** to perform a top-level search.
+        Set **with_context_menu_items** to include each item's context-menu actions in the response.
+
+        Playable items expose opaque *play_action_url* and optionally *autoplay_action_url* values. Invoke either value with *execute_action*.
+
+        :param key: The opaque key to browse. None returns the top-level menu.
+        :param q: The search term. Without **key**, performs a top-level search; with **key**, searches the context identified by a *search_key*.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+        :param with_context_menu_items: Include inline context-menu actions for returned items.
+
+        :raises PlayerBrowseError: If the player returns a structured error response.
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The browse result.
+        """
+        params: dict[str, str | int] = {}
+        if key is not None:
+            params["key"] = key
+        if q is not None:
+            params["q"] = q
+        if with_context_menu_items:
+            params["withContextMenuItems"] = 1
+
+        data = await self._get("/Browse", params=params, timeout=timeout)
+        return parse_browse_result(data)
+
+    async def context_menu(self, key: str, timeout: float | None = None) -> list[ContextMenuAction]:
+        """Get the context-menu actions available for a browse item.
+
+        **key** is the opaque *context_menu_key* from a *BrowseItem*. Do not parse or modify it. Available actions are service-specific and can change.
+
+        :param key: The opaque context-menu key from a browse item.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
+
+        :raises PlayerBrowseError: If the player returns a structured error response.
+        :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
+        :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
+
+        :return: The context-menu actions available for the item.
+        """
+        data = await self._get("/Browse", params={"key": key}, timeout=timeout)
+        return parse_context_menu(data)

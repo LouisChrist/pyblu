@@ -3,17 +3,22 @@ from urllib.parse import unquote
 from lxml import etree
 
 from pyblu.entities import (
+    BrowseCategory,
+    BrowseItem,
+    BrowseResult,
+    ContextMenuAction,
     Input,
     ListeningModeValue,
     PairedPlayer,
     PlayQueue,
+    PlayQueueTrack,
     Preset,
     Status,
     SubwooferModeValue,
     SyncStatus,
     Volume,
 )
-from pyblu.errors import _wrap_in_unxpected_response_error
+from pyblu.errors import PlayerBrowseError, PlayerCommandError, _wrap_in_unxpected_response_error
 
 
 @_wrap_in_unxpected_response_error
@@ -149,6 +154,21 @@ def parse_volume(response: bytes) -> Volume:
     return volume
 
 
+def _attribute_or_child(element: etree._Element, name: str) -> str | None:
+    value = element.attrib.get(name)
+    return value if value is not None else element.findtext(name)
+
+
+def _optional_bool_attribute_or_child(element: etree._Element, name: str) -> bool | None:
+    value = _attribute_or_child(element, name)
+    return value == "1" if value is not None else None
+
+
+def _optional_bool_attribute(element: etree._Element, name: str) -> bool | None:
+    value = element.attrib.get(name)
+    return value.lower() in ("1", "true") if value is not None else None
+
+
 @_wrap_in_unxpected_response_error
 def parse_play_queue(response: bytes) -> PlayQueue:
     """
@@ -161,14 +181,83 @@ def parse_play_queue(response: bytes) -> PlayQueue:
     assert len(playlist_elements) == 1, "Playlist element not found or multiple found"
     playlist_element = playlist_elements[0]
 
-    play_queue = PlayQueue(
-        id=playlist_element.attrib["id"],
-        modified=playlist_element.attrib.get("modified") == "1",
-        length=int(playlist_element.attrib["length"]),
-        shuffle=playlist_element.attrib.get("shuffle") == "1",
+    queue_id = _attribute_or_child(playlist_element, "id")
+    length = _attribute_or_child(playlist_element, "length")
+    assert queue_id is not None, "Playlist id not found"
+    assert length is not None, "Playlist length not found"
+
+    tracks = [
+        PlayQueueTrack(
+            id=int(x.attrib["id"]),
+            title=x.findtext("title"),
+            artist=x.findtext("art"),
+            album=x.findtext("alb"),
+            filename=x.findtext("fn"),
+            image=x.findtext("image"),
+            duration=float(duration) if (duration := x.findtext("time")) is not None else None,
+            service=x.attrib.get("service"),
+            song_id=x.attrib.get("songid"),
+            album_id=x.attrib.get("albumid"),
+            artist_id=x.attrib.get("artistid"),
+        )
+        for x in playlist_element.xpath("./song")
+    ]
+
+    return PlayQueue(
+        id=queue_id,
+        modified=_optional_bool_attribute_or_child(playlist_element, "modified"),
+        length=int(length),
+        shuffle=_optional_bool_attribute_or_child(playlist_element, "shuffle"),
+        name=_attribute_or_child(playlist_element, "name"),
+        repeat=int(repeat) if (repeat := _attribute_or_child(playlist_element, "repeat")) is not None else None,
+        tracks=tracks,
     )
 
-    return play_queue
+
+@_wrap_in_unxpected_response_error
+def parse_deleted_play_queue_track(response: bytes) -> int:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+    deleted_elements = tree.xpath("//deleted")
+
+    assert len(deleted_elements) == 1, "Deleted element not found or multiple found"
+    assert deleted_elements[0].text is not None, "Deleted track id not found"
+    return int(deleted_elements[0].text)
+
+
+@_wrap_in_unxpected_response_error
+def parse_moved_play_queue_track(response: bytes) -> None:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+    moved_elements = tree.xpath("//moved")
+
+    assert len(moved_elements) == 1, "Moved element not found or multiple found"
+    assert moved_elements[0].text == "moved", "Track was not moved"
+
+
+@_wrap_in_unxpected_response_error
+def parse_saved_play_queue(response: bytes) -> int:
+    """
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    tree = etree.fromstring(response)
+    if tree.tag == "error":
+        error = (tree.text or "").strip()
+        message = "Cannot save an empty play queue" if error == "empty" else error or "The player rejected the save command"
+        raise PlayerCommandError(message)
+
+    entries_elements = tree.xpath("//saved/entries")
+
+    assert len(entries_elements) == 1, "Saved entries element not found or multiple found"
+    assert entries_elements[0].text is not None, "Saved entry count not found"
+    return int(entries_elements[0].text)
 
 
 @_wrap_in_unxpected_response_error
@@ -224,6 +313,118 @@ def parse_sleep(response: bytes) -> int:
     sleep_element = sleep_elements[0]
 
     return int(sleep_element.text) if sleep_element.text else 0
+
+
+@_wrap_in_unxpected_response_error
+def parse_command_response(response: bytes) -> None:
+    """Raise *PlayerCommandError* if an opaque command returns an error response.
+
+    Successful command responses vary by endpoint and are intentionally ignored.
+
+    :raises PlayerCommandError: If the player intentionally rejects the command.
+    :raises PlayerUnexpectedResponseError: If the response is not valid XML.
+    """
+    if not response.strip():
+        return
+
+    tree = etree.fromstring(response)
+    if tree.tag != "error":
+        return
+
+    message = (tree.findtext("message") or tree.text or "").strip() or "The player rejected the command"
+    details = [detail.text.strip() for detail in tree.findall("detail") if detail.text and detail.text.strip()]
+    if details:
+        message = f"{message}: {'; '.join(details)}"
+    raise PlayerCommandError(message)
+
+
+def _context_menu_action(x: etree._Element) -> ContextMenuAction:
+    return ContextMenuAction(
+        type=x.attrib["type"],
+        text=x.attrib.get("text"),
+        action_url=x.attrib["actionURL"],
+    )
+
+
+def _browse_item(x: etree._Element) -> BrowseItem:
+    return BrowseItem(
+        type=x.attrib["type"],
+        text=x.attrib.get("text"),
+        text2=x.attrib.get("text2"),
+        image=x.attrib.get("image"),
+        play_action_url=x.attrib.get("playURL"),
+        autoplay_action_url=x.attrib.get("autoplayURL"),
+        browse_key=x.attrib.get("browseKey"),
+        input_type=x.attrib.get("inputType"),
+        context_menu_key=x.attrib.get("contextMenuKey"),
+        context_menu=[_context_menu_action(y) for y in x.xpath("./contextMenu/item")],
+        duration=int(duration) if (duration := x.attrib.get("duration")) is not None else None,
+        is_favourite=_optional_bool_attribute(x, "isFavourite"),
+        tracks=int(tracks) if (tracks := x.attrib.get("tracks")) is not None else None,
+    )
+
+
+def _browse_element(response: bytes) -> etree._Element:
+    tree = etree.fromstring(response)
+
+    error_elements = tree.xpath("//error")
+    if error_elements:
+        error_element = error_elements[0]
+        message = (error_element.findtext("message") or "").strip() or "<unknown error>"
+        details = [d.text.strip() for d in error_element.findall("detail") if d.text and d.text.strip()]
+        raise PlayerBrowseError(message, details)
+
+    browse_elements = tree.xpath("//browse")
+    assert len(browse_elements) == 1, "Browse element not found or multiple found"
+    browse_element: etree._Element = browse_elements[0]
+    return browse_element
+
+
+@_wrap_in_unxpected_response_error
+def parse_browse_result(response: bytes) -> BrowseResult:
+    """
+    :raises PlayerBrowseError: If the response is a structured <error> response from /Browse.
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    browse_element = _browse_element(response)
+
+    items = [_browse_item(x) for x in browse_element.xpath("./item")]
+    categories = [
+        BrowseCategory(
+            text=x.attrib.get("text"),
+            next_key=x.attrib.get("nextKey"),
+            parent_key=x.attrib.get("parentKey"),
+            items=[_browse_item(y) for y in x.xpath("./item")],
+        )
+        for x in browse_element.xpath("./category")
+    ]
+
+    browse_result = BrowseResult(
+        type=browse_element.attrib["type"],
+        service_name=browse_element.attrib.get("serviceName"),
+        service_icon=browse_element.attrib.get("serviceIcon"),
+        search_key=browse_element.attrib.get("searchKey"),
+        next_key=browse_element.attrib.get("nextKey"),
+        parent_key=browse_element.attrib.get("parentKey"),
+        items=items,
+        categories=categories,
+    )
+
+    return browse_result
+
+
+@_wrap_in_unxpected_response_error
+def parse_context_menu(response: bytes) -> list[ContextMenuAction]:
+    """
+    :raises PlayerBrowseError: If the response is a structured <error> response from /Browse.
+    :raises PlayerUnexpectedResponseError: If the response is not as expected.
+    """
+    # pylint: disable=c-extension-no-member
+    browse_element = _browse_element(response)
+    assert browse_element.attrib["type"] == "contextMenu", "Browse response is not a context menu"
+
+    return [_context_menu_action(x) for x in browse_element.xpath("./item")]
 
 
 @_wrap_in_unxpected_response_error

@@ -8,6 +8,19 @@ Keep this file up to date as the codebase evolves — update it when commands, a
 
 `pyblu` is an async Python library for controlling BluOS players via their HTTP API (port 11000). No authentication is required. The library is published to PyPI and uses `uv` for dependency management.
 
+## BluOS API Documentation
+
+Use the official BluOS Custom Integration API PDF linked near the top of `README.md` as the source of truth for endpoints and response formats. Download that document directly instead of searching the web. To make it searchable locally:
+
+```bash
+api_url=$(grep -o 'https://[^)]*\.pdf' README.md | head -1)
+curl -fL "$api_url" -o /tmp/bluos-api.pdf
+pdftotext -layout /tmp/bluos-api.pdf /tmp/bluos-api.txt
+rg -n -C 10 '/Playlist|/Delete|/Move|/Save' /tmp/bluos-api.txt
+```
+
+The PDF and extracted text are temporary reference files; do not commit them.
+
 ## Commands
 
 ```bash
@@ -33,11 +46,11 @@ The library has four modules with a clear separation of concerns:
 
 - **`player.py`** — `Player` class: the public API. Each method makes one HTTP GET request to the BluOS endpoint, passing arguments as query parameters, then delegates the raw response bytes to a parse function. All methods are async and decorated with `@_wrap_in_unreachable_error`.
 
-- **`parse.py`** — Stateless XML parsing functions. Each takes `bytes` from the HTTP response and returns a typed entity. Uses `lxml.etree` for parsing. All functions are decorated with `@_wrap_in_unxpected_response_error`.
+- **`parse.py`** — Stateless XML parsing functions. Each takes `bytes` from the HTTP response and returns a typed entity. Uses `lxml.etree` for parsing. All public parse functions are decorated with `@_wrap_in_unxpected_response_error`.
 
-- **`entities.py`** — Pure `@dataclass` types (`Status`, `Volume`, `SyncStatus`, `PairedPlayer`, `PlayQueue`, `Preset`, `Input`). No logic.
+- **`entities.py`** — Pure `@dataclass` types for player state, play queues, and media browsing, including `PlayQueue`, `PlayQueueTrack`, `BrowseResult`, `BrowseItem`, and `ContextMenuAction`. No logic.
 
-- **`errors.py`** — Exception hierarchy (`PlayerError` → `PlayerUnreachableError` / `PlayerUnexpectedResponseError`) and two decorator factories that wrap exceptions at the Player and parse layers respectively.
+- **`errors.py`** — Exception hierarchy (`PlayerError` → `PlayerUnreachableError` / `PlayerUnexpectedResponseError` / `PlayerCommandError` / `PlayerBrowseError`) and decorators/helpers for translating transport, parser, and structured player errors.
 
 ### Key Conventions
 
@@ -47,6 +60,8 @@ The library has four modules with a clear separation of concerns:
 - All operations use HTTP GET, including mutations (play, pause, volume set).
 - `inputs()` calls `/RadioBrowse?service=Capture`, not a dedicated inputs endpoint.
 - `play_url()` and `play()` both map to the `/Play` endpoint.
+- Browse keys, `playURL` / `autoplayURL`, and context-menu action URLs are opaque. They map to `BrowseItem.play_action_url` / `autoplay_action_url` and `ContextMenuAction.action_url`; pass them unchanged to `Player.execute_action()`, never to `Player.play_url()`. Resolve context-menu keys through `context_menu()`; actions may mutate playback, the queue, presets, or service favorites.
+- `/Playlist` returns queue metadata as child elements for `length=1`, but as attributes for full and paginated listings; `parse_play_queue()` supports both forms. Optional metadata varies by response and player state: `name`, `modified`, `shuffle`, and `repeat` may be absent and are exposed as `None`.
 - The API uses "master/slave" terminology; the library exposes this as "leader/follower".
 
 **Long polling**: `status()` and `sync_status()` accept an `etag` parameter. When provided, `poll_timeout` must be strictly less than `timeout` — the Player method validates this and raises `ValueError` if violated.

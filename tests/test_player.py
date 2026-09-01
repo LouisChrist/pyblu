@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 from unittest.mock import AsyncMock, MagicMock
 from urllib.parse import quote
 
@@ -7,9 +9,9 @@ from mocket import Mocket, async_mocketize
 from mocket.mocks.mockhttp import Entry
 from mocket.plugins.aiohttp_connector import MocketTCPConnector
 
-from pyblu import PairedPlayer, Player, SubwooferModeValue
+from pyblu import ContextMenuAction, PairedPlayer, Player, SubwooferModeValue
 from pyblu.entities import Input, ListeningModeValue, Preset
-from pyblu.errors import PlayerUnreachableError
+from pyblu.errors import PlayerBrowseError, PlayerCommandError, PlayerUnreachableError
 
 
 @async_mocketize(strict_mode=True)
@@ -551,9 +553,125 @@ async def test_clear():
     assert len(Mocket.request_list()) == 1
 
     assert play_queue.id == "1"
-    assert not play_queue.modified
+    assert play_queue.modified is False
     assert play_queue.length == 0
-    assert not play_queue.shuffle
+    assert play_queue.shuffle is None
+
+
+@async_mocketize(strict_mode=True)
+async def test_play_queue():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Playlist",
+        status=200,
+        body="""<playlist name="Queue" modified="1" length="1" shuffle="0" repeat="2" id="12">
+          <song songid="Service:track-1" service="Service" id="0">
+            <title>Track</title><art>Artist</art><alb>Album</alb><fn>Service:track-1</fn>
+          </song>
+        </playlist>""",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            play_queue = await client.play_queue()
+
+    assert len(Mocket.request_list()) == 1
+    assert play_queue.name == "Queue"
+    assert play_queue.length == 1
+    assert play_queue.repeat == 2
+    assert play_queue.tracks[0].title == "Track"
+    assert play_queue.tracks[0].id == 0
+
+
+@async_mocketize(strict_mode=True)
+async def test_play_queue_status_only():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Playlist?length=1",
+        status=200,
+        body="<playlist><length>3</length><id>15</id><modified>1</modified></playlist>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            play_queue = await client.play_queue(status_only=True)
+
+    assert len(Mocket.request_list()) == 1
+    assert play_queue.id == "15"
+    assert play_queue.length == 3
+    assert play_queue.name is None
+    assert play_queue.modified is True
+    assert play_queue.shuffle is None
+    assert play_queue.repeat is None
+    assert play_queue.tracks == []
+
+
+@async_mocketize(strict_mode=True)
+async def test_play_queue_page():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Playlist?start=10&end=19",
+        status=200,
+        body='<playlist modified="0" length="30" id="16"><song id="10"><title>Track 10</title></song></playlist>',
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            play_queue = await client.play_queue(start=10, end=19)
+
+    assert len(Mocket.request_list()) == 1
+    assert play_queue.length == 30
+    assert play_queue.modified is False
+    assert play_queue.shuffle is None
+    assert play_queue.tracks[0].id == 10
+
+
+async def test_play_queue_rejects_incomplete_or_conflicting_pagination():
+    async with Player("node") as client:
+        with pytest.raises(ValueError, match="start and end"):
+            await client.play_queue(start=0)
+        with pytest.raises(ValueError, match="status_only"):
+            await client.play_queue(start=0, end=9, status_only=True)
+
+
+@async_mocketize(strict_mode=True)
+async def test_delete_play_queue_track():
+    Entry.single_register(Entry.GET, "http://node:11000/Delete?id=9", status=200, body="<deleted>9</deleted>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            deleted_id = await client.delete_play_queue_track(9)
+
+    assert len(Mocket.request_list()) == 1
+    assert deleted_id == 9
+
+
+@async_mocketize(strict_mode=True)
+async def test_move_play_queue_track():
+    Entry.single_register(Entry.GET, "http://node:11000/Move?new=8&old=2", status=200, body="<moved>moved</moved>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            await client.move_play_queue_track(old_position=2, new_position=8)
+
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_save_play_queue():
+    Entry.single_register(Entry.GET, "http://node:11000/Save?name=Dinner+Music", status=200, body="<saved><entries>126</entries></saved>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            entries = await client.save_play_queue("Dinner Music")
+
+    assert len(Mocket.request_list()) == 1
+    assert entries == 126
+
+
+@async_mocketize(strict_mode=True)
+async def test_save_empty_play_queue():
+    Entry.single_register(Entry.GET, "http://node:11000/Save?name=Empty", status=200, body="<error>empty</error>")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            with pytest.raises(PlayerCommandError, match="Cannot save an empty play queue"):
+                await client.save_play_queue("Empty")
+
+    assert len(Mocket.request_list()) == 1
 
 
 @async_mocketize(strict_mode=True)
@@ -827,3 +945,175 @@ async def test_get_maps_connection_error_to_unreachable():
     player = _player_with_failing_session(aiohttp.ClientConnectionError())
     with pytest.raises(PlayerUnreachableError):
         await player.status()
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_root():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Browse",
+        status=200,
+        body="""
+        <browse type="menu">
+          <item browseKey="playlists" text="Playlists" image="/images/p.png" type="link"/>
+          <item playURL="/Play?url=Capture%3Abluez%3Abluetooth" text="Bluetooth" image="/images/b.png" type="audio" inputType="bluetooth"/>
+        </browse>
+        """,
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            result = await client.browse()
+
+    assert len(Mocket.request_list()) == 1
+
+    assert result.type == "menu"
+    assert len(result.items) == 2
+    assert result.items[0].browse_key == "playlists"
+    assert result.items[1].play_action_url == "/Play?url=Capture%3Abluez%3Abluetooth"
+    assert result.items[1].input_type == "bluetooth"
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_with_key():
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000/Browse?key={quote('ServiceA:')}",
+        status=200,
+        body="""<browse type="items" serviceName="Service A"/>""",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            result = await client.browse(key="ServiceA:")
+
+    assert len(Mocket.request_list()) == 1
+
+    assert result.type == "items"
+    assert result.service_name == "Service A"
+    assert not result.items
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_with_inline_context_menu_items():
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000/Browse?key={quote('ServiceA:albums')}&withContextMenuItems=1",
+        status=200,
+        body="""<browse type="albums">
+          <item playURL="/Add?service=ServiceA&amp;albumid=1&amp;playnow=1" text="Album" type="album">
+            <contextMenu>
+              <item actionURL="/Add?service=ServiceA&amp;albumid=1" text="Add" type="add-last"/>
+            </contextMenu>
+          </item>
+        </browse>""",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            result = await client.browse(key="ServiceA:albums", with_context_menu_items=True)
+
+    assert len(Mocket.request_list()) == 1
+    assert result.items[0].context_menu == [ContextMenuAction(type="add-last", text="Add", action_url="/Add?service=ServiceA&albumid=1")]
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_search():
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000/Browse?key={quote('Airable:Search')}&q=jazz",
+        status=200,
+        body="""
+        <browse serviceName="Radio" searchKey="Airable:Search" type="menu">
+          <item browseKey="Airable:BrowseMenu/stations" text="Stations" type="link"/>
+          <item browseKey="Airable:BrowseMenu/podcasts" text="Podcasts" type="link"/>
+        </browse>
+        """,
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            result = await client.browse(key="Airable:Search", q="jazz")
+
+    assert len(Mocket.request_list()) == 1
+
+    assert result.search_key == "Airable:Search"
+    assert len(result.items) == 2
+    assert result.items[0].text == "Stations"
+    assert result.items[1].browse_key == "Airable:BrowseMenu/podcasts"
+
+
+@async_mocketize(strict_mode=True)
+async def test_browse_error_response():
+    Entry.single_register(
+        Entry.GET,
+        "http://node:11000/Browse?key=bad",
+        status=200,
+        body="<error><message>Invalid key</message><detail>not recognised</detail></error>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            with pytest.raises(PlayerBrowseError) as exc_info:
+                await client.browse(key="bad")
+
+    assert "Invalid key" in str(exc_info.value)
+    assert exc_info.value.details == ["not recognised"]
+
+
+@pytest.mark.parametrize(
+    ("action_url", "request_url"),
+    [
+        ("/Play?url=Service%3Astream-1&title=Station+One", "http://node:11000/Play?url=Service%3Astream-1&title=Station+One"),
+        ("Add?service=ServiceA&albumid=1&autofill=1", "http://node:11000/Add?service=ServiceA&albumid=1&autofill=1"),
+        ("http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1", "http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1"),
+    ],
+)
+@async_mocketize(strict_mode=True)
+async def test_execute_action(action_url: str, request_url: str):
+    Entry.single_register(Entry.GET, request_url, status=200, body="<success/>")
+
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            await client.execute_action(action_url)
+
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_execute_action_command_error():
+    action_url = "/Add?service=ServiceA&albumid=1&playnow=1"
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000{action_url}",
+        status=200,
+        body="<error><message>Service unavailable</message></error>",
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            with pytest.raises(PlayerCommandError, match="Service unavailable"):
+                await client.execute_action(action_url)
+
+    assert len(Mocket.request_list()) == 1
+
+
+@async_mocketize(strict_mode=True)
+async def test_context_menu():
+    key = "Airable:ContextMenu/opaque?url=station%3A1&hasInfo=1"
+    Entry.single_register(
+        Entry.GET,
+        f"http://node:11000/Browse?key={quote(key)}",
+        status=200,
+        body="""
+        <browse type="contextMenu">
+          <item actionURL="/AddFavourite?service=Airable&amp;url=opaque%3Astation%2F1" text="Favourite" type="favourite-add"/>
+        </browse>
+        """,
+    )
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            actions = await client.context_menu(key)
+
+    assert len(Mocket.request_list()) == 1
+    assert actions == [
+        ContextMenuAction(
+            type="favourite-add",
+            text="Favourite",
+            action_url="/AddFavourite?service=Airable&url=opaque%3Astation%2F1",
+        )
+    ]
