@@ -528,8 +528,8 @@ class Player:
         self,
         key: str | None = None,
         q: str | None = None,
-        timeout: float | None = None,
         with_context_menu_items: bool = False,
+        timeout: float | None = None,
     ) -> BrowseResult:
         """Browse media available on the player.
         Call without parameters to get the top-level menu. Call with **key** to descend, paginate, or navigate up.
@@ -546,8 +546,8 @@ class Player:
 
         :param key: The opaque key to browse. None returns the top-level menu.
         :param q: The search term. Without **key**, performs a top-level search; with **key**, searches the context identified by a *search_key*.
-        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
         :param with_context_menu_items: Include inline context-menu actions for returned items.
+        :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
         :raises PlayerBrowseError: If the player returns a structured error response.
         :raises PlayerUnexpectedResponseError: If the response is not as expected. This is probably a bug in the library.
