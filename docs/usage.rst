@@ -92,3 +92,30 @@ Alternatively, request inline actions while browsing:
 
 Browse keys and all action URLs are opaque. Do not parse, decode, reconstruct, or otherwise modify them before
 passing them back to the same player that returned them.
+
+Audio settings
+--------------
+
+Audio settings are available through ``player.settings``. Each read fetches fresh
+state; availability means the player advertises the setting. Unsupported settings
+return ``None`` from ``get()``.
+
+.. code-block:: python
+
+   if await player.settings.treble.is_available():
+       print(await player.settings.treble.get())
+       print(await player.settings.treble.values())  # Bounds, step, and units.
+
+   for choice in await player.settings.output_mode.values():
+       print(choice.name, choice.display_name, choice.active)
+
+Choice getters return display names, but setters accept raw ``choice.name`` values.
+Numeric ``values()`` methods return :class:`~pyblu.SettingRange` or ``None``;
+choice ``values()`` methods return a list, empty when unavailable.
+
+Setters mutate the player. They do not check advertised choices/ranges or read
+back the result. Numeric setters reject booleans and non-finite numbers; volume
+limits must also be in ascending order.
+
+All methods accept ``timeout`` in seconds, defaulting to the player's timeout.
+See :class:`~pyblu.settings.Settings` and the :doc:`api` for all setting classes.

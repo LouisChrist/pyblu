@@ -28,6 +28,42 @@ async def main():
 pip install pyblu
 ```
 
+## Audio settings
+
+Audio settings are exposed through `player.settings`:
+
+| Settings | `get()` result | Mutation |
+| --- | --- | --- |
+| `listening_mode`, `subwoofer_mode`, `replay_gain`, `output_mode` | Active display name | `set(raw_name)` |
+| `tone_controls`, `centre_channel`, `stereo_surround`, `digital_passthrough`, `fixed_volume`, `audio_clock_trim` | `bool` | `set(True)` / `set(False)` |
+| `treble`, `bass`, `balance`, `centre_volume_trim`, `crossover` | `float` | `set(value)` |
+| `volume_limits` | `(minimum, maximum)` in dB | `set(minimum, maximum)` |
+
+All settings support `is_available(timeout=...)`. Readable settings return `None`
+when absent. Availability means the setting is advertised by the player, not that
+its prerequisites are satisfied. For backward compatibility, listening/subwoofer
+modes also require at least one choice to report availability, and their `values()`
+methods retain the original `ListeningModeValue` (with `icon`) and
+`SubwooferModeValue` types. No prerequisite settings are automatically changed.
+
+For choices, `values()` returns entries with `name`, `display_name`, and `active`;
+pass `name` to `set()`. For ranges, `values()` returns a `SettingRange` with
+`minimum`, `maximum`, optional `step`, `units`, and `minimum_range` (dual ranges).
+Consult these device-specific limits before setting a numeric value; setters do
+not fetch or enforce the advertised limits. Every operation accepts `timeout`.
+
+```python
+# Read-only examples:
+controls_enabled = await player.settings.tone_controls.get()
+bass_limits = await player.settings.bass.values()
+replay_gain_choices = await player.settings.replay_gain.values()
+```
+
+The settings implementation is based on the saved N130/N331 responses in
+`api-responses/settings/audio`. Mutation requests are tested with mocks, not live
+hardware. Settings without a URL use the parent menu's `/audiomodes` URL.
+The reset action advertised in the responses is intentionally not exposed.
+
 ## Development
 
 For information on contributing and releasing new versions, see the [Development Guide](development.md).
