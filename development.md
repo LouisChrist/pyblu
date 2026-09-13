@@ -50,11 +50,10 @@ pushes and `v*` tags; only tags deploy to
 
 ### Access
 
-Set the `GITHUB_TOKEN_PYBLU` environment variable to a GitHub personal access
-token. A fine-grained token needs access to `LouisChrist/pyblu` with read/write
-**Contents** permission; a classic token needs the `repo` scope. The release
-task uses this token to create the GitHub release. Git pushes use your normal
-credentials for `origin`.
+Git pushes use your normal credentials for `origin`. No personal access token
+is needed for the release task. The workflow creates the GitHub release using
+its automatic `GITHUB_TOKEN`, with **Contents: write** permission scoped to
+that job.
 
 PyPI publishing uses Trusted Publisher authentication, not a PyPI API token.
 If publishing fails because of authentication, check the project's
@@ -88,13 +87,14 @@ resulting version for each choice. Press Ctrl+C at the menu to cancel without
 changing anything.
 
 The task updates `pyproject.toml`, creates a `Release v{version}` commit and an
-annotated `v{version}` tag, pushes them, and creates a GitHub release with
-automatically generated notes. It does not run the local checks for you.
+annotated `v{version}` tag, and pushes them. It does not run the local checks
+for you.
 
 Pushing the tag starts the [release workflow](https://github.com/LouisChrist/pyblu/actions/workflows/release.yml).
 It runs lint, formatting, type checks, and tests, then builds the source archive
-and wheel and publishes them to PyPI. Check the workflow result before treating
-the release as complete.
+and wheel and publishes them to PyPI. After successful publishing, a separate
+job creates the GitHub release with automatically generated notes. Check the
+workflow result before treating the release as complete.
 
 ### Development releases
 
@@ -115,19 +115,20 @@ Open the [release workflow](https://github.com/LouisChrist/pyblu/actions/workflo
 choose **Run workflow**, select the branch, and check **Run build without
 publishing (dry-run)**.
 
-This runs the checks and builds the packages without publishing to PyPI. The
-workflow's `dist` artifact contains the packages for inspection.
+This runs the checks and builds the packages without publishing to PyPI or
+creating a GitHub release. The workflow's `dist` artifact contains the packages
+for inspection.
 
 ## If a release fails
 
 Check the task output and GitHub Actions logs to see which step failed. If no
 code change is needed, fix the cause and rerun the failed jobs.
 
-**Check PyPI before rolling anything back.** The tag push starts publishing
-before the task creates the GitHub release, so a failure in that last step
-doesn't mean the package wasn't published. If only the GitHub release is
-missing, create it for the existing tag rather than running the release task
-again.
+**Check PyPI before rolling anything back.** Publishing happens before the
+GitHub release job, so a failure in that job doesn't mean the package wasn't
+published. If only the GitHub release is missing, rerun the failed
+`github-release` job rather than running the local release task or publishing
+again. The job skips creation if the release already exists.
 
 ### The version is already on PyPI
 

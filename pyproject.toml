@@ -37,7 +37,6 @@ dev = [
     "packaging >= 24.0",
     "questionary >= 2.1.0",
     "mypy >= 1.11.2",
-    "pygithub >= 2.4.0",
     "types-lxml >= 2024.8.7"
     ]
 

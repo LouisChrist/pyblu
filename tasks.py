@@ -1,10 +1,8 @@
-import os
 import shutil
 import sys
 
 from invoke import task, Context, Collection
 from packaging.version import InvalidVersion, Version
-import github
 import questionary
 
 
@@ -82,18 +80,6 @@ def add_missing_tags(ctx: Context):
 
 @task
 def release(ctx: Context):
-    github_token = os.getenv("GITHUB_TOKEN_PYBLU")
-    if github_token is None:
-        print("GITHUB_TOKEN_PYBLU environment variable is required")
-        sys.exit(1)
-    github_auth = github.Auth.Token(github_token)
-    gh = github.Github(auth=github_auth)
-    try:
-        github_repo = gh.get_repo("LouisChrist/pyblu")
-    except github.GithubException:
-        print("No access to LouisChrist/pyblu")
-        sys.exit(1)
-
     current_branch = ctx.run("git branch --show-current", hide=True).stdout.strip()
     if current_branch != "main":
         print("You must be on the main branch to release")
@@ -118,16 +104,7 @@ def release(ctx: Context):
     print("Pushing changes")
     ctx.run("git push --follow-tags", hide=True)
 
-    print("Creating release")
-    github_repo.create_git_release(
-        f"v{bumped_version}",
-        f"v{bumped_version}",
-        generate_release_notes=True,
-        prerelease=bumped_version.is_prerelease,
-        make_latest="false" if bumped_version.is_prerelease else "true",
-    )
-
-    print(f"Release v{bumped_version} created. CI/CD will build and publish to PyPI.")
+    print(f"Tag v{bumped_version} pushed. CI/CD will publish to PyPI and create the GitHub release.")
 
 
 @task

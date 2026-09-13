@@ -108,3 +108,39 @@ jobs:
           path: dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    runs-on: ubuntu-latest
+    needs: publish
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.14
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies
+        run: uv sync
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # Rerunning this job must not create a duplicate release.
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists"
+            exit 0
+          fi
+          prerelease=$(uv run python -c 'import os; from packaging.version import Version; print(str(Version(os.environ["TAG"][1:]).is_prerelease).lower())')
+          if [ "$prerelease" = true ]; then
+            flags=(--prerelease --latest=false)
+          else
+            flags=(--latest)
+          fi
+          gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes "${flags[@]}"
