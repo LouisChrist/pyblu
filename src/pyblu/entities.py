@@ -2,6 +2,35 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class SettingValue:
+    """A selectable setting value; pass name (not display_name) to set()."""
+
+    name: str
+    display_name: str
+    active: bool
+
+
+@dataclass
+class SettingRange:
+    """Player-advertised limits for a range or dual-range setting."""
+
+    minimum: float
+    maximum: float
+    step: float | None = None
+    units: str | None = None
+    minimum_range: float | None = None
+
+
+@dataclass
+class _AudioSetting:
+    """Internal parsed audio setting."""
+
+    value: str | bool | float | tuple[float, float]
+    values: list[SettingValue] = field(default_factory=list)
+    range: SettingRange | None = None
+
+
+@dataclass
 class Status:
     etag: str
     """Cursor for long polling requests. Can be passed to next status call."""

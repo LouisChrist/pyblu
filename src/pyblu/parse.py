@@ -1,8 +1,13 @@
+from math import isfinite
+from typing import Literal
 from urllib.parse import unquote
 
 from lxml import etree
 
 from pyblu.entities import (
+    _AudioSetting,
+    SettingRange,
+    SettingValue,
     BrowseCategory,
     BrowseItem,
     BrowseResult,
@@ -449,6 +454,78 @@ def parse_inputs(response: bytes) -> list[Input]:
     return inputs
 
 
+def _parse_setting_range(choices: list[etree._Element]) -> SettingRange:  # pylint: disable=protected-access
+    """Parse and validate the player's range metadata."""
+    if len(choices) != 1:
+        raise ValueError("Expected exactly one range definition")
+    bounds = choices[0].attrib
+    limits = SettingRange(
+        minimum=float(bounds["min"]),
+        maximum=float(bounds["max"]),
+        step=float(bounds["step"]) if "step" in bounds else None,
+        units=bounds.get("units"),
+        minimum_range=float(bounds["minRange"]) if "minRange" in bounds else None,
+    )
+    if not all(isfinite(number) for number in (limits.minimum, limits.maximum)) or limits.minimum > limits.maximum:
+        raise ValueError("Invalid range bounds")
+    if limits.step is not None and (not isfinite(limits.step) or limits.step <= 0):
+        raise ValueError("Invalid range step")
+    if limits.minimum_range is not None and (not isfinite(limits.minimum_range) or not 0 <= limits.minimum_range <= limits.maximum - limits.minimum):
+        raise ValueError("Invalid minimum range")
+    return limits
+
+
+@_wrap_in_unxpected_response_error
+def parse_audio_setting(response: bytes, setting_id: str, expected_kind: Literal["boolean", "range", "dual-range", "list"]) -> _AudioSetting | None:
+    """Parse an expected audio setting kind; absent settings return None.
+
+    Validate untrusted XML before exposing values or metadata to setting classes.
+    Unexpected classes, missing attributes, and malformed numbers raise
+    PlayerUnexpectedResponseError. Boolean modes with named choices are handled
+    separately by parse_subwoofer_modes().
+    """
+    tree = etree.fromstring(response)  # pylint: disable=c-extension-no-member
+    elements = tree.xpath("/settings/menuGroup/setting[@id=$setting_id]", setting_id=setting_id)
+    if not elements:
+        return None
+    if len(elements) != 1:
+        raise ValueError("Duplicate audio setting")
+    element = elements[0]
+    kind = element.attrib["class"]
+    if kind != expected_kind:
+        raise ValueError(f"Expected {expected_kind} setting, got {kind}")
+    raw = element.attrib["value"]
+    value: str | bool | float | tuple[float, float] = raw
+    choices = element.findall("value")
+    limits = None
+    if kind == "boolean":
+        if choices:
+            raise ValueError("Expected an ON/OFF boolean, not a selectable mode")
+        if raw not in ("ON", "OFF"):
+            raise ValueError("Invalid boolean setting value")
+        value = raw == "ON"
+    elif kind in ("range", "dual-range"):
+        if kind == "range":
+            value = float(raw)
+            if not isfinite(value):
+                raise ValueError("Non-finite setting value")
+        else:
+            lower, upper = raw.split(",")
+            value = (float(lower), float(upper))
+            if not all(isfinite(number) for number in value) or value[0] > value[1]:
+                raise ValueError("Invalid dual-range setting value")
+        limits = _parse_setting_range(choices)
+    return _AudioSetting(
+        value=value,
+        values=(
+            [SettingValue(name=val.attrib["name"], display_name=val.attrib["displayName"], active=val.attrib["name"] == raw) for val in choices]
+            if kind == "list"
+            else []
+        ),
+        range=limits,
+    )
+
+
 @_wrap_in_unxpected_response_error
 def parse_listening_modes(response: bytes) -> list[ListeningModeValue]:
     """
@@ -463,7 +540,7 @@ def parse_listening_modes(response: bytes) -> list[ListeningModeValue]:
     mode_active = mode_elements[0].attrib["value"]
     modes = [
         ListeningModeValue(name=val.attrib["name"], display_name=val.attrib["displayName"], icon=val.attrib["icon"], active=val.attrib["name"] == mode_active)
-        for val in mode_elements[0]
+        for val in mode_elements[0].findall("value")
     ]
     return modes
 
@@ -482,6 +559,6 @@ def parse_subwoofer_modes(response: bytes) -> list[SubwooferModeValue]:
     mode_active = mode_elements[0].attrib["value"]
     modes = [
         SubwooferModeValue(name=val.attrib["name"], display_name=val.attrib["displayName"], active=val.attrib["name"] == mode_active)
-        for val in mode_elements[0]
+        for val in mode_elements[0].findall("value")
     ]
     return modes

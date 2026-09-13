@@ -92,3 +92,64 @@ Alternatively, request inline actions while browsing:
 
 Browse keys and all action URLs are opaque. Do not parse, decode, reconstruct, or otherwise modify them before
 passing them back to the same player that returned them.
+
+Audio settings
+--------------
+
+Audio settings are available through ``player.settings``. Each read fetches fresh
+state; availability means the player advertises the setting. Unsupported settings
+return ``None`` from ``get()``.
+
+.. code-block:: python
+
+   if await player.settings.treble.is_available():
+       print(await player.settings.treble.get())
+       print(await player.settings.treble.range())  # Bounds, step, and units.
+
+   for choice in await player.settings.output_mode.choices():
+       print(choice.name, choice.display_name, choice.active)
+
+For ``replay_gain`` and ``output_mode``, getters and setters both use raw names.
+Their getters preserve unlisted active names and return ``None`` only when the
+setting is absent. ``choices()`` returns a list of :class:`~pyblu.SettingValue`
+entries, empty when unavailable; use ``display_name`` for presentation.
+Numeric ``range()`` methods return :class:`~pyblu.SettingRange` or ``None``.
+
+Legacy choice settings
+~~~~~~~~~~~~~~~~~~~~~~
+
+``listening_mode`` and ``subwoofer_mode`` retain their original behavior for
+backward compatibility. Unlike ``replay_gain`` and ``output_mode``:
+
+* ``get()`` returns a display label, such as ``"Movie"`` or ``"Off"``, not a raw name.
+* ``set(name)`` still requires the raw name, such as ``"MOVIE"`` or ``"default"``.
+* Choices are read through ``values()``, not ``choices()``.
+* An unlisted active name produces ``None`` from ``get()``, rather than the raw name.
+* ``is_available()`` requires at least one choice, rather than just a present setting.
+
+.. warning::
+
+   Do not pass a legacy setting's ``get()`` result directly to ``set()``.
+   To save a value for later restoration, read the active choice's raw name:
+
+   .. code-block:: python
+
+      choices = await player.settings.subwoofer_mode.values()
+      original_name = next((choice.name for choice in choices if choice.active), None)
+      # Restore with set(original_name) only if original_name is not None.
+
+``listening_mode.values()`` returns :class:`~pyblu.ListeningModeValue` entries,
+which include an ``icon``. ``subwoofer_mode.values()`` returns
+:class:`~pyblu.SubwooferModeValue` entries. The newer ``choices()`` methods return
+:class:`~pyblu.SettingValue` entries. All expose ``name``, ``display_name``, and
+``active``.
+
+Writing settings
+~~~~~~~~~~~~~~~~
+
+Setters mutate the player. They do not check advertised choices/ranges or read
+back the result. Numeric setters reject booleans and non-finite numbers; volume
+limits must also be in ascending order.
+
+All methods accept ``timeout`` in seconds, defaulting to the player's timeout.
+See :class:`~pyblu.settings.Settings` and the :doc:`api` for all setting classes.
