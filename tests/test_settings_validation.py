@@ -33,7 +33,7 @@ async def test_wrong_setting_class_is_not_exposed(name, setting_id):
     # Well-formed XML and a value, but not the class promised by the public API.
     body = f'<settings><menuGroup><setting id="{setting_id}" class="text" value="ON"/></menuGroup></settings>'.encode()
     setting = getattr(Settings(AsyncMock(return_value=body)), name)
-    for operation in ("get", "is_available", "values"):
+    for operation in ("get", "is_available", "choices", "range"):
         if hasattr(setting, operation):
             with pytest.raises(PlayerUnexpectedResponseError, match="Expected .* setting, got text"):
                 await getattr(setting, operation)()
@@ -65,8 +65,6 @@ async def test_wrong_setting_class_is_not_exposed(name, setting_id):
         ("dual-range", "-90,0", '<value min="-90" max="0" minRange="inf"/>'),
         ("list", "raw", '<value name="raw"/>'),
         ("list", "raw", '<value displayName="Display"/>'),
-        ("boolean", "ON", '<dependsOn name="other"/>'),
-        ("boolean", "ON", '<dependsOn value="OFF"/>'),
     ],
 )
 def test_invalid_values_and_metadata(kind, value, children):

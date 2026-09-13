@@ -14,6 +14,15 @@ Audio Settings
 Access these through ``player.settings``; do not instantiate them directly.
 See :class:`pyblu.settings.Settings` for shared timeout and availability semantics.
 
+.. important::
+
+   ``listening_mode`` and ``subwoofer_mode`` are legacy exceptions: their
+   ``get()`` methods return display labels, but ``set()`` requires raw names
+   from ``values()``. Do not round-trip their getters directly into setters.
+   The newer ``replay_gain`` and ``output_mode`` use raw names for both
+   ``get()`` and ``set()``, and expose ``choices()`` instead of ``values()``.
+   See :doc:`usage` for the full legacy comparison and a save/restore example.
+
 .. autoclass:: pyblu.settings.Settings
    :members:
 

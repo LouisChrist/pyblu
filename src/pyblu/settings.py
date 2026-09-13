@@ -20,6 +20,12 @@ class _HttpGet(Protocol):  # pylint: disable=too-few-public-methods
 class ListeningMode:
     """Listening mode; accessed through ``player.settings.listening_mode``.
 
+    Legacy API: get() returns a display label, but set() requires a raw name.
+    Do not pass get() directly to set(); use the active values() entry's name.
+    Choices use values(), not choices(), and include an icon. Unlike newer
+    choice settings, get() returns None for an unlisted active name, and
+    is_available() requires at least one choice.
+
     See :class:`Settings` for request and availability semantics.
     """
 
@@ -55,6 +61,12 @@ class ListeningMode:
 
 class SubwooferMode:
     """Subwoofer mode; accessed through ``player.settings.subwoofer_mode``.
+
+    Legacy API: get() returns a display label, but set() requires a raw name.
+    Do not pass get() directly to set(); use the active values() entry's name.
+    Choices use values(), not choices(). Unlike newer choice settings, get()
+    returns None for an unlisted active name, and is_available() requires at
+    least one choice.
 
     See :class:`Settings` for request and availability semantics.
     """
@@ -162,7 +174,7 @@ class Treble:
         """Return whether the player advertises this setting."""
         return await self._query_endpoint(timeout) is not None
 
-    async def values(self, timeout: float | None = None) -> SettingRange | None:
+    async def range(self, timeout: float | None = None) -> SettingRange | None:
         """Return advertised bounds, or None if absent; these are not enforced by set()."""
         setting = await self._query_endpoint(timeout)
         return setting.range if setting else None
@@ -205,7 +217,7 @@ class Bass:
         """Return whether the player advertises this setting."""
         return await self._query_endpoint(timeout) is not None
 
-    async def values(self, timeout: float | None = None) -> SettingRange | None:
+    async def range(self, timeout: float | None = None) -> SettingRange | None:
         """Return advertised bounds, or None if absent; these are not enforced by set()."""
         setting = await self._query_endpoint(timeout)
         return setting.range if setting else None
@@ -248,7 +260,7 @@ class Balance:
         """Return whether the player advertises this setting."""
         return await self._query_endpoint(timeout) is not None
 
-    async def values(self, timeout: float | None = None) -> SettingRange | None:
+    async def range(self, timeout: float | None = None) -> SettingRange | None:
         """Return advertised bounds, or None if absent; these are not enforced by set()."""
         setting = await self._query_endpoint(timeout)
         return setting.range if setting else None
@@ -327,7 +339,7 @@ class CentreVolumeTrim:
         """Return whether the player advertises this setting."""
         return await self._query_endpoint(timeout) is not None
 
-    async def values(self, timeout: float | None = None) -> SettingRange | None:
+    async def range(self, timeout: float | None = None) -> SettingRange | None:
         """Return advertised bounds, or None if absent; these are not enforced by set()."""
         setting = await self._query_endpoint(timeout)
         return setting.range if setting else None
@@ -370,7 +382,7 @@ class Crossover:
         """Return whether the player advertises this setting."""
         return await self._query_endpoint(timeout) is not None
 
-    async def values(self, timeout: float | None = None) -> SettingRange | None:
+    async def range(self, timeout: float | None = None) -> SettingRange | None:
         """Return advertised bounds, or None if absent; these are not enforced by set()."""
         setting = await self._query_endpoint(timeout)
         return setting.range if setting else None
@@ -390,14 +402,16 @@ class ReplayGain:
         return parse_audio_setting(data, "replayGainMode", "list")
 
     async def get(self, timeout: float | None = None) -> str | None:
-        """Return the active display name, or None if absent or no choice matches."""
-        for val in await self.values(timeout):
-            if val.active:
-                return val.display_name
-        return None
+        """Return the raw active name, even if unlisted, or None if absent."""
+        setting = await self._query_endpoint(timeout)
+        if setting is None:
+            return None
+        if not isinstance(setting.value, str):
+            raise PlayerUnexpectedResponseError("Expected list setting value")
+        return setting.value
 
     async def set(self, mode: str, timeout: float | None = None) -> None:
-        """Set a raw choice name, not the display name returned by get().
+        """Set a raw choice name, as returned by get().
 
         Choices are not checked locally.
         """
@@ -407,7 +421,7 @@ class ReplayGain:
         """Return whether the player advertises this setting."""
         return await self._query_endpoint(timeout) is not None
 
-    async def values(self, timeout: float | None = None) -> list[SettingValue]:
+    async def choices(self, timeout: float | None = None) -> list[SettingValue]:
         """Return choices with raw names for set(), or an empty list if absent."""
         setting = await self._query_endpoint(timeout)
         return setting.values if setting else []
@@ -427,14 +441,16 @@ class OutputMode:
         return parse_audio_setting(data, "channelMode", "list")
 
     async def get(self, timeout: float | None = None) -> str | None:
-        """Return the active display name, or None if absent or no choice matches."""
-        for val in await self.values(timeout):
-            if val.active:
-                return val.display_name
-        return None
+        """Return the raw active name, even if unlisted, or None if absent."""
+        setting = await self._query_endpoint(timeout)
+        if setting is None:
+            return None
+        if not isinstance(setting.value, str):
+            raise PlayerUnexpectedResponseError("Expected list setting value")
+        return setting.value
 
     async def set(self, mode: str, timeout: float | None = None) -> None:
-        """Set a raw choice name, not the display name returned by get().
+        """Set a raw choice name, as returned by get().
 
         Choices are not checked locally.
         """
@@ -444,7 +460,7 @@ class OutputMode:
         """Return whether the player advertises this setting."""
         return await self._query_endpoint(timeout) is not None
 
-    async def values(self, timeout: float | None = None) -> list[SettingValue]:
+    async def choices(self, timeout: float | None = None) -> list[SettingValue]:
         """Return choices with raw names for set(), or an empty list if absent."""
         setting = await self._query_endpoint(timeout)
         return setting.values if setting else []
@@ -597,7 +613,7 @@ class VolumeLimits:
         """Return whether the player advertises this setting."""
         return await self._query_endpoint(timeout) is not None
 
-    async def values(self, timeout: float | None = None) -> SettingRange | None:
+    async def range(self, timeout: float | None = None) -> SettingRange | None:
         """Return advertised bounds, or None if absent; these are not enforced by set()."""
         setting = await self._query_endpoint(timeout)
         return setting.range if setting else None
@@ -642,8 +658,10 @@ class AudioClockTrim:
 class Settings:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
     """Audio settings accessed through ``player.settings``.
 
-    Each get(), values(), or is_available() call fetches a fresh audio settings
-    response. Availability means the player advertises the setting, not that it
+    Each get(), choices(), range(), values(), or is_available() call fetches a
+    fresh audio settings response. New choice settings return raw names from
+    get() and expose choices(); numeric settings expose range(). ListeningMode
+    and SubwooferMode retain display-name getters and values(). Availability means the player advertises the setting, not that it
     is currently enabled. Setters send one command and do not validate against
     advertised choices/ranges or read back the result.
 

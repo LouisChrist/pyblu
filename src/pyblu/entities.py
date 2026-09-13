@@ -28,7 +28,6 @@ class _AudioSetting:
     value: str | bool | float | tuple[float, float]
     values: list[SettingValue] = field(default_factory=list)
     range: SettingRange | None = None
-    dependencies: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

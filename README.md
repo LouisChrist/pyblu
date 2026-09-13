@@ -49,7 +49,8 @@ available depends on your player.
 
 | Settings | `get()` result | How to change it |
 | --- | --- | --- |
-| `listening_mode`, `subwoofer_mode`, `replay_gain`, `output_mode` | Active display name | `set(name)` |
+| `listening_mode`, `subwoofer_mode` (legacy) | Active display name | `set(name)` |
+| `replay_gain`, `output_mode` | Raw active name | `set(name)` |
 | `tone_controls`, `centre_channel`, `stereo_surround`, `digital_passthrough`, `fixed_volume`, `audio_clock_trim` | `bool` | `set(True)` / `set(False)` |
 | `treble`, `bass`, `balance`, `centre_volume_trim`, `crossover` | `float` | `set(value)` |
 | `volume_limits` | `(minimum, maximum)` in dB | `set(minimum, maximum)` |
@@ -58,23 +59,52 @@ Inside the `async with` block, you can read settings and their available values:
 
 ```python
 controls_enabled = await player.settings.tone_controls.get()
-bass_limits = await player.settings.bass.values()
-replay_gain_choices = await player.settings.replay_gain.values()
+bass_limits = await player.settings.bass.range()
+replay_gain_choices = await player.settings.replay_gain.choices()
 ```
 
-- `get()` returns `None` if the setting is missing or no choice is active.
+- `get()` returns `None` if the setting is missing. For `replay_gain` and
+  `output_mode`, it returns the raw active name even if not listed in `choices()`.
 - `is_available()` checks whether the player lists the setting. For listening
-  and subwoofer modes, it also requires at least one choice. This does not check
-  whether other settings need to be enabled first; pyblu won't change them for you.
-- For settings with choices, `values()` returns entries with `name`,
-  `display_name`, and `active`. Pass the entry's `name` to `set()`, not its
-  display name.
-- For numeric settings, `values()` returns a `SettingRange`, or `None` if the
+  and subwoofer modes, it also requires at least one choice.
+- For `replay_gain` and `output_mode`, `choices()` returns entries with `name`,
+  `display_name`, and `active`. Both `get()` and `set()` use raw names;
+  use `display_name` for presentation.
+- The legacy `listening_mode` and `subwoofer_mode` APIs retain `values()` and
+  display-name getters. Their `get()` also returns `None` if no choice matches;
+  pass a `values()` entry's `name` to `set()`, not the display name.
+- For numeric settings, `range()` returns a `SettingRange`, or `None` if the
   setting is missing. It contains `minimum`, `maximum`, and optional `step`,
   `units`, and `minimum_range` (for volume limits). Check these limits before
   changing a value: `set()` does not fetch or enforce them.
 
 All settings methods accept a `timeout` in seconds.
+
+### Legacy choice settings
+
+`listening_mode` and `subwoofer_mode` preserve their original API for backward
+compatibility. They differ from the newer choice settings:
+
+| Behavior | `listening_mode`, `subwoofer_mode` | `replay_gain`, `output_mode` |
+| --- | --- | --- |
+| `get()` | Display label, e.g. `"Movie"` or `"Off"` | Raw name, e.g. `"none"` or `"default"` |
+| `set(name)` | Raw name, **not** the display label | Raw name, same representation as `get()` |
+| List choices | `values()` | `choices()` |
+| Active name not in choices | `get()` returns `None` | `get()` returns the raw name |
+| `is_available()` | Requires at least one choice | Requires the setting to be present |
+
+**Do not pass a legacy setting's `get()` result to `set()`.** Obtain its raw
+name from the active entry in `values()` instead:
+
+```python
+choices = await player.settings.subwoofer_mode.values()
+original_name = next((choice.name for choice in choices if choice.active), None)
+# If restoring later, pass original_name to set(), not the display label "Off".
+```
+
+Legacy listening-mode choices are `ListeningModeValue` objects (including an
+`icon`); subwoofer choices are `SubwooferModeValue` objects. New choice settings
+return `SettingValue` objects. All three expose `name`, `display_name`, and `active`.
 
 ## Development
 

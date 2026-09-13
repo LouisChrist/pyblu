@@ -523,7 +523,6 @@ def parse_audio_setting(response: bytes, setting_id: str, expected_kind: Literal
             else []
         ),
         range=limits,
-        dependencies={dep.attrib["name"]: dep.attrib["value"] for dep in element.findall("dependsOn")},
     )
 
 

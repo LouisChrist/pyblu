@@ -117,8 +117,8 @@ SETTINGS = [
         endpoint="/audiomodes",
         set_args=("album",),
         encoded_value="album",
-        n130_value="Disabled",
-        n331_value="Disabled",
+        n130_value="none",
+        n331_value="none",
     ),
     SettingCase(
         name="output_mode",
@@ -126,8 +126,8 @@ SETTINGS = [
         endpoint="/audiomodes",
         set_args=("mono",),
         encoded_value="mono",
-        n130_value="Stereo",
-        n331_value="Stereo",
+        n130_value="default",
+        n331_value="default",
     ),
     SettingCase(
         name="stereo_surround",
@@ -225,8 +225,9 @@ async def test_missing_settings(case):
     setting = getattr(Settings(AsyncMock(return_value=b"<settings/>")), case.name)
     assert not await setting.is_available()
     assert await setting.get() is None
-    if hasattr(setting, "values"):
-        assert await setting.values() in (None, [])
+    for operation in ("values", "choices", "range"):
+        if hasattr(setting, operation):
+            assert await getattr(setting, operation)() in (None, [])
 
 
 @pytest.mark.parametrize("case", [case for case in SETTINGS if isinstance(case.set_args[0], bool)], ids=lambda case: case.name)
@@ -249,9 +250,9 @@ async def test_unknown_active_choice(name, setting_id):
         f'<settings><menuGroup><setting id="{setting_id}" class="list" value="new">' '<value name="old" displayName="Old"/></setting></menuGroup></settings>'
     ).encode()
     setting = getattr(Settings(AsyncMock(return_value=body)), name)
-    assert await setting.get() is None
+    assert await setting.get() == "new"
     assert await setting.is_available()
-    assert await setting.values() == [SettingValue("old", "Old", False)]
+    assert await setting.choices() == [SettingValue("old", "Old", False)]
 
 
 @pytest.mark.parametrize(
@@ -292,33 +293,71 @@ async def test_original_mode_api(name, setting_id, endpoint, expected):
     assert not await setting.is_available()
 
 
+@pytest.mark.parametrize("name,setting_id", [("replay_gain", "replayGainMode"), ("output_mode", "channelMode")])
+@pytest.mark.parametrize("raw", ["old", "new"])
+async def test_choice_get_set_round_trip(name, setting_id, raw):
+    body = (
+        f'<settings><menuGroup><setting id="{setting_id}" class="list" value="{raw}">'
+        '<value name="old" displayName="Display label"/></setting></menuGroup></settings>'
+    ).encode()
+    get = AsyncMock(return_value=body)
+    setting = getattr(Settings(get), name)
+    original = await setting.get(timeout=2)
+    assert original == raw
+    get.assert_awaited_once_with("/Settings?id=audio", timeout=2)
+    get.reset_mock()
+    await setting.set(original, timeout=3)
+    get.assert_awaited_once_with("/audiomodes", params={setting_id: raw}, timeout=3)
+
+
+@pytest.mark.parametrize("case", SETTINGS, ids=[case.name for case in SETTINGS])
+async def test_metadata_api_and_timeout(case):
+    get = AsyncMock(return_value=(RESPONSES / "bluesound_n331.xml").read_bytes())
+    setting = getattr(Settings(get), case.name)
+    if case.name in ("listening_mode", "subwoofer_mode"):
+        expected = {"values"}
+    elif case.name in ("replay_gain", "output_mode"):
+        expected = {"choices"}
+    elif isinstance(case.set_args[0], bool):
+        expected = set()
+    else:
+        expected = {"range"}
+    assert {method for method in ("values", "choices", "range") if hasattr(setting, method)} == expected
+    for method in expected:
+        await getattr(setting, method)(timeout=2)
+        get.assert_awaited_once_with("/Settings?id=audio", timeout=2)
+        get.reset_mock()
+        get.side_effect = PlayerUnreachableError("offline")
+        with pytest.raises(PlayerUnreachableError):
+            await getattr(setting, method)()
+
+
 async def test_choices_and_ranges():
     settings = Settings(AsyncMock(return_value=(RESPONSES / "bluesound_n130.xml").read_bytes()))
-    assert await settings.replay_gain.values() == [
+    assert await settings.replay_gain.choices() == [
         SettingValue("none", "Disabled", True),
         SettingValue("track", "Track gain", False),
         SettingValue("album", "Album gain", False),
         SettingValue("smart", "Smart gain", False),
     ]
-    assert await settings.output_mode.values() == [
+    assert await settings.output_mode.choices() == [
         SettingValue("default", "Stereo", True),
         SettingValue("left", "Left", False),
         SettingValue("right", "Right", False),
         SettingValue("mono", "Mono", False),
     ]
-    assert await settings.treble.values() == SettingRange(-6, 6, 0.5, "dB")
-    assert await settings.bass.values() == SettingRange(-6, 6, 0.5, "dB")
-    assert await settings.crossover.values() == SettingRange(40, 200, 10, "Hz")
-    assert await settings.volume_limits.values() == SettingRange(-90, 0, units="dB", minimum_range=30)
+    assert await settings.treble.range() == SettingRange(-6, 6, 0.5, "dB")
+    assert await settings.bass.range() == SettingRange(-6, 6, 0.5, "dB")
+    assert await settings.crossover.range() == SettingRange(40, 200, 10, "Hz")
+    assert await settings.volume_limits.range() == SettingRange(-90, 0, units="dB", minimum_range=30)
     settings = Settings(AsyncMock(return_value=(RESPONSES / "bluesound_n331.xml").read_bytes()))
-    assert await settings.balance.values() == SettingRange(-7, 7, 0.5)
-    assert await settings.centre_volume_trim.values() == SettingRange(-10, 10, 0.5)
+    assert await settings.balance.range() == SettingRange(-7, 7, 0.5)
+    assert await settings.centre_volume_trim.range() == SettingRange(-10, 10, 0.5)
 
 
-def test_dependencies_are_not_choices():
+def test_non_choice_elements_are_ignored():
     setting = parse_audio_setting((RESPONSES / "bluesound_n130.xml").read_bytes(), "replayGainMode", "list")
     assert setting is not None
-    assert setting.dependencies == {"mqaDisable": "OFF"}
     assert len(setting.values) == 4
 
 

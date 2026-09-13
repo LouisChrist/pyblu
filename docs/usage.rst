@@ -104,14 +104,48 @@ return ``None`` from ``get()``.
 
    if await player.settings.treble.is_available():
        print(await player.settings.treble.get())
-       print(await player.settings.treble.values())  # Bounds, step, and units.
+       print(await player.settings.treble.range())  # Bounds, step, and units.
 
-   for choice in await player.settings.output_mode.values():
+   for choice in await player.settings.output_mode.choices():
        print(choice.name, choice.display_name, choice.active)
 
-Choice getters return display names, but setters accept raw ``choice.name`` values.
-Numeric ``values()`` methods return :class:`~pyblu.SettingRange` or ``None``;
-choice ``values()`` methods return a list, empty when unavailable.
+For ``replay_gain`` and ``output_mode``, getters and setters both use raw names.
+Their getters preserve unlisted active names and return ``None`` only when the
+setting is absent. ``choices()`` returns a list of :class:`~pyblu.SettingValue`
+entries, empty when unavailable; use ``display_name`` for presentation.
+Numeric ``range()`` methods return :class:`~pyblu.SettingRange` or ``None``.
+
+Legacy choice settings
+~~~~~~~~~~~~~~~~~~~~~~
+
+``listening_mode`` and ``subwoofer_mode`` retain their original behavior for
+backward compatibility. Unlike ``replay_gain`` and ``output_mode``:
+
+* ``get()`` returns a display label, such as ``"Movie"`` or ``"Off"``, not a raw name.
+* ``set(name)`` still requires the raw name, such as ``"MOVIE"`` or ``"default"``.
+* Choices are read through ``values()``, not ``choices()``.
+* An unlisted active name produces ``None`` from ``get()``, rather than the raw name.
+* ``is_available()`` requires at least one choice, rather than just a present setting.
+
+.. warning::
+
+   Do not pass a legacy setting's ``get()`` result directly to ``set()``.
+   To save a value for later restoration, read the active choice's raw name:
+
+   .. code-block:: python
+
+      choices = await player.settings.subwoofer_mode.values()
+      original_name = next((choice.name for choice in choices if choice.active), None)
+      # Restore with set(original_name) only if original_name is not None.
+
+``listening_mode.values()`` returns :class:`~pyblu.ListeningModeValue` entries,
+which include an ``icon``. ``subwoofer_mode.values()`` returns
+:class:`~pyblu.SubwooferModeValue` entries. The newer ``choices()`` methods return
+:class:`~pyblu.SettingValue` entries. All expose ``name``, ``display_name``, and
+``active``.
+
+Writing settings
+~~~~~~~~~~~~~~~~
 
 Setters mutate the player. They do not check advertised choices/ranges or read
 back the result. Numeric setters reject booleans and non-finite numbers; volume
