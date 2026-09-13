@@ -42,19 +42,21 @@ uv run invoke release            # select a stable/dev release (requires GITHUB_
 
 ## Architecture
 
-The library has four modules with a clear separation of concerns:
+The library has five main modules with a clear separation of concerns:
 
-- **`player.py`** — `Player` class: the public API. Each method makes one HTTP GET request to the BluOS endpoint, passing arguments as query parameters, then delegates the raw response bytes to a parse function. All methods are async and decorated with `@_wrap_in_unreachable_error`.
+- **`player.py`** — `Player` class: the public API. Async endpoint methods use `_get()` to make HTTP GET requests, then delegate the raw response bytes to parse functions. `_get()` centralizes transport error handling.
+
+- **`settings.py`** — Settings API exposed through `Player.settings`. Uses the player's `_get()` callable for requests, sharing its session, timeouts, and transport error handling.
 
 - **`parse.py`** — Stateless XML parsing functions. Each takes `bytes` from the HTTP response and returns a typed entity. Uses `lxml.etree` for parsing. All public parse functions are decorated with `@_wrap_in_unxpected_response_error`.
 
 - **`entities.py`** — Pure `@dataclass` types for player state, play queues, and media browsing, including `PlayQueue`, `PlayQueueTrack`, `BrowseResult`, `BrowseItem`, and `ContextMenuAction`. No logic.
 
-- **`errors.py`** — Exception hierarchy (`PlayerError` → `PlayerUnreachableError` / `PlayerUnexpectedResponseError` / `PlayerCommandError` / `PlayerBrowseError`) and decorators/helpers for translating transport, parser, and structured player errors.
+- **`errors.py`** — Exception hierarchy (`PlayerError` → `PlayerUnreachableError` / `PlayerUnexpectedResponseError` / `PlayerCommandError` / `PlayerBrowseError`) and the decorator for translating parser failures.
 
 ### Key Conventions
 
-**Error handling via decorators**: `_wrap_in_unreachable_error` (on Player methods) catches `TimeoutError` and `aiohttp.ClientConnectionError`. `_wrap_in_unxpected_response_error` (on parse functions) catches everything else. Never add try/except inside Player methods or parse functions — let the decorators handle it.
+**Centralized error handling**: `Player._get()` catches `TimeoutError` and `aiohttp.ClientConnectionError` and raises `PlayerUnreachableError`. `_wrap_in_unxpected_response_error` on parse functions preserves existing `PlayerError` exceptions and wraps other exceptions in `PlayerUnexpectedResponseError`. Parsers raise `PlayerCommandError` or `PlayerBrowseError` for structured player errors. Do not duplicate try/except handling in endpoint methods or parse functions.
 
 **BluOS API quirks**:
 - All operations use HTTP GET, including mutations (play, pause, volume set).
@@ -90,5 +92,5 @@ async def test_example():
 
 1. Add the entity dataclass to `entities.py` if needed, and export it from `__init__.py`.
 2. Add a `parse_*` function in `parse.py` decorated with `@_wrap_in_unxpected_response_error`.
-3. Add the async method to `Player` in `player.py` decorated with `@_wrap_in_unreachable_error`.
+3. Add the async method to `Player` in `player.py`, using `_get()` for the request and delegating the response to the parser.
 4. Add tests in `tests/test_player.py` (HTTP mock) and `tests/test_parse.py` (parse logic) as appropriate.
