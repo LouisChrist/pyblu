@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 from urllib.parse import quote
 
 import aiohttp
+from aiohttp import web
 import pytest
 from mocket import Mocket, async_mocketize
 from mocket.mocks.mockhttp import Entry
@@ -1061,7 +1062,7 @@ async def test_browse_error_response():
     [
         ("/Play?url=Service%3Astream-1&title=Station+One", "http://node:11000/Play?url=Service%3Astream-1&title=Station+One"),
         ("Add?service=ServiceA&albumid=1&autofill=1", "http://node:11000/Add?service=ServiceA&albumid=1&autofill=1"),
-        ("http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1", "http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1"),
+        ("/AddFavourite?service=Airable&url=opaque%3Astation%2F1", "http://node:11000/AddFavourite?service=Airable&url=opaque%3Astation%2F1"),
     ],
 )
 @async_mocketize(strict_mode=True)
@@ -1073,6 +1074,44 @@ async def test_execute_action(action_url: str, request_url: str):
             await client.execute_action(action_url)
 
     assert len(Mocket.request_list()) == 1
+
+
+@pytest.mark.parametrize("url_form", ["absolute_path", "relative_path"])
+async def test_execute_action_preserves_raw_url(url_form: str):
+    # Query-parsing mocks can hide canonicalization, so inspect a real local HTTP request.
+    action_path = "/Play?url=RadioParadise%3A%2F1%3A4%2FMellow%2520Mix&title=Mellow+Mix&other=%2b%26%3D%20"
+    received_paths = []
+
+    async def handle(request: web.Request) -> web.Response:
+        received_paths.append(request.raw_path)
+        return web.Response(text="<state>stream</state>")
+
+    app = web.Application()
+    app.router.add_get("/Play", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    try:
+        site = web.TCPSite(runner, "127.0.0.1", 0)
+        await site.start()
+        port = runner.addresses[0][1]
+        async with Player("127.0.0.1", port=port) as client:
+            action_url = action_path
+            if url_form == "relative_path":
+                action_url = action_path.lstrip("/")
+            await client.execute_action(action_url)
+    finally:
+        await runner.cleanup()
+
+    assert received_paths == [action_path]
+
+
+@pytest.mark.parametrize("action_url", ["http://node:11000/Play?url=test", "//node:11000/Play?url=test", "https://other/Play", "Capture:test"])
+async def test_execute_action_rejects_nonrelative_urls(action_url: str):
+    session = MagicMock(spec=aiohttp.ClientSession)
+    async with Player("node", session=session) as client:
+        with pytest.raises(ValueError, match="must be relative"):
+            await client.execute_action(action_url)
+    session.get.assert_not_called()
 
 
 @async_mocketize(strict_mode=True)

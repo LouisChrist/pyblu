@@ -62,7 +62,7 @@ The library has five main modules with a clear separation of concerns:
 - All operations use HTTP GET, including mutations (play, pause, volume set).
 - `inputs()` calls `/RadioBrowse?service=Capture`, not a dedicated inputs endpoint.
 - `play_url()` and `play()` both map to the `/Play` endpoint.
-- Browse keys, `playURL` / `autoplayURL`, and context-menu action URLs are opaque. They map to `BrowseItem.play_action_url` / `autoplay_action_url` and `ContextMenuAction.action_url`; pass them unchanged to `Player.execute_action()`, never to `Player.play_url()`. Resolve context-menu keys through `context_menu()`; actions may mutate playback, the queue, presets, or service favorites.
+- Browse keys, `playURL` / `autoplayURL`, and context-menu action URLs are opaque. They map to `BrowseItem.play_action_url` / `autoplay_action_url` and `ContextMenuAction.action_url`; pass them unchanged to `Player.execute_action()`, never to `Player.play_url()`. Resolve context-menu keys through `context_menu()`; actions may mutate playback, the queue, presets, or service favorites. `execute_action()` passes a relative `yarl.URL(encoded=True)` to `_get()` to preserve its encoding. `_get()` accepts relative strings or `URL` objects, rejects URIs with a scheme or host, and resolves them against the player's base URL; normal endpoint query parameters still use aiohttp's encoding.
 - `/Playlist` returns queue metadata as child elements for `length=1`, but as attributes for full and paginated listings; `parse_play_queue()` supports both forms. Optional metadata varies by response and player state: `name`, `modified`, `shuffle`, and `repeat` may be absent and are exposed as `None`.
 - The API uses "master/slave" terminology; the library exposes this as "leader/follower".
 
@@ -87,6 +87,8 @@ async def test_example():
     assert len(Mocket.request_list()) == 1
     assert result.field == expected
 ```
+
+The action-URL encoding regression test uses a loopback aiohttp server to assert the raw request path, since query-parsing mocks can hide URL canonicalization. It never contacts a real player.
 
 ### Adding a New Player Method
 

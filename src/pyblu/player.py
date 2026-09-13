@@ -1,7 +1,7 @@
 from types import TracebackType
-from urllib.parse import urljoin
 
 import aiohttp
+from yarl import URL
 
 from pyblu.entities import BrowseResult, ContextMenuAction, Input, PairedPlayer, PlayQueue, Preset, Status, SyncStatus, Volume
 from pyblu.errors import PlayerUnreachableError
@@ -70,11 +70,15 @@ class Player:
     ) -> None:
         await self.close()
 
-    async def _get(self, path: str, params: dict[str, str | int] | None = None, timeout: float | None = None) -> bytes:
+    async def _get(self, path: str | URL, params: dict[str, str | int] | None = None, timeout: float | None = None) -> bytes:
+        url = URL(path)
+        if url.scheme or url.raw_authority:
+            raise ValueError("Request URL must be relative to the player")
+        url = URL(f"{self.base_url}/").join(url)
         used_timeout = timeout if timeout is not None else self._default_timeout
         try:
             async with self._session.get(
-                urljoin(f"{self.base_url}/", path),
+                url,
                 params=params,
                 timeout=aiohttp.ClientTimeout(total=used_timeout),
             ) as response:
@@ -218,14 +222,16 @@ class Player:
         construct a /Play request: the complete action URI is sent directly to the player. Actions can start playback,
         modify the play queue, add a preset, or change a service favorite.
 
-        :param action_url: An opaque action URI supplied by the player.
+        :param action_url: An opaque relative action URI supplied by the player.
         :param timeout: The timeout in seconds for the request. This overrides the default timeout.
 
+        :raises ValueError: If the action URI includes a scheme or host.
         :raises PlayerCommandError: If the player rejects the action.
         :raises PlayerUnexpectedResponseError: If the command response is not valid XML.
         :raises PlayerUnreachableError: If the player is not reachable. Player is offline or request timed out.
         """
-        data = await self._get(action_url, timeout=timeout)
+        # The player already encoded this URI; prevent aiohttp from canonicalizing it.
+        data = await self._get(URL(action_url, encoded=True), timeout=timeout)
         parse_command_response(data)
 
     async def pause(self, toggle: bool | None = None, timeout: float | None = None) -> str:
