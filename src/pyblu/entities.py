@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -128,15 +128,47 @@ class Volume:
 
 
 @dataclass
+class PlayQueueTrack:
+    id: int
+    """Position of the track in the play queue, starting from 0."""
+    title: str | None = None
+    """Track title."""
+    artist: str | None = None
+    """Artist name."""
+    album: str | None = None
+    """Album name."""
+    filename: str | None = None
+    """Service-specific filename. Treat this as an opaque value."""
+    image: str | None = None
+    """URL of the track artwork."""
+    duration: float | None = None
+    """Track duration in seconds."""
+    service: str | None = None
+    """Music service that supplied the track."""
+    song_id: str | None = None
+    """Service-specific song id."""
+    album_id: str | None = None
+    """Service-specific album id."""
+    artist_id: str | None = None
+    """Service-specific artist id."""
+
+
+@dataclass
 class PlayQueue:
     id: str
     """Unique id for the current play queue state. Changes whenever the play queue changes."""
-    shuffle: bool
-    """PlayQueue is shuffled"""
-    modified: bool
-    """PlayQueue was modified since it was loaded"""
+    shuffle: bool | None
+    """Whether the play queue is shuffled, or *None* if the response does not include the shuffle state."""
+    modified: bool | None
+    """Whether the play queue was modified since it was loaded, or *None* if the response does not include this state."""
     length: int
-    """Number of tracks in the play queue"""
+    """Total number of tracks in the play queue, including tracks not returned by a paginated request."""
+    name: str | None = None
+    """Name of the current play queue."""
+    repeat: int | None = None
+    """Repeat mode: 0 repeats the queue, 1 repeats the current track, and 2 disables repeat."""
+    tracks: list[PlayQueueTrack] = field(default_factory=list)
+    """Tracks returned by the request. Empty for a status-only request or an empty queue."""
 
 
 @dataclass
@@ -163,6 +195,83 @@ class Input:
     """URL of the input image"""
     url: str
     """URL to play the input. Can be passed to *play_url*"""
+
+
+@dataclass
+class ContextMenuAction:
+    type: str
+    """Service-specific action type. Treat unknown values as a display hint only."""
+    text: str | None
+    """Human-readable action label."""
+    action_url: str
+    """Opaque relative action URI. Pass it unchanged to *Player.execute_action*."""
+
+
+@dataclass
+class BrowseItem:
+    type: str
+    """Item type. Common values are "link" (descend with *browse_key*), "audio" (playable), "album", "track",
+    "artist", "playlist", "folder", "section", "text". The list is open — treat unknown values as a display hint only."""
+    text: str | None
+    """Primary display label."""
+    text2: str | None
+    """Secondary display label from the BluOS ``text2`` attribute.
+    The meaning is service-specific: it may be an artist, station slogan, current show, date, or another subtitle."""
+    image: str | None
+    """Icon or artwork URL."""
+    play_action_url: str | None
+    """Opaque relative URI from the item's *playURL* attribute. Pass it unchanged to *Player.execute_action*.
+    *None* if the item does not provide a default play action. Do not pass this value to *Player.play_url*."""
+    browse_key: str | None
+    """Opaque key. Pass to *Player.browse* to descend into this item. *None* if the item is a leaf."""
+    input_type: str | None
+    """Input kind for items that represent a physical input (e.g. "bluetooth", "arc", "spdif"). Usually only set on the root menu."""
+    context_menu_key: str | None
+    """Opaque key for this item's context menu. Pass it to *Player.context_menu*."""
+    context_menu: list[ContextMenuAction]
+    """Inline context-menu actions. Usually empty because BluOS normally supplies *context_menu_key* instead."""
+    autoplay_action_url: str | None = None
+    """Opaque relative URI from the item's *autoplayURL* attribute. Pass it unchanged to *Player.execute_action*.
+    *None* if the item does not provide an auto-fill play action. Do not pass this value to *Player.play_url*."""
+    duration: int | None = None
+    """Duration in seconds for a track or collection."""
+    is_favourite: bool | None = None
+    """Whether the item is a favourite."""
+    tracks: int | None = None
+    """Number of tracks in a collection."""
+
+
+@dataclass
+class BrowseCategory:
+    text: str | None
+    """Category heading."""
+    next_key: str | None
+    """Opaque key for the next page of items in this category. Pass to *Player.browse*."""
+    parent_key: str | None
+    """Opaque key for navigating up from this category. Pass to *Player.browse*."""
+    items: list[BrowseItem]
+    """Items in this category."""
+
+
+@dataclass
+class BrowseResult:
+    type: str
+    """Result list type. Common values are "menu", "items", "albums", "tracks", "playlists", "sections", "folders"."""
+    service_name: str | None
+    """Human-readable service name, suitable for UI."""
+    service_icon: str | None
+    """URL of an icon for the service."""
+    search_key: str | None
+    """Opaque key for searching the current service. Pass to *Player.browse* together with the **q**
+    parameter (the search term). *None* if search is not available here."""
+    next_key: str | None
+    """Opaque key for the next page of results. Pass to *Player.browse*."""
+    parent_key: str | None
+    """Opaque key for navigating up the hierarchy. Pass to *Player.browse*."""
+    items: list[BrowseItem]
+    """Top-level items. Empty when the response is grouped into *categories*."""
+    categories: list[BrowseCategory]
+    """Categories. Empty unless the response groups items under headings."""
 
 
 @dataclass
