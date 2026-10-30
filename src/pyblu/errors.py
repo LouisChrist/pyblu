@@ -23,7 +23,10 @@ class PlayerUnreachableError(PlayerError):
 
 
 class PlayerUnexpectedResponseError(PlayerError):
-    """Exception raised when the player returns an unexpected response. This is likely a bug in this library."""
+    """Exception raised when the player returns an unexpected response.
+
+    This covers HTTP error statuses as well as malformed response bodies. A malformed body is likely a bug in this library.
+    """
 
 
 class PlayerCommandError(PlayerError):
