@@ -667,7 +667,7 @@ class Settings:  # pylint: disable=too-few-public-methods,too-many-instance-attr
 
     All methods accept an optional timeout in seconds; None uses the player's
     default. Transport failures raise :class:`~pyblu.errors.PlayerUnreachableError`;
-    malformed setting responses raise
+    HTTP error statuses and malformed setting responses raise
     :class:`~pyblu.errors.PlayerUnexpectedResponseError`.
     """
 

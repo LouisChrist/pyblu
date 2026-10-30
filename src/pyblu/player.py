@@ -4,7 +4,7 @@ import aiohttp
 from yarl import URL
 
 from pyblu.entities import BrowseResult, ContextMenuAction, Input, PairedPlayer, PlayQueue, Preset, Status, SyncStatus, Volume
-from pyblu.errors import PlayerUnreachableError
+from pyblu.errors import PlayerUnexpectedResponseError, PlayerUnreachableError
 from pyblu.parse import (
     parse_add_follower,
     parse_browse_result,
@@ -88,6 +88,8 @@ class Player:
             raise PlayerUnreachableError(f"Timeout during request: {e}") from e
         except aiohttp.ClientConnectionError as e:
             raise PlayerUnreachableError(f"Connection error: {e}") from e
+        except aiohttp.ClientResponseError as e:
+            raise PlayerUnexpectedResponseError(f"Unexpected HTTP status {e.status} from player: {e.message}") from e
 
     async def status(self, etag: str | None = None, poll_timeout: int = 30, timeout: float | None = None) -> Status:
         """Get the current status of the player.

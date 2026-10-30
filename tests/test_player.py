@@ -12,7 +12,7 @@ from mocket.plugins.aiohttp_connector import MocketTCPConnector
 
 from pyblu import ContextMenuAction, PairedPlayer, Player, SubwooferModeValue
 from pyblu.entities import Input, ListeningModeValue, Preset
-from pyblu.errors import PlayerBrowseError, PlayerCommandError, PlayerUnreachableError
+from pyblu.errors import PlayerBrowseError, PlayerCommandError, PlayerUnexpectedResponseError, PlayerUnreachableError
 
 
 @async_mocketize(strict_mode=True)
@@ -946,6 +946,18 @@ async def test_get_maps_connection_error_to_unreachable():
     player = _player_with_failing_session(aiohttp.ClientConnectionError())
     with pytest.raises(PlayerUnreachableError):
         await player.status()
+
+
+@async_mocketize(strict_mode=True)
+async def test_get_maps_http_error_status_to_unexpected_response():
+    Entry.single_register(Entry.GET, "http://node:11000/Status", status=500, body="Internal Server Error")
+    async with aiohttp.ClientSession(connector=MocketTCPConnector()) as session:
+        async with Player("node", session=session) as client:
+            with pytest.raises(PlayerUnexpectedResponseError, match="Unexpected HTTP status 500") as exc_info:
+                await client.status()
+
+    assert isinstance(exc_info.value.__cause__, aiohttp.ClientResponseError)
+    assert len(Mocket.request_list()) == 1
 
 
 @async_mocketize(strict_mode=True)
